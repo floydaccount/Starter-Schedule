@@ -8,6 +8,24 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Georgia, serif; background: #f4f1ea; color: #1a1a1a; min-height: 100vh; }
 
+
+  /* Login screen */
+  #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a3a1a;
+    display: flex; align-items: center; justify-content: center; z-index: 9999; }
+  #login-box { background: #fff; border-radius: 14px; padding: 40px 36px; width: 320px;
+    text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+  #login-box .golf-icon { font-size: 42px; margin-bottom: 12px; }
+  #login-box h2 { font-size: 20px; color: #1a3a1a; margin-bottom: 4px; }
+  #login-box p { font-size: 13px; color: #888; margin-bottom: 24px; }
+  #login-box input { width: 100%; padding: 11px 14px; border-radius: 8px; border: 1.5px solid #c8b87a;
+    font-size: 15px; font-family: Georgia, serif; outline: none; text-align: center;
+    letter-spacing: 3px; margin-bottom: 14px; }
+  #login-box button { width: 100%; padding: 11px; border-radius: 8px; border: none; cursor: pointer;
+    background: #1a3a1a; color: #e8d8a0; font-size: 15px; font-family: Georgia, serif;
+    font-weight: bold; letter-spacing: 1px; transition: background 0.15s; }
+  #login-box button:hover { background: #2a5a2a; }
+  #login-error { color: #c0392b; font-size: 13px; margin-top: 10px; min-height: 18px; }
+
   /* Header */
   #header { background: #1a3a1a; color: #e8d8a0; padding: 16px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
   #header-icon { font-size: 28px; }
@@ -72,6 +90,19 @@
 </head>
 <body>
 
+
+<div id="login-screen">
+  <div id="login-box">
+    <div class="golf-icon">⛳</div>
+    <h2>Starter Schedule</h2>
+    <p>Enter the password to continue</p>
+    <input type="password" id="password-input" placeholder="Password"
+      onkeydown="if(event.key==='Enter') checkPassword()">
+    <button onclick="checkPassword()">Enter</button>
+    <div id="login-error"></div>
+  </div>
+</div>
+
 <div id="header">
   <span id="header-icon">⛳</span>
   <div id="header-titles">
@@ -90,7 +121,9 @@
   <!-- SEARCH VIEW -->
   <div id="view-search" class="view active">
     <div id="filters">
-      <input type="text" id="search-input" placeholder="🔍  Search by name..." oninput="renderSearch()">
+      <select class="filter-select" id="search-input" onchange="renderSearch()" style="font-size:15px; padding:10px 16px; min-width:200px;">
+        <option value="">👤 All Starters</option>
+      </select>
       <select class="filter-select" id="month-filter" onchange="renderSearch()">
         <option value="All">All Months</option>
         <option>January</option><option>February</option><option>March</option>
@@ -109,7 +142,12 @@
   <!-- PERSON VIEW -->
   <div id="view-person" class="view">
     <div id="person-label">Select a Starter</div>
-    <div id="person-buttons"></div>
+    <div style="margin-bottom:20px;">
+      <select id="person-select" class="filter-select" onchange="selectPerson(this.value)" style="font-size:15px; padding:10px 16px; min-width:220px;">
+        <option value="">-- Choose a name --</option>
+      </select>
+      <span id="person-shift-count" style="margin-left:12px; font-size:13px; color:#666;"></span>
+    </div>
     <div id="person-detail"></div>
   </div>
 
@@ -658,7 +696,7 @@ const RAW_DATA = [
   { day: "Sunday", date: "Jun 7", month: "June", course: "Harbor", name: "Mark L", shift: "7-3" },
   { day: "Sunday", date: "Jun 7", month: "June", course: "Harbor", name: "Coach Bob", shift: "9-6" },
   { day: "Monday", date: "Jun 8", month: "June", course: "Links", name: "Cary", shift: "7-3" },
-  { day: "Monday", date: "Jun 8", month: "June", course: "Links", name: "Greg", shift: "9-6" },
+  { day: "Monday", date: "Jun 8", month: "June", course: "Links", name: "Greg S", shift: "9-6" },
   { day: "Monday", date: "Jun 8", month: "June", course: "Harbor", name: "Coach Bob", shift: "8-1" },
   { day: "Tuesday", date: "Jun 9", month: "June", course: "Links", name: "Gary", shift: "7-3" },
   { day: "Tuesday", date: "Jun 9", month: "June", course: "Links", name: "Seamus", shift: "9-6" },
@@ -735,9 +773,9 @@ const RAW_DATA = [
   { day: "Sunday", date: "Jun 28", month: "June", course: "Harbor", name: "John S", shift: "9-6" },
   { day: "Monday", date: "Jun 29", month: "June", course: "Harbor", name: "Bob J", shift: "7-3" },
   { day: "Monday", date: "Jun 29", month: "June", course: "Harbor", name: "Bud D", shift: "9-6" },
-  { day: "Tuesday", date: "Jun 30", month: "June", course: "Links", name: "Bobby", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 30", month: "June", course: "Links", name: "Bobby M", shift: "7-3" },
   { day: "Tuesday", date: "Jun 30", month: "June", course: "Links", name: "Gary", shift: "9-6" },
-  { day: "Tuesday", date: "Jun 30", month: "June", course: "Harbor", name: "Greg", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 30", month: "June", course: "Harbor", name: "Greg S", shift: "7-3" },
   { day: "Tuesday", date: "Jun 30", month: "June", course: "Harbor", name: "Mike K", shift: "8:30-6" },
 ];
 
@@ -805,12 +843,12 @@ function buildTotals(rows) {
 }
 
 function renderSearch() {
-  const query = document.getElementById('search-input').value.toLowerCase();
+  const query = document.getElementById('search-input').value;
   const month = document.getElementById('month-filter').value;
   const course = document.getElementById('course-filter').value;
 
   const filtered = RAW_DATA.filter(e => {
-    return (query === '' || e.name.toLowerCase().includes(query))
+    return (query === '' || e.name === query)
       && (month === 'All' || e.month === month)
       && (course === 'All' || e.course === course);
   });
@@ -832,31 +870,34 @@ function renderSearch() {
   document.getElementById('totals-bar').innerHTML = buildTotals(filtered);
 }
 
-// Build person buttons
+// Build person dropdown
 let selectedPerson = null;
 const allNames = [...new Set(RAW_DATA.map(r => r.name))].sort();
 
 function renderPersonButtons() {
-  const el = document.getElementById('person-buttons');
-  el.innerHTML = allNames.map(name =>
-    `<button class="person-btn ${name === selectedPerson ? 'selected' : ''}" onclick="selectPerson('${name.replace(/'/g,"\'")}')">` +
-    `${name}</button>`
-  ).join('');
+  const el = document.getElementById('person-select');
+  if (!el) return;
+  el.innerHTML = '<option value="">-- Choose a name --</option>' +
+    allNames.map(name => `<option value="${name}">${name}</option>`).join('');
 }
 
 function selectPerson(name) {
   selectedPerson = name;
-  renderPersonButtons();
+  if (!name) {
+    document.getElementById('person-detail').innerHTML = '<div class="empty">Select a name above to see their full schedule</div>';
+    document.getElementById('person-shift-count').textContent = '';
+    return;
+  }
   const rows = RAW_DATA.filter(e => e.name === name).sort((a,b) => {
     const mi = m => MONTHS.indexOf(m);
     const dn = d => parseInt(d.split(' ')[1]);
     if (mi(a.month) !== mi(b.month)) return mi(a.month) - mi(b.month);
     return dn(a.date) - dn(b.date);
   });
+  document.getElementById('person-shift-count').textContent = `${rows.length} shift${rows.length !== 1 ? 's' : ''} scheduled`;
   const detail = document.getElementById('person-detail');
   detail.innerHTML = `
     <div id="person-name">${name}</div>
-    <div id="person-shifts">${rows.length} shift${rows.length !== 1 ? 's' : ''} scheduled</div>
     ${rows.length === 0 ? '<div class="empty">No shifts found</div>' : buildTable(rows, false)}
     <div id="person-totals-bar" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">${buildTotals(rows)}</div>
   `;
@@ -870,10 +911,39 @@ function switchView(view) {
   });
 }
 
+
+// Password protection
+const CORRECT_PASSWORD = 'wilddunes';
+
+function checkPassword() {
+  const input = document.getElementById('password-input').value;
+  if (input === CORRECT_PASSWORD) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('password-input').value = '';
+  } else {
+    document.getElementById('login-error').textContent = 'Incorrect password. Try again.';
+    document.getElementById('password-input').value = '';
+    document.getElementById('password-input').focus();
+  }
+}
+
+// Auto-focus password field
+document.getElementById('password-input').focus();
+
 // Init
+// Populate search name dropdown
+const searchSelect = document.getElementById('search-input');
+allNames.forEach(name => {
+  const opt = document.createElement('option');
+  opt.value = name;
+  opt.textContent = name;
+  searchSelect.appendChild(opt);
+});
+
 renderSearch();
 renderPersonButtons();
 document.getElementById('person-detail').innerHTML = '<div class="empty">Select a name above to see their full schedule</div>';
+document.getElementById('person-shift-count').textContent = '';
 </script>
 </body>
 </html>
