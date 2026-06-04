@@ -879,35 +879,81 @@ function loadAndRenderCalendar(){
   }).catch(function(){renderCalUI(name,month);});
 }
 
-function renderCalUI(name,month){
-  var key=getKey(name,month),offDays=requestsCache[key]||[],totalDays=MDAYS[month]||30,startDay=MSTART[month]||0,monthIdx=Object.keys(MDAYS).indexOf(month);
-  requestsCache[key]=offDays;
-  var h='<div class="cal-grid">';
-  for(var i=0;i<7;i++)h+='<div class="cal-header">'+DNAMES[i]+'</div>';
-  for(var i=0;i<startDay;i++)h+='<div class="cal-day empty-day"></div>';
-  for(var d=1;d<=totalDays;d++){
-    var isOff=offDays.indexOf(d)>=0,dt=new Date(2026,monthIdx,d);
-    var cls='cal-day'+(isOff?' unavailable':'');
-    h+='<div class="'+cls+'" data-d="'+d+'" data-name="'+name.replace(/"/g,'')+'" data-month="'+month+'"><div class="day-num">'+d+'</div><div class="day-name">'+DNAMES[dt.getDay()]+'</div></div>';
+function renderCalUI(name, month) {
+  var key = getKey(name, month);
+  if (!requestsCache[key]) requestsCache[key] = [];
+  var offDays = requestsCache[key];
+  var totalDays = MDAYS[month] || 30;
+  var startDay = MSTART[month] || 0;
+  var monthIdx = Object.keys(MDAYS).indexOf(month);
+  var container = document.getElementById('req-calendar');
+  container.innerHTML = '';
+
+  // Build calendar grid using DOM
+  var grid = document.createElement('div');
+  grid.className = 'cal-grid';
+
+  // Day headers
+  for (var i = 0; i < 7; i++) {
+    var hdr = document.createElement('div');
+    hdr.className = 'cal-header';
+    hdr.textContent = DNAMES[i];
+    grid.appendChild(hdr);
   }
-  h+='</div>';
-  if(offDays.length>0){
-    var s=offDays.slice().sort(function(a,b){return a-b;}),list=s.map(function(d){var dt=new Date(2026,monthIdx,d);return DNAMES[dt.getDay()]+' '+month.substring(0,3)+' '+d;}).join(', ');
-    h+='<div style="background:#fff3f3;border:1px solid #e0c0c0;border-radius:8px;padding:12px 16px;margin-top:8px;"><strong style="color:#8b1a1a;">Requested off in '+month+':</strong><div style="margin-top:4px;font-size:14px;color:#444;">'+list+'</div></div>';
+
+  // Empty cells
+  for (var i = 0; i < startDay; i++) {
+    var empty = document.createElement('div');
+    empty.className = 'cal-day empty-day';
+    grid.appendChild(empty);
   }
-  h+='<div style="margin-top:16px;"><button onclick="submitReq('+JSON.stringify(name)+','+JSON.stringify(month)+')" style="padding:10px 28px;background:#1a3a1a;color:#e8d8a0;border:none;border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:15px;font-weight:bold;">Submit Request</button> <span id="sub-status" style="font-size:13px;color:#1a6b3a;"></span></div>';
-  document.getElementById('req-calendar').innerHTML=h;
-  // Attach click handlers via event delegation
-  document.getElementById('req-calendar').onclick=function(e){
-    var el=e.target.closest('.cal-day');
-    if(!el||el.classList.contains('empty-day'))return;
-    var d=parseInt(el.getAttribute('data-d'));
-    var n=el.getAttribute('data-name');
-    var m=el.getAttribute('data-month');
-    if(d&&n&&m)toggleDay(n,m,d);
-  };
-  document.getElementById('req-status').textContent=offDays.length>0?offDays.length+' day'+(offDays.length!==1?'s':'')+' marked. Click Submit to save.':'Click any day to mark unavailable, then Submit.';
+
+  // Day cells
+  for (var d = 1; d <= totalDays; d++) {
+    var isOff = offDays.indexOf(d) >= 0;
+    var dt = new Date(2026, monthIdx, d);
+    var cell = document.createElement('div');
+    cell.className = 'cal-day' + (isOff ? ' unavailable' : '');
+    cell.innerHTML = '<div class="day-num">' + d + '</div><div class="day-name">' + DNAMES[dt.getDay()] + '</div>';
+    (function(day, n, m) {
+      cell.onclick = function() { toggleDay(n, m, day); };
+    })(d, name, month);
+    grid.appendChild(cell);
+  }
+  container.appendChild(grid);
+
+  // Summary
+  if (offDays.length > 0) {
+    var sorted = offDays.slice().sort(function(a,b){return a-b;});
+    var list = sorted.map(function(d){
+      var dt = new Date(2026, monthIdx, d);
+      return DNAMES[dt.getDay()] + ' ' + month.substring(0,3) + ' ' + d;
+    }).join(', ');
+    var summary = document.createElement('div');
+    summary.style.cssText = 'background:#fff3f3;border:1px solid #e0c0c0;border-radius:8px;padding:12px 16px;margin-top:8px;';
+    summary.innerHTML = '<strong style="color:#8b1a1a;">Requested off in ' + month + ':</strong><div style="margin-top:4px;font-size:14px;color:#444;">' + list + '</div>';
+    container.appendChild(summary);
+  }
+
+  // Submit button
+  var btnDiv = document.createElement('div');
+  btnDiv.style.marginTop = '16px';
+  var btn = document.createElement('button');
+  btn.textContent = 'Submit Request';
+  btn.style.cssText = 'padding:10px 28px;background:#1a3a1a;color:#e8d8a0;border:none;border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:15px;font-weight:bold;';
+  btn.onclick = function() { submitReq(name, month); };
+  var statusSpan = document.createElement('span');
+  statusSpan.id = 'sub-status';
+  statusSpan.style.cssText = 'font-size:13px;color:#1a6b3a;margin-left:12px;';
+  btnDiv.appendChild(btn);
+  btnDiv.appendChild(statusSpan);
+  container.appendChild(btnDiv);
+
+  document.getElementById('req-status').textContent = offDays.length > 0
+    ? offDays.length + ' day' + (offDays.length !== 1 ? 's' : '') + ' marked. Click Submit to save.'
+    : 'Click any day to mark unavailable, then Submit.';
 }
+
 
 function toggleDay(name,month,day){
   var key=getKey(name,month);if(!requestsCache[key])requestsCache[key]=[];
