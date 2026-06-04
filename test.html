@@ -112,7 +112,7 @@ tr{border-bottom:1px solid #f0ece0;}
   <div id="header-titles">
     <h1>2026 Starter Schedule</h1>
     <p>Links &amp; Harbor Courses</p>
-    <div id="coverage-badge">Jan-Jun 2026 static · Jul+ from scheduler</div>
+    <div id="coverage-badge">Covers: Jan-Jun 2026 + assigned months</div>
   </div>
   <div id="tab-bar">
     <button class="tab-btn active" id="tab-search" onclick="switchView('search')">Schedule</button>
@@ -1113,12 +1113,29 @@ function toggleDay(name,month,day){
 }
 
 function submitReq(name,month){
-  var days=requestsCache[getKey(name,month)]||[],el=document.getElementById('sub-status');
+  var days=requestsCache[getKey(name,month)]||[];
+  var el=document.getElementById('sub-status');
   el.textContent='Saving...';
-  apiCall({action:'submitRequest',name:name,month:month,days:days.join(',')}).then(function(data){
-    el.textContent=data.status==='success'?'Saved!':'Error saving.';
-    setTimeout(function(){el.textContent='';},3000);
-  }).catch(function(){el.textContent='Connection error.';});
+  var params={action:'submitRequest',name:name,month:month,days:days.join(',')};
+  apiCall(params).then(function(data){
+    if(data.status==='success'){
+      el.textContent='Saved! '+days.length+' day'+(days.length!==1?'s':'')+' submitted.';
+    } else {
+      el.textContent='Error: '+(data.message||'Unknown error');
+    }
+    setTimeout(function(){el.textContent='';},4000);
+  }).catch(function(err){
+    // Retry once after 2 seconds
+    el.textContent='Retrying...';
+    setTimeout(function(){
+      apiCall(params).then(function(data){
+        el.textContent=data.status==='success'?'Saved!':'Error saving.';
+        setTimeout(function(){el.textContent='';},3000);
+      }).catch(function(){
+        el.textContent='Connection error. Please try submitting again.';
+      });
+    }, 2000);
+  });
 }
 
 function loadScheduler(){
