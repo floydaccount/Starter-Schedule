@@ -175,7 +175,7 @@ tr{border-bottom:1px solid #f0ece0;}
   </div>
 </div>
 <script>
-var SPW='wilddunes',APW='schedule',AURL='https://script.google.com/macros/s/AKfycbwA9WFMT0MCr-ZLCjBNESRkjdUVJNGJ9rrKsGMFoRxfpAZMDVSF_GxvKIx1x0IhNLCB/exec',role='',allNames=[],requestsCache={},schedAssignments={},schedRequests={};
+var SPW='wilddunes',APW='schedule',AURL='https://schedule-proxy.fsmattern.workers.dev',role='',allNames=[],requestsCache={},schedAssignments={},schedRequests={};
 var MONTHS=['January','February','March','April','May','June'];
 var MDAYS={January:31,February:28,March:31,April:30,May:31,June:30,July:31,August:31,September:30,October:31,November:30,December:31};
 var DNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -876,70 +876,23 @@ function buildTotals(rows){
   return h;
 }
 
-// READ: use fetch with cors mode - follows redirects automatically
+// READ: simple fetch GET through Cloudflare Worker (no CORS issues)
 function apiRead(params){
-  return new Promise(function(resolve, reject){
-    var url = AURL + '?';
-    var parts = [];
-    for(var k in params) parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
-    url += parts.join('&');
-    
-    fetch(url, {
-      method: 'GET',
-      mode: 'cors',
-      credentials: 'omit',
-      redirect: 'follow'
-    }).then(function(response){
-      return response.json();
-    }).then(function(data){
-      resolve(data);
-    }).catch(function(err){
-      // CORS failed - try JSONP as fallback
-      var callbackName = 'cb_' + Date.now();
-      var jsonpUrl = AURL + '?callback=' + callbackName;
-      for(var k in params) jsonpUrl += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
-      var script = document.createElement('script');
-      var timeout = setTimeout(function(){
-        delete window[callbackName];
-        if(document.body.contains(script)) document.body.removeChild(script);
-        reject(new Error('Timeout'));
-      }, 15000);
-      window[callbackName] = function(data){
-        clearTimeout(timeout);
-        delete window[callbackName];
-        if(document.body.contains(script)) document.body.removeChild(script);
-        resolve(data);
-      };
-      script.onerror = function(){
-        clearTimeout(timeout);
-        delete window[callbackName];
-        if(document.body.contains(script)) document.body.removeChild(script);
-        reject(new Error('Load error'));
-      };
-      script.src = jsonpUrl;
-      document.body.appendChild(script);
-    });
-  });
+  var url = AURL + '?';
+  var parts = [];
+  for(var k in params) parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
+  url += parts.join('&');
+  return fetch(url).then(function(r){ return r.json(); });
 }
 
-// WRITE: use no-cors fetch POST
+// WRITE: POST through Cloudflare Worker (no CORS issues)
 function apiWrite(params){
-  return new Promise(function(resolve, reject){
-    var formData = new FormData();
-    for(var k in params) formData.append(k, String(params[k]));
-    fetch(AURL, {
-      method: 'POST',
-      mode: 'no-cors',
-      body: formData
-    }).then(function(response){
-      console.log('Write response type:', response.type);
-      resolve({status:'success'});
-    }).catch(function(err){
-      console.log('Write error:', err.message);
-      // If fetch itself fails, try GET as fallback
-      apiRead(params).then(resolve).catch(reject);
-    });
-  });
+  var formData = new FormData();
+  for(var k in params) formData.append(k, String(params[k]));
+  return fetch(AURL, {
+    method: 'POST',
+    body: formData
+  }).then(function(r){ return r.json(); });
 }
 
 // Route to correct method based on action
