@@ -62,6 +62,13 @@ tr{border-bottom:1px solid #f0ece0;}
 .sched-course h4.harbor{color:#1a4a8a;}
 .unavail-list{font-size:12px;color:#8b1a1a;margin-bottom:6px;}
 
+/* Off list popup */
+#off-popup{position:fixed;background:#1a1a1a;color:#fff;border-radius:8px;padding:10px 14px;font-size:13px;font-family:Georgia,serif;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:200px;display:none;}
+#off-popup ul{margin:4px 0 0 0;padding:0 0 0 16px;}
+#off-popup ul li{margin:2px 0;}
+.unavail-badge{cursor:pointer;text-decoration:underline dotted;}
+.unavail-badge:hover{color:#c0392b;}
+
 /* Monthly calendar view */
 .month-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px;}
 .month-cal-header{text-align:center;font-size:12px;font-weight:bold;color:#888;padding:6px;text-transform:uppercase;background:#f4f1ea;border-radius:4px;}
@@ -1123,7 +1130,7 @@ function renderCalendarView(month){
       +'<div class="cal-date">'+d+'</div>'
       +'<div class="cal-day-name">'+dayName+'</div>'
       +'<div class="cal-status-dots">'+dots+'</div>'
-      +(offToday.length>0?'<div class="unavail-badge">'+offToday.length+' off</div>':'')
+      +(offToday.length>0?'<div class="unavail-badge" onclick="showOffList(event,'+JSON.stringify(offToday)+')">'+offToday.length+' off &#9660;</div>':'')
       +'</div>';
   }
   html += '</div>';
@@ -1189,6 +1196,29 @@ function panelAssign(month, dateStr, course, slot, name, d){
   var dayName = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getDay()];
   openDayPanel(month, d, dateStr, dayName);
 }
+
+function showOffList(e, names){
+  e.stopPropagation();
+  var popup = document.getElementById('off-popup');
+  var html = '<strong style="color:#e8d8a0;">Unavailable:</strong><ul>';
+  for(var i=0;i<names.length;i++) html += '<li>'+names[i]+'</li>';
+  html += '</ul><div style="font-size:11px;color:#aaa;margin-top:6px;">Click day to assign</div>';
+  popup.innerHTML = html;
+  popup.style.display = 'block';
+  // Position near click
+  var x = e.clientX + 10, y = e.clientY + 10;
+  if(x + 210 > window.innerWidth) x = e.clientX - 220;
+  if(y + 120 > window.innerHeight) y = e.clientY - 130;
+  popup.style.left = x + 'px';
+  popup.style.top = y + 'px';
+  // Auto close after 4 seconds or on click elsewhere
+  setTimeout(function(){ popup.style.display='none'; }, 4000);
+}
+
+document.addEventListener('click', function(){
+  var popup = document.getElementById('off-popup');
+  if(popup) popup.style.display='none';
+});
 
 function closeDayPanel(){
   document.getElementById('day-detail-panel').style.display='none';
@@ -1304,5 +1334,6 @@ function printSummary(){
 }
 
 </script>
+<div id="off-popup"></div>
 </body>
 </html>
