@@ -927,11 +927,31 @@ function renderSearch(){
       if(data.status==='success'&&data.entries.length>0){
         var monthIdx=['January','February','March','April','May','June','July','August','September','October','November','December'].indexOf(m);
         var rows=data.entries.map(function(e){
-          var day=parseInt(e.date.split(' ')[1]);
-          var dt=new Date(2026,monthIdx,day);
-          var dayName=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dt.getDay()];
-          return {date:e.date,day:dayName,month:m,course:e.course,name:e.name,shift:e.shift||''};
+          // Date may come back as ISO string from Google Sheets - convert to "Jul 1" format
+          var dateStr = e.date;
+          var shiftStr = e.shift || '';
+          // If date looks like ISO format, convert it
+          if(dateStr && dateStr.indexOf('T') > 0){
+            var d = new Date(dateStr);
+            var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            dateStr = monthNames[d.getUTCMonth()] + ' ' + d.getUTCDate();
+          }
+          // If shift looks like ISO format, it's wrong - use empty string
+          if(shiftStr && shiftStr.indexOf('T') > 0) shiftStr = '';
+          // Get day name from date
+          var dayNum = parseInt(dateStr.split(' ')[1]);
+          var dt = new Date(2026, monthIdx, dayNum);
+          var dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dt.getDay()];
+          return {date:dateStr, day:dayName, month:m, course:e.course, name:e.name, shift:shiftStr};
         }).filter(function(e){return(q===''||e.name===q)&&(c==='All'||e.course===c);});
+        // Remove duplicates by date+course+slot
+        var seen = {};
+        rows = rows.filter(function(e){
+          var key = e.date+'|'+e.course+'|'+e.name;
+          if(seen[key]) return false;
+          seen[key] = true;
+          return true;
+        });
         rows.sort(function(a,b){return parseInt(a.date.split(' ')[1])-parseInt(b.date.split(' ')[1]);});
         document.getElementById('result-count').innerHTML=rows.length+' assignment'+(rows.length!==1?'s':'')+' found'+(q?' <span class="search-badge">'+q+'</span>':'');
         if(rows.length===0){document.getElementById('search-results').innerHTML='<div class="empty">No assignments found</div>';document.getElementById('totals-bar').innerHTML='';return;}
