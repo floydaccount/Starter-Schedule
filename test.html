@@ -877,9 +877,34 @@ function buildTotals(rows){
 }
 
 function apiCall(params){
-  var url=AURL+'?',parts=[];
-  for(var k in params)parts.push(encodeURIComponent(k)+'='+encodeURIComponent(params[k]));
-  return fetch(url+parts.join('&')).then(function(r){return r.json();});
+  return new Promise(function(resolve, reject){
+    var callbackName = 'cb_' + Date.now();
+    var url = AURL + '?callback=' + callbackName;
+    for(var k in params) url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+    
+    var script = document.createElement('script');
+    var timeout = setTimeout(function(){
+      delete window[callbackName];
+      document.body.removeChild(script);
+      reject(new Error('Timeout'));
+    }, 15000);
+    
+    window[callbackName] = function(data){
+      clearTimeout(timeout);
+      delete window[callbackName];
+      document.body.removeChild(script);
+      resolve(data);
+    };
+    
+    script.src = url;
+    script.onerror = function(){
+      clearTimeout(timeout);
+      delete window[callbackName];
+      document.body.removeChild(script);
+      reject(new Error('Script load error'));
+    };
+    document.body.appendChild(script);
+  });
 }
 
 function switchView(v){
