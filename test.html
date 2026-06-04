@@ -905,21 +905,22 @@ function apiRead(params){
   });
 }
 
-// WRITE: use no-cors fetch POST - bypasses CORS, can't read response but data gets saved
+// WRITE: use no-cors fetch POST
 function apiWrite(params){
   return new Promise(function(resolve, reject){
-    var formData = new URLSearchParams();
-    for(var k in params) formData.append(k, params[k]);
+    var formData = new FormData();
+    for(var k in params) formData.append(k, String(params[k]));
     fetch(AURL, {
       method: 'POST',
       mode: 'no-cors',
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: formData.toString()
-    }).then(function(){
-      // no-cors returns opaque response - can't read it but request went through
+      body: formData
+    }).then(function(response){
+      console.log('Write response type:', response.type);
       resolve({status:'success'});
     }).catch(function(err){
-      reject(err);
+      console.log('Write error:', err.message);
+      // If fetch itself fails, try GET as fallback
+      apiRead(params).then(resolve).catch(reject);
     });
   });
 }
