@@ -876,35 +876,53 @@ function buildTotals(rows){
   return h;
 }
 
-function apiCall(params){
+// READ: use JSONP (GET with callback)
+function apiRead(params){
   return new Promise(function(resolve, reject){
     var callbackName = 'cb_' + Date.now();
     var url = AURL + '?callback=' + callbackName;
     for(var k in params) url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
-    
     var script = document.createElement('script');
     var timeout = setTimeout(function(){
       delete window[callbackName];
-      document.body.removeChild(script);
+      if(document.body.contains(script)) document.body.removeChild(script);
       reject(new Error('Timeout'));
     }, 15000);
-    
     window[callbackName] = function(data){
       clearTimeout(timeout);
       delete window[callbackName];
-      document.body.removeChild(script);
+      if(document.body.contains(script)) document.body.removeChild(script);
       resolve(data);
     };
-    
-    script.src = url;
     script.onerror = function(){
       clearTimeout(timeout);
       delete window[callbackName];
-      document.body.removeChild(script);
-      reject(new Error('Script load error'));
+      if(document.body.contains(script)) document.body.removeChild(script);
+      reject(new Error('Load error'));
     };
+    script.src = url;
     document.body.appendChild(script);
   });
+}
+
+// WRITE: use fetch POST with no-cors (fire and forget)
+function apiWrite(params){
+  return new Promise(function(resolve, reject){
+    var formData = new FormData();
+    for(var k in params) formData.append(k, params[k]);
+    fetch(AURL, {method:'POST', body:formData, mode:'no-cors'})
+      .then(function(){ resolve({status:'success'}); })
+      .catch(function(err){ reject(err); });
+  });
+}
+
+// Route to correct method based on action
+function apiCall(params){
+  var writeActions = ['submitRequest','saveSchedule'];
+  if(writeActions.indexOf(params.action) >= 0){
+    return apiWrite(params);
+  }
+  return apiRead(params);
 }
 
 function switchView(v){
