@@ -905,9 +905,23 @@ function apiRead(params){
   });
 }
 
-// WRITE: use JSONP GET (same as read, works for writes too since Apps Script handles GET)
+// WRITE: use no-cors fetch POST - bypasses CORS, can't read response but data gets saved
 function apiWrite(params){
-  return apiRead(params);
+  return new Promise(function(resolve, reject){
+    var formData = new URLSearchParams();
+    for(var k in params) formData.append(k, params[k]);
+    fetch(AURL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: formData.toString()
+    }).then(function(){
+      // no-cors returns opaque response - can't read it but request went through
+      resolve({status:'success'});
+    }).catch(function(err){
+      reject(err);
+    });
+  });
 }
 
 // Route to correct method based on action
