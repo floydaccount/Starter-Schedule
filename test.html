@@ -878,6 +878,25 @@ function courseBadge(course) {
   return `<span class="badge ${cls}">${course}</span>`;
 }
 
+
+// ── Helper functions ──────────────────────────────────────────
+function courseColor(c) { return c === 'Links' ? '#1a6b3a' : '#1a4a8a'; }
+function courseLight(c) { return c === 'Links' ? '#e8f5ed' : '#e8f0fb'; }
+
+function shiftHours(shift) {
+  var parts = shift.trim().split('-');
+  if (parts.length !== 2) return 0;
+  function toH(t) {
+    if (t.indexOf(':') >= 0) { var s = t.split(':'); return parseInt(s[0]) + parseInt(s[1])/60; }
+    return parseFloat(t);
+  }
+  try {
+    var start = toH(parts[0]), end = toH(parts[1]);
+    if (end <= start) end += 12;
+    return Math.round((end - start) * 10) / 10;
+  } catch(e) { return 0; }
+}
+
 function buildTable(rows, showName) {
   const cols = showName
     ? ['Date','Day','Name','Course','Shift','Hours']
