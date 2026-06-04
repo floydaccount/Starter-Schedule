@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 Starter Schedule</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Georgia, serif; background: #f4f1ea; color: #1a1a1a; min-height: 100vh; }
+
+
+  /* Login screen */
+  #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a3a1a;
+    display: flex; align-items: center; justify-content: center; z-index: 9999; }
+  #login-box { background: #fff; border-radius: 14px; padding: 40px 36px; width: 320px;
+    text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+  #login-box .golf-icon { font-size: 42px; margin-bottom: 12px; }
+  #login-box h2 { font-size: 20px; color: #1a3a1a; margin-bottom: 4px; }
+  #login-box p { font-size: 13px; color: #888; margin-bottom: 24px; }
+  #login-box input { width: 100%; padding: 11px 14px; border-radius: 8px; border: 1.5px solid #c8b87a;
+    font-size: 15px; font-family: Georgia, serif; outline: none; text-align: center;
+    letter-spacing: 3px; margin-bottom: 14px; }
+  #login-box button { width: 100%; padding: 11px; border-radius: 8px; border: none; cursor: pointer;
+    background: #1a3a1a; color: #e8d8a0; font-size: 15px; font-family: Georgia, serif;
+    font-weight: bold; letter-spacing: 1px; transition: background 0.15s; }
+  #login-box button:hover { background: #2a5a2a; }
+  #login-error { color: #c0392b; font-size: 13px; margin-top: 10px; min-height: 18px; }
+
+  /* Header */
+  #header { background: #1a3a1a; color: #e8d8a0; padding: 16px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  #header-icon { font-size: 28px; }
+  #header-titles { flex: 1; }
+  #header-titles h1 { font-size: 20px; letter-spacing: 1px; }
+  #header-titles p { font-size: 12px; opacity: 0.7; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+  #coverage-badge { font-size: 12px; margin-top: 6px; background: rgba(232,216,160,0.2); border: 1px solid rgba(232,216,160,0.4); border-radius: 4px; padding: 2px 8px; display: inline-block; color: #e8d8a0; }
+  #tab-bar { display: flex; gap: 8px; }
+  .tab-btn { padding: 6px 18px; border-radius: 20px; border: none; cursor: pointer; font-size: 13px; font-family: Georgia, serif; transition: background 0.15s; }
+  .tab-btn.active { background: #e8d8a0; color: #1a3a1a; }
+  .tab-btn.inactive { background: rgba(255,255,255,0.15); color: #e8d8a0; }
+
+  /* Main */
+  #main { padding: 20px 24px; max-width: 960px; margin: 0 auto; }
+
+  /* Filters */
+  #filters { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  #search-input { flex: 1 1 200px; padding: 9px 14px; border-radius: 8px; border: 1.5px solid #c8b87a; font-size: 15px; background: #fff; font-family: Georgia, serif; outline: none; }
+  .filter-select { padding: 9px 12px; border-radius: 8px; border: 1.5px solid #c8b87a; font-size: 14px; background: #fff; font-family: Georgia, serif; cursor: pointer; }
+
+  /* Result count */
+  #result-count { font-size: 13px; color: #666; margin-bottom: 12px; }
+  .search-badge { margin-left: 8px; background: #1a3a1a; color: #e8d8a0; border-radius: 10px; padding: 2px 10px; font-size: 12px; }
+
+  /* Table */
+  .table-wrap { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-family: Georgia, serif; }
+  thead tr { border-bottom: 2px solid #1a3a1a; }
+  th { text-align: left; padding: 12px 18px; font-size: 14px; font-weight: bold; color: #1a1a1a; letter-spacing: 0.5px; white-space: nowrap; }
+  td { padding: 11px 18px; font-size: 14px; white-space: nowrap; }
+  tr.even { background: #fff; }
+  tr.odd { background: #faf8f3; }
+  tr { border-bottom: 1px solid #f0ece0; }
+  td.bold { font-weight: bold; }
+  td.muted { color: #444; }
+
+  /* Course badge */
+  .badge { border-radius: 10px; padding: 2px 10px; font-size: 13px; font-weight: bold; display: inline-block; }
+  .badge-links { background: #e8f5ed; color: #1a6b3a; }
+  .badge-harbor { background: #e8f0fb; color: #1a4a8a; }
+
+  /* Totals bar */
+  #totals-bar { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .month-total { background: #1a3a1a; color: #e8d8a0; border-radius: 8px; padding: 8px 18px; font-size: 14px; }
+  .grand-total { background: #c8b87a; color: #1a1a1a; border-radius: 8px; padding: 8px 18px; font-size: 14px; font-weight: bold; }
+
+  /* Person buttons */
+  #person-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .person-btn { padding: 6px 16px; border-radius: 20px; border: 1.5px solid #c8b87a; cursor: pointer; font-size: 13px; font-family: Georgia, serif; background: #fff; color: #1a1a1a; transition: background 0.15s; }
+  .person-btn.selected { background: #1a3a1a; color: #e8d8a0; }
+  #person-label { font-size: 13px; color: #666; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+  #person-name { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
+  #person-shifts { font-size: 13px; color: #666; margin-bottom: 16px; }
+
+  /* Empty states */
+  .empty { text-align: center; padding: 60px; color: #888; font-size: 16px; }
+
+  /* Calendar grid */
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 8px; }
+  .cal-header { text-align: center; font-size: 12px; font-weight: bold; color: #888; padding: 4px; text-transform: uppercase; }
+  .cal-day { border-radius: 8px; padding: 10px 4px; text-align: center; cursor: pointer; border: 1.5px solid #e0d8c8; background: #fff; font-size: 14px; font-family: Georgia, serif; transition: all 0.15s; min-height: 48px; }
+  .cal-day:hover { border-color: #c8b87a; background: #faf5e8; }
+  .cal-day.unavailable { background: #8b1a1a; color: #fff; border-color: #8b1a1a; font-weight: bold; }
+  .cal-day.empty-day { background: transparent; border-color: transparent; cursor: default; }
+  .cal-day .day-num { font-size: 15px; font-weight: bold; }
+  .cal-day .day-name { font-size: 10px; color: inherit; opacity: 0.75; }
+
+  /* Scheduler day cards */
+  .sched-day { background: #fff; border-radius: 10px; margin-bottom: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .sched-day-header { background: #1a3a1a; color: #e8d8a0; padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; }
+  .sched-day-header.has-requests { background: #8b4a00; }
+  .sched-day-header.all-filled { background: #1a6b3a; }
+  .sched-day-body { padding: 12px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .sched-course { }
+  .sched-course h4 { font-size: 13px; font-weight: bold; margin-bottom: 6px; }
+  .sched-course h4.links { color: #1a6b3a; }
+  .sched-course h4.harbor { color: #1a4a8a; }
+  .unavail-list { font-size: 12px; color: #8b1a1a; margin-bottom: 6px; }
+  .avail-list { font-size: 12px; color: #444; }
+  .avail-name { display: inline-block; background: #f0ece0; border-radius: 10px; padding: 2px 8px; margin: 2px; font-size: 12px; }
+
+  /* Print styles */
+  @media print {
+    #header, #tab-bar, #filters, #result-count, #totals-bar, .tab-btn { display: none !important; }
+    .print-summary { display: block !important; }
+    body { background: white; }
+  }
+  .print-summary { display: none; }
+
+  /* View panels */
+  .view { display: none; }
+  .view.active { display: block; }
+</style>
+</head>
+<body>
+
+
+<div id="login-screen">
+  <div id="login-box">
+    <div class="golf-icon">⛳</div>
+    <h2>Starter Schedule</h2>
+    <p>Wild Dunes Resort</p>
+    <input type="password" id="password-input" placeholder="Enter password"
+      onkeydown="if(event.key==='Enter') checkPassword()">
+    <button onclick="checkPassword()">Enter</button>
+    <div id="login-error"></div>
+  </div>
+</div>
+
+<div id="header">
+  <span id="header-icon">⛳</span>
+  <div id="header-titles">
+    <h1>2026 Starter Schedule</h1>
+    <p>Links &amp; Harbor Courses</p>
+    <div id="coverage-badge">📅 Covers: January – June 2026</div>
+  </div>
+  <div id="tab-bar">
+    <button class="tab-btn active" onclick="switchView('search')">Schedule</button>
+    <button class="tab-btn inactive" onclick="switchView('person')">By Person</button>
+    <button class="tab-btn inactive" id="tab-requests" style="display:none;" onclick="switchView('requests')">Request Days Off</button>
+    <button class="tab-btn inactive" id="tab-scheduler" style="display:none;" onclick="switchView('scheduler')">⚙️ Scheduler</button>
+  </div>
+</div>
+
+<div id="main">
+
+  <!-- SEARCH VIEW -->
+  <div id="view-search" class="view active">
+    <div id="filters">
+      <select class="filter-select" id="search-input" onchange="renderSearch()" style="font-size:15px; padding:10px 16px; min-width:200px;">
+        <option value="">👤 All Starters</option>
+      </select>
+      <select class="filter-select" id="month-filter" onchange="renderSearch()">
+        <option value="All">All Months</option>
+        <option>January</option><option>February</option><option>March</option>
+        <option>April</option><option>May</option><option>June</option>
+      </select>
+      <select class="filter-select" id="course-filter" onchange="renderSearch()">
+        <option value="All">All Courses</option>
+        <option>Links</option><option>Harbor</option>
+      </select>
+    </div>
+    <div id="result-count"></div>
+    <div id="search-results"></div>
+    <div id="totals-bar"></div>
+  </div>
+
+  <!-- PERSON VIEW -->
+  <div id="view-person" class="view">
+    <div id="person-label">Select a Starter</div>
+    <div style="margin-bottom:20px;">
+      <select id="person-select" class="filter-select" onchange="selectPerson(this.value)" style="font-size:15px; padding:10px 16px; min-width:220px;">
+        <option value="">-- Choose a name --</option>
+      </select>
+      <span id="person-shift-count" style="margin-left:12px; font-size:13px; color:#666;"></span>
+    </div>
+    <div id="person-detail"></div>
+  </div>
+
+  <!-- REQUESTS VIEW -->
+  <div id="view-requests" class="view">
+    <div style="max-width:700px;">
+      <h2 style="font-size:18px; margin-bottom:4px; color:#1a3a1a;">Request Days Off</h2>
+      <p style="font-size:13px; color:#666; margin-bottom:20px;">Select your name and the month, then click the days you cannot work. Your request is saved automatically.</p>
+      <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+        <select id="req-name" class="filter-select" style="font-size:14px;" onchange="renderCalendar()">
+          <option value="">-- Select your name --</option>
+        </select>
+        <select id="req-month" class="filter-select" style="font-size:14px;" onchange="renderCalendar()">
+          <option value="">-- Select month --</option>
+          <option>January</option><option>February</option><option>March</option>
+          <option>April</option><option>May</option><option>June</option>
+          <option>July</option><option>August</option><option>September</option>
+          <option>October</option><option>November</option><option>December</option>
+        </select>
+      </div>
+      <div id="req-calendar"></div>
+      <div id="req-status" style="margin-top:12px; font-size:13px; color:#1a6b3a; font-style:italic;"></div>
+    </div>
+  </div>
+
+  <!-- SCHEDULER VIEW (Admin only) -->
+  <div id="view-scheduler" class="view">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+      <div>
+        <h2 style="font-size:18px; color:#1a3a1a; margin-bottom:4px;">⚙️ Adam's Scheduler</h2>
+        <p style="font-size:13px; color:#666;">View all day-off requests and available starters by day.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <select id="sched-month" class="filter-select" style="font-size:14px;" onchange="renderScheduler()">
+          <option value="">-- Select month --</option>
+          <option>January</option><option>February</option><option>March</option>
+          <option>April</option><option>May</option><option>June</option>
+          <option>July</option><option>August</option><option>September</option>
+          <option>October</option><option>November</option><option>December</option>
+        </select>
+        <button onclick="printSummary()" style="padding:9px 18px; background:#1a3a1a; color:#e8d8a0; border:none; border-radius:8px; cursor:pointer; font-family:Georgia,serif; font-size:14px;">🖨️ Print Summary</button>
+        <button onclick="clearAllRequests()" style="padding:9px 18px; background:#8b1a1a; color:#fff; border:none; border-radius:8px; cursor:pointer; font-family:Georgia,serif; font-size:14px;">🗑️ Clear Month Requests</button>
+      </div>
+    </div>
+    <div id="sched-content"></div>
+  </div>
+
+</div>
+
+<script>
+const RAW_DATA = [
+  // January 2026
+  { day: "Thursday", date: "Jan 1", month: "January", course: "Links", name: "Adam", shift: "7-4" },
+  { day: "Thursday", date: "Jan 1", month: "January", course: "Harbor", name: "Coach Bob", shift: "7-4" },
+  { day: "Friday", date: "Jan 2", month: "January", course: "Links", name: "Bob B", shift: "7-2" },
+  { day: "Friday", date: "Jan 2", month: "January", course: "Links", name: "Cary", shift: "10-5" },
+  { day: "Friday", date: "Jan 2", month: "January", course: "Harbor", name: "Greg S", shift: "7-2" },
+  { day: "Friday", date: "Jan 2", month: "January", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Saturday", date: "Jan 3", month: "January", course: "Links", name: "Bill I", shift: "7-4" },
+  { day: "Saturday", date: "Jan 3", month: "January", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Jan 3", month: "January", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Sunday", date: "Jan 4", month: "January", course: "Links", name: "Coach Bob", shift: "7-4" },
+  { day: "Sunday", date: "Jan 4", month: "January", course: "Harbor", name: "Dick E", shift: "7-2" },
+  { day: "Sunday", date: "Jan 4", month: "January", course: "Harbor", name: "Mark L", shift: "10-5" },
+  { day: "Monday", date: "Jan 5", month: "January", course: "Links", name: "Greg S", shift: "7-4" },
+  { day: "Monday", date: "Jan 5", month: "January", course: "Harbor", name: "Bob B", shift: "7-4" },
+  { day: "Tuesday", date: "Jan 6", month: "January", course: "Links", name: "Seamus", shift: "7-4" },
+  { day: "Tuesday", date: "Jan 6", month: "January", course: "Harbor", name: "Bud D", shift: "7-4" },
+  { day: "Wednesday", date: "Jan 7", month: "January", course: "Links", name: "Gary", shift: "7-4" },
+  { day: "Wednesday", date: "Jan 7", month: "January", course: "Harbor", name: "Coach Bob", shift: "7-4" },
+  { day: "Thursday", date: "Jan 8", month: "January", course: "Links", name: "Greg S", shift: "7-4" },
+  { day: "Thursday", date: "Jan 8", month: "January", course: "Harbor", name: "Cary", shift: "7-2" },
+  { day: "Thursday", date: "Jan 8", month: "January", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Friday", date: "Jan 9", month: "January", course: "Links", name: "Bobby M", shift: "7-4" },
+  { day: "Friday", date: "Jan 9", month: "January", course: "Harbor", name: "Coach Bob", shift: "7-2" },
+  { day: "Friday", date: "Jan 9", month: "January", course: "Harbor", name: "Bill", shift: "10-5" },
+  { day: "Saturday", date: "Jan 10", month: "January", course: "Links", name: "Rick V", shift: "7-4" },
+  { day: "Saturday", date: "Jan 10", month: "January", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Jan 10", month: "January", course: "Harbor", name: "Gary", shift: "10-5" },
+  { day: "Sunday", date: "Jan 11", month: "January", course: "Links", name: "Dick E", shift: "7-4" },
+  { day: "Sunday", date: "Jan 11", month: "January", course: "Harbor", name: "Bud D", shift: "7-2" },
+  { day: "Sunday", date: "Jan 11", month: "January", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Monday", date: "Jan 12", month: "January", course: "Links", name: "Coach Bob", shift: "7-4" },
+  { day: "Monday", date: "Jan 12", month: "January", course: "Harbor", name: "Seamus", shift: "7-2" },
+  { day: "Monday", date: "Jan 12", month: "January", course: "Harbor", name: "Bill I", shift: "10-5" },
+  { day: "Thursday", date: "Jan 15", month: "January", course: "Links", name: "Kevin", shift: "7-4" },
+  { day: "Thursday", date: "Jan 15", month: "January", course: "Harbor", name: "Coach Bob", shift: "7-2" },
+  { day: "Thursday", date: "Jan 15", month: "January", course: "Harbor", name: "Cary", shift: "10-5" },
+  { day: "Friday", date: "Jan 16", month: "January", course: "Links", name: "Bobby M", shift: "7-4" },
+  { day: "Friday", date: "Jan 16", month: "January", course: "Harbor", name: "Bill I", shift: "7-2" },
+  { day: "Friday", date: "Jan 16", month: "January", course: "Harbor", name: "Greg S", shift: "10-5" },
+  { day: "Saturday", date: "Jan 17", month: "January", course: "Links", name: "Rick V", shift: "7-2" },
+  { day: "Saturday", date: "Jan 17", month: "January", course: "Links", name: "Coach Bob", shift: "10-5" },
+  { day: "Saturday", date: "Jan 17", month: "January", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Jan 17", month: "January", course: "Harbor", name: "Kevin", shift: "10-5" },
+  { day: "Sunday", date: "Jan 18", month: "January", course: "Links", name: "Dick E", shift: "7-4" },
+  { day: "Sunday", date: "Jan 18", month: "January", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Sunday", date: "Jan 18", month: "January", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Monday", date: "Jan 19", month: "January", course: "Links", name: "Kevin", shift: "7-4" },
+  { day: "Tuesday", date: "Jan 20", month: "January", course: "Links", name: "Bud D", shift: "7-4" },
+  { day: "Tuesday", date: "Jan 20", month: "January", course: "Harbor", name: "Coach Bob", shift: "7-12" },
+  { day: "Wednesday", date: "Jan 21", month: "January", course: "Links", name: "Seamus", shift: "7-4" },
+  { day: "Wednesday", date: "Jan 21", month: "January", course: "Harbor", name: "Gary", shift: "7-2" },
+  { day: "Wednesday", date: "Jan 21", month: "January", course: "Harbor", name: "Bill I", shift: "10-5" },
+  { day: "Thursday", date: "Jan 22", month: "January", course: "Links", name: "Kevin", shift: "7-4" },
+  { day: "Thursday", date: "Jan 22", month: "January", course: "Harbor", name: "Greg S", shift: "7-2" },
+  { day: "Thursday", date: "Jan 22", month: "January", course: "Harbor", name: "Cary", shift: "10-5" },
+  { day: "Friday", date: "Jan 23", month: "January", course: "Links", name: "Bobby M", shift: "7-2" },
+  { day: "Friday", date: "Jan 23", month: "January", course: "Links", name: "Bill I", shift: "10-5" },
+  { day: "Friday", date: "Jan 23", month: "January", course: "Harbor", name: "Bob B", shift: "7-2" },
+  { day: "Friday", date: "Jan 23", month: "January", course: "Harbor", name: "Coach Bob", shift: "10-5" },
+  { day: "Saturday", date: "Jan 24", month: "January", course: "Links", name: "Rick V", shift: "7-2" },
+  { day: "Saturday", date: "Jan 24", month: "January", course: "Links", name: "Kevin", shift: "10-5" },
+  { day: "Saturday", date: "Jan 24", month: "January", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Jan 24", month: "January", course: "Harbor", name: "Gary", shift: "10-5" },
+  { day: "Sunday", date: "Jan 25", month: "January", course: "Links", name: "Dick E", shift: "7-4" },
+  { day: "Sunday", date: "Jan 25", month: "January", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Sunday", date: "Jan 25", month: "January", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Monday", date: "Jan 26", month: "January", course: "Links", name: "Coach Bob", shift: "7-4" },
+  { day: "Monday", date: "Jan 26", month: "January", course: "Harbor", name: "Mike K", shift: "7-4" },
+  { day: "Tuesday", date: "Jan 27", month: "January", course: "Links", name: "Gary", shift: "7-4" },
+  { day: "Tuesday", date: "Jan 27", month: "January", course: "Harbor", name: "John S", shift: "7-2" },
+  { day: "Tuesday", date: "Jan 27", month: "January", course: "Harbor", name: "Bud D", shift: "10-5" },
+  { day: "Wednesday", date: "Jan 28", month: "January", course: "Links", name: "Kevin", shift: "7-4" },
+  { day: "Wednesday", date: "Jan 28", month: "January", course: "Harbor", name: "Bill I", shift: "7-4" },
+  { day: "Thursday", date: "Jan 29", month: "January", course: "Links", name: "Greg S", shift: "7-2" },
+  { day: "Thursday", date: "Jan 29", month: "January", course: "Links", name: "John S", shift: "10-5" },
+  { day: "Thursday", date: "Jan 29", month: "January", course: "Harbor", name: "Cary", shift: "7-2" },
+  { day: "Thursday", date: "Jan 29", month: "January", course: "Harbor", name: "Coach Bob", shift: "10-5" },
+  { day: "Friday", date: "Jan 30", month: "January", course: "Links", name: "Gary", shift: "7-4" },
+  { day: "Friday", date: "Jan 30", month: "January", course: "Harbor", name: "Bobby M", shift: "7-2" },
+  { day: "Friday", date: "Jan 30", month: "January", course: "Harbor", name: "Kevin", shift: "10-5" },
+  { day: "Saturday", date: "Jan 31", month: "January", course: "Links", name: "Rick V", shift: "7-2" },
+  { day: "Saturday", date: "Jan 31", month: "January", course: "Links", name: "Bill I", shift: "10-5" },
+  { day: "Saturday", date: "Jan 31", month: "January", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Jan 31", month: "January", course: "Harbor", name: "Coach Bob", shift: "10-5" },
+
+  // February 2026
+  { day: "Sunday", date: "Feb 1", month: "February", course: "Links", name: "Dick E", shift: "7-4" },
+  { day: "Sunday", date: "Feb 1", month: "February", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Sunday", date: "Feb 1", month: "February", course: "Harbor", name: "Bill I", shift: "10-5" },
+  { day: "Monday", date: "Feb 2", month: "February", course: "Links", name: "Greg S", shift: "7-4" },
+  { day: "Monday", date: "Feb 2", month: "February", course: "Harbor", name: "Dick E", shift: "7-2" },
+  { day: "Monday", date: "Feb 2", month: "February", course: "Harbor", name: "Mike K", shift: "10-5" },
+  { day: "Tuesday", date: "Feb 3", month: "February", course: "Links", name: "Joe N", shift: "7-2" },
+  { day: "Tuesday", date: "Feb 3", month: "February", course: "Links", name: "Bobby M", shift: "10-5" },
+  { day: "Tuesday", date: "Feb 3", month: "February", course: "Harbor", name: "Bud D", shift: "7-2" },
+  { day: "Tuesday", date: "Feb 3", month: "February", course: "Harbor", name: "Seamus", shift: "10-5" },
+  { day: "Wednesday", date: "Feb 4", month: "February", course: "Links", name: "Gary", shift: "7-4" },
+  { day: "Wednesday", date: "Feb 4", month: "February", course: "Harbor", name: "Coach Bob", shift: "7-2" },
+  { day: "Wednesday", date: "Feb 4", month: "February", course: "Harbor", name: "Bill I", shift: "10-5" },
+  { day: "Thursday", date: "Feb 5", month: "February", course: "Links", name: "Kevin", shift: "7-2" },
+  { day: "Thursday", date: "Feb 5", month: "February", course: "Links", name: "John S", shift: "10-5" },
+  { day: "Thursday", date: "Feb 5", month: "February", course: "Harbor", name: "Greg S", shift: "7-2" },
+  { day: "Thursday", date: "Feb 5", month: "February", course: "Harbor", name: "Mike K", shift: "10-5" },
+  { day: "Friday", date: "Feb 6", month: "February", course: "Links", name: "Bobby M", shift: "7-2" },
+  { day: "Friday", date: "Feb 6", month: "February", course: "Links", name: "Bob J", shift: "10-5" },
+  { day: "Friday", date: "Feb 6", month: "February", course: "Harbor", name: "Bill I", shift: "7-2" },
+  { day: "Friday", date: "Feb 6", month: "February", course: "Harbor", name: "Coach Bob", shift: "10-5" },
+  { day: "Saturday", date: "Feb 7", month: "February", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Feb 7", month: "February", course: "Harbor", name: "Bud D", shift: "10-5" },
+  { day: "Sunday", date: "Feb 8", month: "February", course: "Links", name: "Bob B", shift: "7-4" },
+  { day: "Sunday", date: "Feb 8", month: "February", course: "Harbor", name: "Coach Bob", shift: "7-4" },
+  { day: "Monday", date: "Feb 9", month: "February", course: "Links", name: "Bob B", shift: "7-2" },
+  { day: "Monday", date: "Feb 9", month: "February", course: "Links", name: "Gary", shift: "9-5" },
+  { day: "Tuesday", date: "Feb 10", month: "February", course: "Links", name: "Bobby M", shift: "7-4" },
+  { day: "Tuesday", date: "Feb 10", month: "February", course: "Harbor", name: "Greg S", shift: "7-2" },
+  { day: "Tuesday", date: "Feb 10", month: "February", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Wednesday", date: "Feb 11", month: "February", course: "Links", name: "Bob J", shift: "7-4" },
+  { day: "Wednesday", date: "Feb 11", month: "February", course: "Harbor", name: "Joe N", shift: "7-2" },
+  { day: "Wednesday", date: "Feb 11", month: "February", course: "Harbor", name: "Seamus", shift: "10-5" },
+  { day: "Thursday", date: "Feb 12", month: "February", course: "Links", name: "Kevin", shift: "10-4" },
+  { day: "Thursday", date: "Feb 12", month: "February", course: "Harbor", name: "Mike K", shift: "7-2" },
+  { day: "Thursday", date: "Feb 12", month: "February", course: "Harbor", name: "Cary", shift: "10-5" },
+  { day: "Friday", date: "Feb 13", month: "February", course: "Links", name: "Bobby M", shift: "7-2" },
+  { day: "Friday", date: "Feb 13", month: "February", course: "Links", name: "Greg S", shift: "10-5" },
+  { day: "Friday", date: "Feb 13", month: "February", course: "Harbor", name: "Bob B", shift: "7-2" },
+  { day: "Friday", date: "Feb 13", month: "February", course: "Harbor", name: "Bob J", shift: "10-5" },
+  { day: "Saturday", date: "Feb 14", month: "February", course: "Links", name: "Rick V", shift: "7-4" },
+  { day: "Saturday", date: "Feb 14", month: "February", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Feb 14", month: "February", course: "Harbor", name: "Coach Bob", shift: "10-5" },
+  { day: "Sunday", date: "Feb 15", month: "February", course: "Links", name: "Dick E", shift: "7-4" },
+  { day: "Sunday", date: "Feb 15", month: "February", course: "Harbor", name: "Joe N", shift: "7-2" },
+  { day: "Sunday", date: "Feb 15", month: "February", course: "Harbor", name: "Mark L", shift: "10-5" },
+  { day: "Monday", date: "Feb 16", month: "February", course: "Links", name: "Greg S", shift: "7-4" },
+  { day: "Monday", date: "Feb 16", month: "February", course: "Harbor", name: "Coach Bob", shift: "7-2" },
+  { day: "Monday", date: "Feb 16", month: "February", course: "Harbor", name: "Bill I", shift: "10-5" },
+  { day: "Tuesday", date: "Feb 17", month: "February", course: "Links", name: "Bobby M", shift: "7-2" },
+  { day: "Tuesday", date: "Feb 17", month: "February", course: "Links", name: "Cary", shift: "9-5" },
+  { day: "Wednesday", date: "Feb 18", month: "February", course: "Links", name: "Seamus", shift: "7-4" },
+  { day: "Wednesday", date: "Feb 18", month: "February", course: "Harbor", name: "Bob J", shift: "7-2" },
+  { day: "Wednesday", date: "Feb 18", month: "February", course: "Harbor", name: "Mike K", shift: "10-5" },
+  { day: "Thursday", date: "Feb 19", month: "February", course: "Links", name: "Greg S", shift: "7-4" },
+  { day: "Thursday", date: "Feb 19", month: "February", course: "Harbor", name: "Bill I", shift: "7-2" },
+  { day: "Thursday", date: "Feb 19", month: "February", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Friday", date: "Feb 20", month: "February", course: "Links", name: "Kevin", shift: "7-2" },
+  { day: "Friday", date: "Feb 20", month: "February", course: "Links", name: "Bobby M", shift: "10-5" },
+  { day: "Friday", date: "Feb 20", month: "February", course: "Harbor", name: "Bob B", shift: "7-2" },
+  { day: "Friday", date: "Feb 20", month: "February", course: "Harbor", name: "Cary", shift: "10-5" },
+  { day: "Saturday", date: "Feb 21", month: "February", course: "Links", name: "Rick V", shift: "7-4" },
+  { day: "Saturday", date: "Feb 21", month: "February", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Feb 21", month: "February", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Sunday", date: "Feb 22", month: "February", course: "Links", name: "Bill I", shift: "7-4" },
+  { day: "Sunday", date: "Feb 22", month: "February", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Sunday", date: "Feb 22", month: "February", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Monday", date: "Feb 23", month: "February", course: "Links", name: "Greg S", shift: "7-4" },
+  { day: "Monday", date: "Feb 23", month: "February", course: "Harbor", name: "Bob B", shift: "7-2" },
+  { day: "Monday", date: "Feb 23", month: "February", course: "Harbor", name: "Cary", shift: "10-5" },
+  { day: "Tuesday", date: "Feb 24", month: "February", course: "Links", name: "Gary", shift: "7-4" },
+  { day: "Tuesday", date: "Feb 24", month: "February", course: "Harbor", name: "Dick E", shift: "7-2" },
+  { day: "Tuesday", date: "Feb 24", month: "February", course: "Harbor", name: "Seamus", shift: "10-5" },
+  { day: "Wednesday", date: "Feb 25", month: "February", course: "Links", name: "Coach Bob", shift: "7-4" },
+  { day: "Wednesday", date: "Feb 25", month: "February", course: "Harbor", name: "Mike K", shift: "7-2" },
+  { day: "Wednesday", date: "Feb 25", month: "February", course: "Harbor", name: "Bill I", shift: "10-5" },
+  { day: "Thursday", date: "Feb 26", month: "February", course: "Links", name: "Kevin I", shift: "7-4" },
+  { day: "Thursday", date: "Feb 26", month: "February", course: "Harbor", name: "Bud D", shift: "7-2" },
+  { day: "Thursday", date: "Feb 26", month: "February", course: "Harbor", name: "Cary", shift: "10-5" },
+  { day: "Friday", date: "Feb 27", month: "February", course: "Links", name: "Gary", shift: "7-4" },
+  { day: "Friday", date: "Feb 27", month: "February", course: "Harbor", name: "Greg S", shift: "7-2" },
+  { day: "Friday", date: "Feb 27", month: "February", course: "Harbor", name: "Bill I", shift: "10-5" },
+  { day: "Saturday", date: "Feb 28", month: "February", course: "Links", name: "Rick V", shift: "7-2" },
+  { day: "Saturday", date: "Feb 28", month: "February", course: "Links", name: "John S", shift: "10-5" },
+  { day: "Saturday", date: "Feb 28", month: "February", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Feb 28", month: "February", course: "Harbor", name: "Coach Bob", shift: "10-5" },
+
+  // March 2026
+  { day: "Sunday", date: "Mar 1", month: "March", course: "Links", name: "Bill I", shift: "7-4" },
+  { day: "Sunday", date: "Mar 1", month: "March", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Sunday", date: "Mar 1", month: "March", course: "Harbor", name: "Coach Bob", shift: "10-6" },
+  { day: "Monday", date: "Mar 2", month: "March", course: "Links", name: "Greg S", shift: "7-4" },
+  { day: "Monday", date: "Mar 2", month: "March", course: "Harbor", name: "Cary", shift: "7-2" },
+  { day: "Monday", date: "Mar 2", month: "March", course: "Harbor", name: "Dick E", shift: "8:30-6" },
+  { day: "Tuesday", date: "Mar 3", month: "March", course: "Links", name: "Bobby M", shift: "7-2" },
+  { day: "Tuesday", date: "Mar 3", month: "March", course: "Links", name: "John S", shift: "10-6" },
+  { day: "Tuesday", date: "Mar 3", month: "March", course: "Harbor", name: "Joe N", shift: "7-2" },
+  { day: "Tuesday", date: "Mar 3", month: "March", course: "Harbor", name: "Coach Bob", shift: "10-6" },
+  { day: "Wednesday", date: "Mar 4", month: "March", course: "Links", name: "Seamus", shift: "7-2" },
+  { day: "Wednesday", date: "Mar 4", month: "March", course: "Links", name: "Greg S", shift: "10-6" },
+  { day: "Wednesday", date: "Mar 4", month: "March", course: "Harbor", name: "Cary", shift: "7-2" },
+  { day: "Wednesday", date: "Mar 4", month: "March", course: "Harbor", name: "Bob J", shift: "8:30-5" },
+  { day: "Thursday", date: "Mar 5", month: "March", course: "Links", name: "John S", shift: "7-3" },
+  { day: "Thursday", date: "Mar 5", month: "March", course: "Links", name: "Gary", shift: "10-6" },
+  { day: "Thursday", date: "Mar 5", month: "March", course: "Harbor", name: "Bud D", shift: "7-2" },
+  { day: "Thursday", date: "Mar 5", month: "March", course: "Harbor", name: "Mike K", shift: "10-6" },
+  { day: "Friday", date: "Mar 6", month: "March", course: "Links", name: "Bill I", shift: "7-3" },
+  { day: "Friday", date: "Mar 6", month: "March", course: "Links", name: "John J", shift: "10-6" },
+  { day: "Friday", date: "Mar 6", month: "March", course: "Harbor", name: "Greg S", shift: "7-3" },
+  { day: "Friday", date: "Mar 6", month: "March", course: "Harbor", name: "Kevin", shift: "8:30-6" },
+  { day: "Saturday", date: "Mar 7", month: "March", course: "Links", name: "Bob J", shift: "12-6" },
+  { day: "Saturday", date: "Mar 7", month: "March", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Mar 7", month: "March", course: "Harbor", name: "Bud D", shift: "10-6" },
+  { day: "Sunday", date: "Mar 8", month: "March", course: "Links", name: "Joe N", shift: "7-2" },
+  { day: "Sunday", date: "Mar 8", month: "March", course: "Links", name: "Dick E", shift: "10-6" },
+  { day: "Sunday", date: "Mar 8", month: "March", course: "Harbor", name: "John S", shift: "11:30-5" },
+  { day: "Monday", date: "Mar 9", month: "March", course: "Links", name: "Greg S", shift: "7-2" },
+  { day: "Monday", date: "Mar 9", month: "March", course: "Links", name: "Bill I", shift: "10-6" },
+  { day: "Monday", date: "Mar 9", month: "March", course: "Harbor", name: "Coach Bob", shift: "7-2" },
+  { day: "Monday", date: "Mar 9", month: "March", course: "Harbor", name: "Cary", shift: "10-6" },
+  { day: "Tuesday", date: "Mar 10", month: "March", course: "Links", name: "Gary", shift: "7-4" },
+  { day: "Tuesday", date: "Mar 10", month: "March", course: "Harbor", name: "Bobby M", shift: "7-2" },
+  { day: "Tuesday", date: "Mar 10", month: "March", course: "Harbor", name: "Seamus", shift: "8:30-6" },
+  { day: "Wednesday", date: "Mar 11", month: "March", course: "Links", name: "Kevin I", shift: "7-2" },
+  { day: "Wednesday", date: "Mar 11", month: "March", course: "Links", name: "John S", shift: "10-6" },
+  { day: "Wednesday", date: "Mar 11", month: "March", course: "Harbor", name: "Joe N", shift: "7-2" },
+  { day: "Wednesday", date: "Mar 11", month: "March", course: "Harbor", name: "Coach Bob", shift: "10-6" },
+  { day: "Thursday", date: "Mar 12", month: "March", course: "Links", name: "Gary", shift: "7-2" },
+  { day: "Thursday", date: "Mar 12", month: "March", course: "Links", name: "Bill I", shift: "10-6" },
+  { day: "Thursday", date: "Mar 12", month: "March", course: "Harbor", name: "Mike K", shift: "7-2" },
+  { day: "Thursday", date: "Mar 12", month: "March", course: "Harbor", name: "Cary", shift: "8:30-6" },
+  { day: "Friday", date: "Mar 13", month: "March", course: "Links", name: "Kevin I", shift: "7-4" },
+  { day: "Friday", date: "Mar 13", month: "March", course: "Harbor", name: "Coach Bob", shift: "7-2" },
+  { day: "Friday", date: "Mar 13", month: "March", course: "Harbor", name: "Greg S", shift: "10-6" },
+  { day: "Saturday", date: "Mar 14", month: "March", course: "Links", name: "Rick V", shift: "7-2" },
+  { day: "Saturday", date: "Mar 14", month: "March", course: "Links", name: "John S", shift: "10-6" },
+  { day: "Saturday", date: "Mar 14", month: "March", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Mar 14", month: "March", course: "Harbor", name: "Bill I", shift: "8:30-6" },
+  { day: "Sunday", date: "Mar 15", month: "March", course: "Links", name: "Joe N", shift: "7-2" },
+  { day: "Sunday", date: "Mar 15", month: "March", course: "Links", name: "Coach Bob", shift: "10-6" },
+  { day: "Sunday", date: "Mar 15", month: "March", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "Mar 15", month: "March", course: "Harbor", name: "Bud D", shift: "10-6" },
+  { day: "Monday", date: "Mar 16", month: "March", course: "Links", name: "Dick E", shift: "7-2" },
+  { day: "Monday", date: "Mar 16", month: "March", course: "Links", name: "Gary", shift: "10-6" },
+  { day: "Monday", date: "Mar 16", month: "March", course: "Harbor", name: "Bill I", shift: "7-2" },
+  { day: "Monday", date: "Mar 16", month: "March", course: "Harbor", name: "Mike K", shift: "8:30-6" },
+  { day: "Tuesday", date: "Mar 17", month: "March", course: "Links", name: "Kevin I", shift: "7-2" },
+  { day: "Tuesday", date: "Mar 17", month: "March", course: "Links", name: "Greg S", shift: "10-6" },
+  { day: "Tuesday", date: "Mar 17", month: "March", course: "Harbor", name: "Bobby M", shift: "7-2" },
+  { day: "Tuesday", date: "Mar 17", month: "March", course: "Harbor", name: "Cary", shift: "10-6" },
+  { day: "Wednesday", date: "Mar 18", month: "March", course: "Links", name: "Coach Bob", shift: "7-4" },
+  { day: "Wednesday", date: "Mar 18", month: "March", course: "Harbor", name: "Mike K", shift: "7-2" },
+  { day: "Wednesday", date: "Mar 18", month: "March", course: "Harbor", name: "Bob J", shift: "8:30-6" },
+  { day: "Thursday", date: "Mar 19", month: "March", course: "Links", name: "Kevin I", shift: "7-2" },
+  { day: "Thursday", date: "Mar 19", month: "March", course: "Links", name: "Gary", shift: "10-6" },
+  { day: "Thursday", date: "Mar 19", month: "March", course: "Harbor", name: "John S", shift: "7-1:30" },
+  { day: "Friday", date: "Mar 20", month: "March", course: "Links", name: "Bob B", shift: "7-3" },
+  { day: "Friday", date: "Mar 20", month: "March", course: "Links", name: "Carl", shift: "10-6" },
+  { day: "Friday", date: "Mar 20", month: "March", course: "Harbor", name: "Greg S", shift: "7-2" },
+  { day: "Friday", date: "Mar 20", month: "March", course: "Harbor", name: "Bill I", shift: "8:30-6" },
+  { day: "Saturday", date: "Mar 21", month: "March", course: "Links", name: "Rick V", shift: "7-3" },
+  { day: "Saturday", date: "Mar 21", month: "March", course: "Links", name: "Kevin I", shift: "10-6" },
+  { day: "Saturday", date: "Mar 21", month: "March", course: "Harbor", name: "Bob J", shift: "7-2" },
+  { day: "Saturday", date: "Mar 21", month: "March", course: "Harbor", name: "John S", shift: "10-6" },
+  { day: "Sunday", date: "Mar 22", month: "March", course: "Links", name: "Dick E", shift: "7-3" },
+  { day: "Sunday", date: "Mar 22", month: "March", course: "Links", name: "Carl", shift: "10-6" },
+  { day: "Sunday", date: "Mar 22", month: "March", course: "Harbor", name: "Bill I", shift: "7-2" },
+  { day: "Sunday", date: "Mar 22", month: "March", course: "Harbor", name: "Bud D", shift: "8:30-6" },
+  { day: "Monday", date: "Mar 23", month: "March", course: "Links", name: "Greg S", shift: "7-4" },
+  { day: "Monday", date: "Mar 23", month: "March", course: "Harbor", name: "Cary", shift: "7-2" },
+  { day: "Monday", date: "Mar 23", month: "March", course: "Harbor", name: "Mike K", shift: "10-6" },
+  { day: "Tuesday", date: "Mar 24", month: "March", course: "Links", name: "Bobby M", shift: "7-2" },
+  { day: "Tuesday", date: "Mar 24", month: "March", course: "Links", name: "Gary", shift: "10-6" },
+  { day: "Tuesday", date: "Mar 24", month: "March", course: "Harbor", name: "Seamus", shift: "8:00-2" },
+  { day: "Tuesday", date: "Mar 24", month: "March", course: "Harbor", name: "Bud D", shift: "11-6" },
+  { day: "Wednesday", date: "Mar 25", month: "March", course: "Links", name: "Kevin I", shift: "7-4" },
+  { day: "Wednesday", date: "Mar 25", month: "March", course: "Harbor", name: "Mike K", shift: "7-2" },
+  { day: "Wednesday", date: "Mar 25", month: "March", course: "Harbor", name: "Cary", shift: "10-6" },
+  { day: "Thursday", date: "Mar 26", month: "March", course: "Links", name: "Carl", shift: "7-2" },
+  { day: "Thursday", date: "Mar 26", month: "March", course: "Links", name: "Coach Bob", shift: "10-6" },
+  { day: "Thursday", date: "Mar 26", month: "March", course: "Harbor", name: "Greg S", shift: "7-2" },
+  { day: "Thursday", date: "Mar 26", month: "March", course: "Harbor", name: "Bill I", shift: "8:30-6" },
+  { day: "Friday", date: "Mar 27", month: "March", course: "Links", name: "Bob B", shift: "7-3" },
+  { day: "Friday", date: "Mar 27", month: "March", course: "Links", name: "Carl", shift: "10-6" },
+  { day: "Friday", date: "Mar 27", month: "March", course: "Harbor", name: "Cary", shift: "7-2" },
+  { day: "Friday", date: "Mar 27", month: "March", course: "Harbor", name: "Greg S", shift: "10-5" },
+  { day: "Saturday", date: "Mar 28", month: "March", course: "Links", name: "Rick V", shift: "7-3" },
+  { day: "Saturday", date: "Mar 28", month: "March", course: "Links", name: "Bill I", shift: "10-6" },
+  { day: "Saturday", date: "Mar 28", month: "March", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Mar 28", month: "March", course: "Harbor", name: "Bud D", shift: "8:30-6" },
+  { day: "Sunday", date: "Mar 29", month: "March", course: "Links", name: "Bob B", shift: "7-2" },
+  { day: "Sunday", date: "Mar 29", month: "March", course: "Links", name: "John S", shift: "10-6" },
+  { day: "Sunday", date: "Mar 29", month: "March", course: "Harbor", name: "Bob J", shift: "7-2" },
+  { day: "Sunday", date: "Mar 29", month: "March", course: "Harbor", name: "Coach Bob", shift: "10-6" },
+  { day: "Monday", date: "Mar 30", month: "March", course: "Harbor", name: "Cary", shift: "7-2" },
+  { day: "Monday", date: "Mar 30", month: "March", course: "Harbor", name: "Bob B", shift: "8:30-6" },
+  { day: "Tuesday", date: "Mar 31", month: "March", course: "Links", name: "Seamus", shift: "7-2" },
+  { day: "Tuesday", date: "Mar 31", month: "March", course: "Links", name: "Gary", shift: "10-6" },
+
+  // April 2026
+  { day: "Wednesday", date: "Apr 1", month: "April", course: "Links", name: "Gary M", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 1", month: "April", course: "Links", name: "Seamus", shift: "9-6" },
+  { day: "Wednesday", date: "Apr 1", month: "April", course: "Harbor", name: "Bob B", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 1", month: "April", course: "Harbor", name: "Bob J", shift: "9-6" },
+  { day: "Thursday", date: "Apr 2", month: "April", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Thursday", date: "Apr 2", month: "April", course: "Links", name: "John S", shift: "9-6" },
+  { day: "Thursday", date: "Apr 2", month: "April", course: "Harbor", name: "Coach Bob", shift: "7-3" },
+  { day: "Thursday", date: "Apr 2", month: "April", course: "Harbor", name: "Bill I", shift: "8:30-6" },
+  { day: "Friday", date: "Apr 3", month: "April", course: "Links", name: "Cary", shift: "7-3" },
+  { day: "Friday", date: "Apr 3", month: "April", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Friday", date: "Apr 3", month: "April", course: "Harbor", name: "Joe N", shift: "7-3" },
+  { day: "Friday", date: "Apr 3", month: "April", course: "Harbor", name: "Jeff C", shift: "9-6" },
+  { day: "Saturday", date: "Apr 4", month: "April", course: "Links", name: "Carl", shift: "7-3" },
+  { day: "Saturday", date: "Apr 4", month: "April", course: "Links", name: "Bill I", shift: "9-6" },
+  { day: "Saturday", date: "Apr 4", month: "April", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Apr 4", month: "April", course: "Harbor", name: "Coach Bob", shift: "8:30-6" },
+  { day: "Sunday", date: "Apr 5", month: "April", course: "Links", name: "Jeff C", shift: "7-4" },
+  { day: "Sunday", date: "Apr 5", month: "April", course: "Harbor", name: "Coach Bob", shift: "7-4" },
+  { day: "Monday", date: "Apr 6", month: "April", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Monday", date: "Apr 6", month: "April", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Monday", date: "Apr 6", month: "April", course: "Harbor", name: "Carl", shift: "7-3" },
+  { day: "Monday", date: "Apr 6", month: "April", course: "Harbor", name: "Bob B", shift: "8:30-6" },
+  { day: "Tuesday", date: "Apr 7", month: "April", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Tuesday", date: "Apr 7", month: "April", course: "Links", name: "Bob J", shift: "9-6" },
+  { day: "Tuesday", date: "Apr 7", month: "April", course: "Harbor", name: "Joe N", shift: "7-3" },
+  { day: "Tuesday", date: "Apr 7", month: "April", course: "Harbor", name: "George", shift: "9-6" },
+  { day: "Wednesday", date: "Apr 8", month: "April", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 8", month: "April", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Wednesday", date: "Apr 8", month: "April", course: "Harbor", name: "Bill I", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 8", month: "April", course: "Harbor", name: "Jeff C", shift: "8:30-6" },
+  { day: "Thursday", date: "Apr 9", month: "April", course: "Links", name: "Cary", shift: "7-3" },
+  { day: "Thursday", date: "Apr 9", month: "April", course: "Links", name: "John S", shift: "9-6" },
+  { day: "Thursday", date: "Apr 9", month: "April", course: "Harbor", name: "Dick E", shift: "7-3" },
+  { day: "Thursday", date: "Apr 9", month: "April", course: "Harbor", name: "Coach Bob", shift: "9-6" },
+  { day: "Friday", date: "Apr 10", month: "April", course: "Links", name: "Kevin", shift: "7-3" },
+  { day: "Friday", date: "Apr 10", month: "April", course: "Links", name: "Bob B", shift: "9-6" },
+  { day: "Friday", date: "Apr 10", month: "April", course: "Harbor", name: "Jeff C", shift: "7-3" },
+  { day: "Friday", date: "Apr 10", month: "April", course: "Harbor", name: "Bill I", shift: "8:30-6" },
+  { day: "Saturday", date: "Apr 11", month: "April", course: "Links", name: "Rick", shift: "7-2" },
+  { day: "Saturday", date: "Apr 11", month: "April", course: "Links", name: "Bob J", shift: "9-6" },
+  { day: "Saturday", date: "Apr 11", month: "April", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Apr 11", month: "April", course: "Harbor", name: "Coach Bob", shift: "9-6" },
+  { day: "Sunday", date: "Apr 12", month: "April", course: "Links", name: "John S", shift: "7-3" },
+  { day: "Sunday", date: "Apr 12", month: "April", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Sunday", date: "Apr 12", month: "April", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "Apr 12", month: "April", course: "Harbor", name: "Jeff C", shift: "8:30-6" },
+  { day: "Monday", date: "Apr 13", month: "April", course: "Harbor", name: "Seamus", shift: "7-3" },
+  { day: "Monday", date: "Apr 13", month: "April", course: "Harbor", name: "Bud D", shift: "9-6" },
+  { day: "Tuesday", date: "Apr 14", month: "April", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Tuesday", date: "Apr 14", month: "April", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Wednesday", date: "Apr 15", month: "April", course: "Links", name: "Bob B", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 15", month: "April", course: "Links", name: "Cary", shift: "9-6" },
+  { day: "Wednesday", date: "Apr 15", month: "April", course: "Harbor", name: "Mike K", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 15", month: "April", course: "Harbor", name: "Seamus", shift: "9-6" },
+  { day: "Thursday", date: "Apr 16", month: "April", course: "Links", name: "Dick E", shift: "7-3" },
+  { day: "Thursday", date: "Apr 16", month: "April", course: "Links", name: "Greg S", shift: "9-6" },
+  { day: "Thursday", date: "Apr 16", month: "April", course: "Harbor", name: "John S", shift: "7-3" },
+  { day: "Thursday", date: "Apr 16", month: "April", course: "Harbor", name: "Coach Bob", shift: "8:30-6" },
+  { day: "Friday", date: "Apr 17", month: "April", course: "Links", name: "Joe N", shift: "7-3" },
+  { day: "Friday", date: "Apr 17", month: "April", course: "Links", name: "Carl", shift: "9-6" },
+  { day: "Friday", date: "Apr 17", month: "April", course: "Harbor", name: "Bob J", shift: "7-3" },
+  { day: "Friday", date: "Apr 17", month: "April", course: "Harbor", name: "Cary", shift: "9-6" },
+  { day: "Saturday", date: "Apr 18", month: "April", course: "Links", name: "Bill I", shift: "7-3" },
+  { day: "Saturday", date: "Apr 18", month: "April", course: "Links", name: "Coach Bob", shift: "9-6" },
+  { day: "Saturday", date: "Apr 18", month: "April", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Apr 18", month: "April", course: "Harbor", name: "John S", shift: "10-6" },
+  { day: "Sunday", date: "Apr 19", month: "April", course: "Links", name: "Dick E", shift: "7-3" },
+  { day: "Sunday", date: "Apr 19", month: "April", course: "Links", name: "Kevin I", shift: "9-6" },
+  { day: "Sunday", date: "Apr 19", month: "April", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "Apr 19", month: "April", course: "Harbor", name: "Bud D", shift: "9-6" },
+  { day: "Monday", date: "Apr 20", month: "April", course: "Links", name: "Cary", shift: "7-3" },
+  { day: "Monday", date: "Apr 20", month: "April", course: "Links", name: "Bill I", shift: "9-6" },
+  { day: "Monday", date: "Apr 20", month: "April", course: "Harbor", name: "Greg S", shift: "7-3" },
+  { day: "Monday", date: "Apr 20", month: "April", course: "Harbor", name: "Mike K", shift: "8:30-6" },
+  { day: "Tuesday", date: "Apr 21", month: "April", course: "Links", name: "Gary", shift: "7-3" },
+  { day: "Tuesday", date: "Apr 21", month: "April", course: "Links", name: "Bobby M", shift: "9-6" },
+  { day: "Tuesday", date: "Apr 21", month: "April", course: "Harbor", name: "Seamus", shift: "7-3" },
+  { day: "Tuesday", date: "Apr 21", month: "April", course: "Harbor", name: "George", shift: "9-6" },
+  { day: "Wednesday", date: "Apr 22", month: "April", course: "Links", name: "Kevin", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 22", month: "April", course: "Links", name: "Bill I", shift: "9-6" },
+  { day: "Wednesday", date: "Apr 22", month: "April", course: "Harbor", name: "Mike K", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 22", month: "April", course: "Harbor", name: "Cary", shift: "8:30-6" },
+  { day: "Thursday", date: "Apr 23", month: "April", course: "Links", name: "Bob J", shift: "7-3" },
+  { day: "Thursday", date: "Apr 23", month: "April", course: "Links", name: "Dick E", shift: "9-6" },
+  { day: "Thursday", date: "Apr 23", month: "April", course: "Harbor", name: "John S", shift: "7-3" },
+  { day: "Thursday", date: "Apr 23", month: "April", course: "Harbor", name: "Jeff C", shift: "9-6" },
+  { day: "Friday", date: "Apr 24", month: "April", course: "Links", name: "Kevin", shift: "7-3" },
+  { day: "Friday", date: "Apr 24", month: "April", course: "Links", name: "Greg S", shift: "9-6" },
+  { day: "Friday", date: "Apr 24", month: "April", course: "Harbor", name: "Bill I", shift: "7-3" },
+  { day: "Friday", date: "Apr 24", month: "April", course: "Harbor", name: "Coach Bob", shift: "8:30-6" },
+  { day: "Saturday", date: "Apr 25", month: "April", course: "Links", name: "Rick", shift: "7-3" },
+  { day: "Saturday", date: "Apr 25", month: "April", course: "Links", name: "Gary", shift: "9-3" },
+  { day: "Saturday", date: "Apr 25", month: "April", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Apr 25", month: "April", course: "Harbor", name: "Jeff C", shift: "9-6" },
+  { day: "Sunday", date: "Apr 26", month: "April", course: "Links", name: "Dick E", shift: "7-3" },
+  { day: "Sunday", date: "Apr 26", month: "April", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Sunday", date: "Apr 26", month: "April", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "Apr 26", month: "April", course: "Harbor", name: "Coach Bob", shift: "8:30-6" },
+  { day: "Monday", date: "Apr 27", month: "April", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Monday", date: "Apr 27", month: "April", course: "Links", name: "Bob B", shift: "9-6" },
+  { day: "Monday", date: "Apr 27", month: "April", course: "Harbor", name: "Cary", shift: "7-3" },
+  { day: "Monday", date: "Apr 27", month: "April", course: "Harbor", name: "Bud D", shift: "9-6" },
+  { day: "Tuesday", date: "Apr 28", month: "April", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Tuesday", date: "Apr 28", month: "April", course: "Links", name: "John S", shift: "9-6" },
+  { day: "Tuesday", date: "Apr 28", month: "April", course: "Harbor", name: "Mike K", shift: "7-3" },
+  { day: "Tuesday", date: "Apr 28", month: "April", course: "Harbor", name: "George", shift: "8:30-6" },
+  { day: "Wednesday", date: "Apr 29", month: "April", course: "Links", name: "Coach Bob", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 29", month: "April", course: "Links", name: "Cary", shift: "9-6" },
+  { day: "Wednesday", date: "Apr 29", month: "April", course: "Harbor", name: "Bill I", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 29", month: "April", course: "Harbor", name: "Seamus", shift: "9-6" },
+  { day: "Thursday", date: "Apr 30", month: "April", course: "Links", name: "Jeff C", shift: "7-3" },
+  { day: "Thursday", date: "Apr 30", month: "April", course: "Links", name: "Bob J", shift: "9-6" },
+  { day: "Thursday", date: "Apr 30", month: "April", course: "Harbor", name: "Greg S", shift: "7-3" },
+  { day: "Thursday", date: "Apr 30", month: "April", course: "Harbor", name: "Bud D", shift: "8:30-6" },
+
+  // May 2026
+  { day: "Friday", date: "May 1", month: "May", course: "Links", name: "Joe N", shift: "7-3" },
+  { day: "Friday", date: "May 1", month: "May", course: "Links", name: "Bill", shift: "9-6" },
+  { day: "Friday", date: "May 1", month: "May", course: "Harbor", name: "John S", shift: "7-3" },
+  { day: "Friday", date: "May 1", month: "May", course: "Harbor", name: "Bob B", shift: "9-6" },
+  { day: "Saturday", date: "May 2", month: "May", course: "Links", name: "Rick", shift: "7-3" },
+  { day: "Saturday", date: "May 2", month: "May", course: "Links", name: "John S", shift: "9-6" },
+  { day: "Saturday", date: "May 2", month: "May", course: "Harbor", name: "Bob J", shift: "7-3" },
+  { day: "Saturday", date: "May 2", month: "May", course: "Harbor", name: "Mark L", shift: "8:30-6" },
+  { day: "Sunday", date: "May 3", month: "May", course: "Links", name: "John J", shift: "7-12" },
+  { day: "Sunday", date: "May 3", month: "May", course: "Links", name: "Cary", shift: "9-6" },
+  { day: "Sunday", date: "May 3", month: "May", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "May 3", month: "May", course: "Harbor", name: "Jeff C", shift: "9-6" },
+  { day: "Monday", date: "May 4", month: "May", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Monday", date: "May 4", month: "May", course: "Links", name: "Bill I", shift: "9-6" },
+  { day: "Tuesday", date: "May 5", month: "May", course: "Links", name: "Joe N", shift: "7-3" },
+  { day: "Tuesday", date: "May 5", month: "May", course: "Links", name: "Seamus", shift: "9-6" },
+  { day: "Tuesday", date: "May 5", month: "May", course: "Harbor", name: "Bud D", shift: "7-3" },
+  { day: "Tuesday", date: "May 5", month: "May", course: "Harbor", name: "George", shift: "9-6" },
+  { day: "Wednesday", date: "May 6", month: "May", course: "Links", name: "Bob B", shift: "7-3" },
+  { day: "Wednesday", date: "May 6", month: "May", course: "Links", name: "Bob J", shift: "9-6" },
+  { day: "Wednesday", date: "May 6", month: "May", course: "Harbor", name: "John S", shift: "7-3" },
+  { day: "Wednesday", date: "May 6", month: "May", course: "Harbor", name: "Mike K", shift: "8:30-6" },
+  { day: "Thursday", date: "May 7", month: "May", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Thursday", date: "May 7", month: "May", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Thursday", date: "May 7", month: "May", course: "Harbor", name: "Coach Bob", shift: "7-3" },
+  { day: "Thursday", date: "May 7", month: "May", course: "Harbor", name: "Jeff C", shift: "9-6" },
+  { day: "Friday", date: "May 8", month: "May", course: "Links", name: "Jeff C", shift: "7-3" },
+  { day: "Friday", date: "May 8", month: "May", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Friday", date: "May 8", month: "May", course: "Harbor", name: "Seamus", shift: "7-3" },
+  { day: "Friday", date: "May 8", month: "May", course: "Harbor", name: "Coach Bob", shift: "8:30-6" },
+  { day: "Saturday", date: "May 9", month: "May", course: "Links", name: "Rick", shift: "7-5" },
+  { day: "Saturday", date: "May 9", month: "May", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "May 9", month: "May", course: "Harbor", name: "Bud D", shift: "9-6" },
+  { day: "Sunday", date: "May 10", month: "May", course: "Links", name: "Dick E", shift: "7-5" },
+  { day: "Sunday", date: "May 10", month: "May", course: "Harbor", name: "Carl", shift: "7-2" },
+  { day: "Sunday", date: "May 10", month: "May", course: "Harbor", name: "Coach Bob", shift: "8:30-6" },
+  { day: "Monday", date: "May 11", month: "May", course: "Harbor", name: "Joe N", shift: "7-3" },
+  { day: "Monday", date: "May 11", month: "May", course: "Harbor", name: "Mike K", shift: "9-6" },
+  { day: "Tuesday", date: "May 12", month: "May", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Tuesday", date: "May 12", month: "May", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Tuesday", date: "May 12", month: "May", course: "Harbor", name: "Seamus", shift: "7-3" },
+  { day: "Tuesday", date: "May 12", month: "May", course: "Harbor", name: "George", shift: "8:30-6" },
+  { day: "Wednesday", date: "May 13", month: "May", course: "Links", name: "Bill I", shift: "7-3" },
+  { day: "Wednesday", date: "May 13", month: "May", course: "Links", name: "Bob J", shift: "9-6" },
+  { day: "Wednesday", date: "May 13", month: "May", course: "Harbor", name: "Coach Bob", shift: "7-3" },
+  { day: "Wednesday", date: "May 13", month: "May", course: "Harbor", name: "Cary", shift: "9-6" },
+  { day: "Thursday", date: "May 14", month: "May", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Thursday", date: "May 14", month: "May", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Thursday", date: "May 14", month: "May", course: "Harbor", name: "Mike K", shift: "7-3" },
+  { day: "Thursday", date: "May 14", month: "May", course: "Harbor", name: "Kevin", shift: "9-6" },
+  { day: "Friday", date: "May 15", month: "May", course: "Links", name: "Coach Bob", shift: "7-3" },
+  { day: "Friday", date: "May 15", month: "May", course: "Links", name: "Bob B", shift: "9-6" },
+  { day: "Friday", date: "May 15", month: "May", course: "Harbor", name: "Joe N", shift: "7-3" },
+  { day: "Friday", date: "May 15", month: "May", course: "Harbor", name: "Bill I", shift: "9-6" },
+  { day: "Saturday", date: "May 16", month: "May", course: "Links", name: "Rick V", shift: "7-3" },
+  { day: "Saturday", date: "May 16", month: "May", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Saturday", date: "May 16", month: "May", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "May 16", month: "May", course: "Harbor", name: "Jeff C", shift: "9-6" },
+  { day: "Sunday", date: "May 17", month: "May", course: "Links", name: "Dick E", shift: "8:30-6" },
+  { day: "Sunday", date: "May 17", month: "May", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "May 17", month: "May", course: "Harbor", name: "Cary", shift: "9-6" },
+  { day: "Monday", date: "May 18", month: "May", course: "Links", name: "Gary", shift: "7-3" },
+  { day: "Monday", date: "May 18", month: "May", course: "Links", name: "Bob B", shift: "9-6" },
+  { day: "Monday", date: "May 18", month: "May", course: "Harbor", name: "Greg S", shift: "9-6" },
+  { day: "Tuesday", date: "May 19", month: "May", course: "Links", name: "Bobby M", shift: "9-6" },
+  { day: "Tuesday", date: "May 19", month: "May", course: "Harbor", name: "John S", shift: "7-3" },
+  { day: "Tuesday", date: "May 19", month: "May", course: "Harbor", name: "Bud D", shift: "9-6" },
+  { day: "Wednesday", date: "May 20", month: "May", course: "Links", name: "Bob J", shift: "9-6" },
+  { day: "Wednesday", date: "May 20", month: "May", course: "Harbor", name: "Seamus", shift: "7-3" },
+  { day: "Wednesday", date: "May 20", month: "May", course: "Harbor", name: "Mike K", shift: "9-6" },
+  { day: "Thursday", date: "May 21", month: "May", course: "Links", name: "Coach Bob", shift: "7-3" },
+  { day: "Thursday", date: "May 21", month: "May", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Thursday", date: "May 21", month: "May", course: "Harbor", name: "John S", shift: "7-3" },
+  { day: "Thursday", date: "May 21", month: "May", course: "Harbor", name: "Jeff C", shift: "9-6" },
+  { day: "Friday", date: "May 22", month: "May", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Friday", date: "May 22", month: "May", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Friday", date: "May 22", month: "May", course: "Harbor", name: "Bill I", shift: "7-3" },
+  { day: "Friday", date: "May 22", month: "May", course: "Harbor", name: "Bob B", shift: "8:30-6" },
+  { day: "Saturday", date: "May 23", month: "May", course: "Links", name: "Rick", shift: "7-3" },
+  { day: "Saturday", date: "May 23", month: "May", course: "Links", name: "Coach Bob", shift: "9-6" },
+  { day: "Saturday", date: "May 23", month: "May", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "May 23", month: "May", course: "Harbor", name: "George", shift: "9-6" },
+  { day: "Sunday", date: "May 24", month: "May", course: "Links", name: "Coach Bob", shift: "7-4" },
+  { day: "Sunday", date: "May 24", month: "May", course: "Harbor", name: "Jeff C", shift: "7-3" },
+  { day: "Sunday", date: "May 24", month: "May", course: "Harbor", name: "John S", shift: "8:30-6" },
+  { day: "Monday", date: "May 25", month: "May", course: "Links", name: "Jeff C", shift: "7-3" },
+  { day: "Monday", date: "May 25", month: "May", course: "Links", name: "Cary", shift: "9-6" },
+  { day: "Monday", date: "May 25", month: "May", course: "Harbor", name: "Mike K", shift: "7-3" },
+  { day: "Monday", date: "May 25", month: "May", course: "Harbor", name: "Bob J", shift: "9-6" },
+  { day: "Tuesday", date: "May 26", month: "May", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Tuesday", date: "May 26", month: "May", course: "Links", name: "Bobby M", shift: "9-6" },
+  { day: "Tuesday", date: "May 26", month: "May", course: "Harbor", name: "Gary", shift: "7-3" },
+  { day: "Tuesday", date: "May 26", month: "May", course: "Harbor", name: "Seamus", shift: "8:30-6" },
+  { day: "Wednesday", date: "May 27", month: "May", course: "Links", name: "Bob B", shift: "7-3" },
+  { day: "Wednesday", date: "May 27", month: "May", course: "Links", name: "Bill I", shift: "9-6" },
+  { day: "Wednesday", date: "May 27", month: "May", course: "Harbor", name: "Bob J", shift: "7-3" },
+  { day: "Wednesday", date: "May 27", month: "May", course: "Harbor", name: "Cary", shift: "9-6" },
+  { day: "Thursday", date: "May 28", month: "May", course: "Links", name: "Kevin", shift: "7-3" },
+  { day: "Thursday", date: "May 28", month: "May", course: "Links", name: "Greg S", shift: "9-6" },
+  { day: "Thursday", date: "May 28", month: "May", course: "Harbor", name: "John S", shift: "7-3" },
+  { day: "Thursday", date: "May 28", month: "May", course: "Harbor", name: "Bud D", shift: "8:30-6" },
+  { day: "Friday", date: "May 29", month: "May", course: "Links", name: "Gary", shift: "7-3" },
+  { day: "Friday", date: "May 29", month: "May", course: "Links", name: "Coach Bob", shift: "9-6" },
+  { day: "Friday", date: "May 29", month: "May", course: "Harbor", name: "Jeff C", shift: "7-3" },
+  { day: "Friday", date: "May 29", month: "May", course: "Harbor", name: "George", shift: "9-6" },
+  { day: "Saturday", date: "May 30", month: "May", course: "Links", name: "Bill I", shift: "7-3" },
+  { day: "Saturday", date: "May 30", month: "May", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Saturday", date: "May 30", month: "May", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "May 30", month: "May", course: "Harbor", name: "Coach Bob", shift: "9-6" },
+  { day: "Sunday", date: "May 31", month: "May", course: "Links", name: "Dick E", shift: "7-3" },
+  { day: "Sunday", date: "May 31", month: "May", course: "Links", name: "Jeff C", shift: "9-6" },
+  { day: "Sunday", date: "May 31", month: "May", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "May 31", month: "May", course: "Harbor", name: "Bill", shift: "9-6" },
+
+  // June 2026
+  { day: "Tuesday", date: "Jun 2", month: "June", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 2", month: "June", course: "Links", name: "Seamus", shift: "9-6" },
+  { day: "Wednesday", date: "Jun 3", month: "June", course: "Links", name: "Joe N", shift: "7-3" },
+  { day: "Wednesday", date: "Jun 3", month: "June", course: "Links", name: "Bill", shift: "9-6" },
+  { day: "Wednesday", date: "Jun 3", month: "June", course: "Harbor", name: "Bob J", shift: "7-3" },
+  { day: "Wednesday", date: "Jun 3", month: "June", course: "Harbor", name: "Floyd", shift: "9-6" },
+  { day: "Thursday", date: "Jun 4", month: "June", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Thursday", date: "Jun 4", month: "June", course: "Links", name: "John S", shift: "9-6" },
+  { day: "Thursday", date: "Jun 4", month: "June", course: "Harbor", name: "George", shift: "7-3" },
+  { day: "Thursday", date: "Jun 4", month: "June", course: "Harbor", name: "Cary", shift: "8:30-6" },
+  { day: "Friday", date: "Jun 5", month: "June", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Friday", date: "Jun 5", month: "June", course: "Links", name: "Coach Bob", shift: "9-6" },
+  { day: "Friday", date: "Jun 5", month: "June", course: "Harbor", name: "Floyd", shift: "7-3" },
+  { day: "Friday", date: "Jun 5", month: "June", course: "Harbor", name: "Seamus", shift: "9-6" },
+  { day: "Saturday", date: "Jun 6", month: "June", course: "Links", name: "Kevin", shift: "7-3" },
+  { day: "Saturday", date: "Jun 6", month: "June", course: "Links", name: "Bill", shift: "9-6" },
+  { day: "Saturday", date: "Jun 6", month: "June", course: "Harbor", name: "Bob J", shift: "7-3" },
+  { day: "Saturday", date: "Jun 6", month: "June", course: "Harbor", name: "George", shift: "8:30-6" },
+  { day: "Sunday", date: "Jun 7", month: "June", course: "Links", name: "Bill", shift: "7-3" },
+  { day: "Sunday", date: "Jun 7", month: "June", course: "Links", name: "Floyd", shift: "9-6" },
+  { day: "Sunday", date: "Jun 7", month: "June", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "Jun 7", month: "June", course: "Harbor", name: "Coach Bob", shift: "9-6" },
+  { day: "Monday", date: "Jun 8", month: "June", course: "Links", name: "Cary", shift: "7-3" },
+  { day: "Monday", date: "Jun 8", month: "June", course: "Links", name: "Greg S", shift: "9-6" },
+  { day: "Monday", date: "Jun 8", month: "June", course: "Harbor", name: "Coach Bob", shift: "8-1" },
+  { day: "Tuesday", date: "Jun 9", month: "June", course: "Links", name: "Gary", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 9", month: "June", course: "Links", name: "Seamus", shift: "9-6" },
+  { day: "Tuesday", date: "Jun 9", month: "June", course: "Harbor", name: "Joe N", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 9", month: "June", course: "Harbor", name: "Bud D", shift: "9-6" },
+  { day: "Wednesday", date: "Jun 10", month: "June", course: "Links", name: "Kevin", shift: "7-3" },
+  { day: "Wednesday", date: "Jun 10", month: "June", course: "Links", name: "Bill", shift: "9-6" },
+  { day: "Wednesday", date: "Jun 10", month: "June", course: "Harbor", name: "Jeff C", shift: "7-3" },
+  { day: "Wednesday", date: "Jun 10", month: "June", course: "Harbor", name: "Floyd", shift: "8:30-6" },
+  { day: "Thursday", date: "Jun 11", month: "June", course: "Links", name: "Gary", shift: "7-3" },
+  { day: "Thursday", date: "Jun 11", month: "June", course: "Links", name: "Coach Bob", shift: "9-6" },
+  { day: "Thursday", date: "Jun 11", month: "June", course: "Harbor", name: "John S", shift: "7-3" },
+  { day: "Thursday", date: "Jun 11", month: "June", course: "Harbor", name: "Mike", shift: "9-6" },
+  { day: "Friday", date: "Jun 12", month: "June", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Friday", date: "Jun 12", month: "June", course: "Links", name: "Cary", shift: "9-6" },
+  { day: "Friday", date: "Jun 12", month: "June", course: "Harbor", name: "George", shift: "7-3" },
+  { day: "Friday", date: "Jun 12", month: "June", course: "Harbor", name: "Jeff C", shift: "8:30-6" },
+  { day: "Saturday", date: "Jun 13", month: "June", course: "Links", name: "Rick", shift: "7-3" },
+  { day: "Saturday", date: "Jun 13", month: "June", course: "Links", name: "Bob J", shift: "9-6" },
+  { day: "Saturday", date: "Jun 13", month: "June", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Jun 13", month: "June", course: "Harbor", name: "Bill", shift: "9-6" },
+  { day: "Sunday", date: "Jun 14", month: "June", course: "Links", name: "John S", shift: "7-3" },
+  { day: "Sunday", date: "Jun 14", month: "June", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Sunday", date: "Jun 14", month: "June", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "Jun 14", month: "June", course: "Harbor", name: "Bud D", shift: "8:30-6" },
+  { day: "Tuesday", date: "Jun 16", month: "June", course: "Links", name: "Coach Bob", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 16", month: "June", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Tuesday", date: "Jun 16", month: "June", course: "Harbor", name: "Mike", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 16", month: "June", course: "Harbor", name: "Seamus", shift: "8:30-6" },
+  { day: "Wednesday", date: "Jun 17", month: "June", course: "Links", name: "Joe N", shift: "7-3" },
+  { day: "Wednesday", date: "Jun 17", month: "June", course: "Links", name: "Bill", shift: "9-6" },
+  { day: "Wednesday", date: "Jun 17", month: "June", course: "Harbor", name: "Cary", shift: "7-3" },
+  { day: "Wednesday", date: "Jun 17", month: "June", course: "Harbor", name: "Jeff C", shift: "9-6" },
+  { day: "Thursday", date: "Jun 18", month: "June", course: "Links", name: "Kevin", shift: "7-5" },
+  { day: "Thursday", date: "Jun 18", month: "June", course: "Harbor", name: "Floyd", shift: "7-3" },
+  { day: "Thursday", date: "Jun 18", month: "June", course: "Harbor", name: "Mike K", shift: "8:30-6" },
+  { day: "Friday", date: "Jun 19", month: "June", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Friday", date: "Jun 19", month: "June", course: "Links", name: "Cary", shift: "9-6" },
+  { day: "Friday", date: "Jun 19", month: "June", course: "Harbor", name: "Jeff C", shift: "7-3" },
+  { day: "Friday", date: "Jun 19", month: "June", course: "Harbor", name: "Floyd", shift: "10-6" },
+  { day: "Saturday", date: "Jun 20", month: "June", course: "Links", name: "Bobby M", shift: "7-1" },
+  { day: "Saturday", date: "Jun 20", month: "June", course: "Links", name: "Kevin", shift: "11-6" },
+  { day: "Saturday", date: "Jun 20", month: "June", course: "Harbor", name: "Carl", shift: "7-2" },
+  { day: "Saturday", date: "Jun 20", month: "June", course: "Harbor", name: "Jeff C", shift: "8:30-6" },
+  { day: "Sunday", date: "Jun 21", month: "June", course: "Links", name: "Bill", shift: "7-3" },
+  { day: "Sunday", date: "Jun 21", month: "June", course: "Links", name: "Dick E", shift: "9-6" },
+  { day: "Sunday", date: "Jun 21", month: "June", course: "Harbor", name: "Carl", shift: "7-2" },
+  { day: "Sunday", date: "Jun 21", month: "June", course: "Harbor", name: "Floyd", shift: "9-6" },
+  { day: "Monday", date: "Jun 22", month: "June", course: "Links", name: "Gary", shift: "7-3" },
+  { day: "Monday", date: "Jun 22", month: "June", course: "Links", name: "Cary", shift: "9-6" },
+  { day: "Tuesday", date: "Jun 23", month: "June", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 23", month: "June", course: "Links", name: "Bob J", shift: "9-6" },
+  { day: "Tuesday", date: "Jun 23", month: "June", course: "Harbor", name: "Joe N", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 23", month: "June", course: "Harbor", name: "Bud D", shift: "9-6" },
+  { day: "Wednesday", date: "Jun 24", month: "June", course: "Links", name: "Kevin", shift: "7-3" },
+  { day: "Wednesday", date: "Jun 24", month: "June", course: "Links", name: "Cary", shift: "9-6" },
+  { day: "Wednesday", date: "Jun 24", month: "June", course: "Harbor", name: "Jeff C", shift: "7-3" },
+  { day: "Wednesday", date: "Jun 24", month: "June", course: "Harbor", name: "Floyd", shift: "8:30-6" },
+  { day: "Thursday", date: "Jun 25", month: "June", course: "Links", name: "Jeff C", shift: "7-3" },
+  { day: "Thursday", date: "Jun 25", month: "June", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Thursday", date: "Jun 25", month: "June", course: "Harbor", name: "Mike K", shift: "7-3" },
+  { day: "Thursday", date: "Jun 25", month: "June", course: "Harbor", name: "Greg S", shift: "9-6" },
+  { day: "Friday", date: "Jun 26", month: "June", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Friday", date: "Jun 26", month: "June", course: "Links", name: "Bill", shift: "9-6" },
+  { day: "Friday", date: "Jun 26", month: "June", course: "Harbor", name: "Greg S", shift: "7-3" },
+  { day: "Friday", date: "Jun 26", month: "June", course: "Harbor", name: "Floyd", shift: "8:30-6" },
+  { day: "Saturday", date: "Jun 27", month: "June", course: "Links", name: "Rick", shift: "7-3" },
+  { day: "Saturday", date: "Jun 27", month: "June", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Saturday", date: "Jun 27", month: "June", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Jun 27", month: "June", course: "Harbor", name: "John S", shift: "9-6" },
+  { day: "Sunday", date: "Jun 28", month: "June", course: "Links", name: "Bill I", shift: "7-3" },
+  { day: "Sunday", date: "Jun 28", month: "June", course: "Links", name: "Jeff C", shift: "9-6" },
+  { day: "Sunday", date: "Jun 28", month: "June", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "Jun 28", month: "June", course: "Harbor", name: "John S", shift: "9-6" },
+  { day: "Monday", date: "Jun 29", month: "June", course: "Harbor", name: "Bob J", shift: "7-3" },
+  { day: "Monday", date: "Jun 29", month: "June", course: "Harbor", name: "Bud D", shift: "9-6" },
+  { day: "Tuesday", date: "Jun 30", month: "June", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 30", month: "June", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Tuesday", date: "Jun 30", month: "June", course: "Harbor", name: "Greg S", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 30", month: "June", course: "Harbor", name: "Mike K", shift: "8:30-6" },
+];
+
+const MONTHS = ["January","February","March","April","May","June"];
+
+function shiftHours(shift) {
+  const parts = shift.trim().split('-');
+  if (parts.length !== 2) return 0;
+  function toH(t) {
+    if (t.includes(':')) { const [h,m] = t.split(':'); return parseInt(h) + parseInt(m)/60; }
+    return parseFloat(t);
+  }
+  try {
+    let start = toH(parts[0]), end = toH(parts[1]);
+    if (end <= start) end += 12;
+    return Math.round((end - start) * 10) / 10;
+  } catch(e) { return 0; }
+}
+
+function courseBadge(course) {
+  const cls = course === 'Links' ? 'badge-links' : 'badge-harbor';
+  return `<span class="badge ${cls}">${course}</span>`;
+}
+
+function buildTable(rows, showName) {
+  const cols = showName
+    ? ['Date','Day','Name','Course','Shift','Hours']
+    : ['Date','Day','Course','Shift','Hours'];
+  let html = `<div class="table-wrap"><table><thead><tr>`;
+  cols.forEach(c => html += `<th>${c}</th>`);
+  html += `</tr></thead><tbody>`;
+  rows.forEach((e, i) => {
+    const hrs = shiftHours(e.shift);
+    const rowClass = i % 2 === 0 ? 'even' : 'odd';
+    html += `<tr class="${rowClass}">`;
+    html += `<td class="bold">${e.date}</td>`;
+    html += `<td class="muted">${e.day}</td>`;
+    if (showName) html += `<td class="bold">${e.name}</td>`;
+    html += `<td>${courseBadge(e.course)}</td>`;
+    html += `<td class="muted">${e.shift}</td>`;
+    html += `<td class="muted">${hrs}h</td>`;
+    html += `</tr>`;
+  });
+  html += `</tbody></table></div>`;
+  return html;
+}
+
+function buildTotals(rows) {
+  const monthTotals = {};
+  rows.forEach(e => {
+    if (!monthTotals[e.month]) monthTotals[e.month] = 0;
+    monthTotals[e.month] = Math.round((monthTotals[e.month] + shiftHours(e.shift)) * 10) / 10;
+  });
+  const months = MONTHS.filter(m => monthTotals[m]);
+  if (months.length === 0) return '';
+  const grandTotal = Math.round(months.reduce((a,m) => a + monthTotals[m], 0) * 10) / 10;
+  let html = '';
+  months.forEach(m => {
+    html += `<div class="month-total"><span style="opacity:0.8">${m}: </span><strong>${monthTotals[m]}h</strong></div>`;
+  });
+  if (months.length > 1) {
+    html += `<div class="grand-total">Total: ${grandTotal}h</div>`;
+  }
+  return html;
+}
+
+function renderSearch() {
+  const query = document.getElementById('search-input').value;
+  const month = document.getElementById('month-filter').value;
+  const course = document.getElementById('course-filter').value;
+
+  const filtered = RAW_DATA.filter(e => {
+    return (query === '' || e.name === query)
+      && (month === 'All' || e.month === month)
+      && (course === 'All' || e.course === course);
+  });
+
+  // Count display
+  const countEl = document.getElementById('result-count');
+  let countHtml = `${filtered.length} assignment${filtered.length !== 1 ? 's' : ''} found`;
+  if (query) countHtml += ` <span class="search-badge">${query}</span>`;
+  countEl.innerHTML = countHtml;
+
+  // Table
+  const resultsEl = document.getElementById('search-results');
+  if (filtered.length === 0) {
+    resultsEl.innerHTML = '<div class="empty">No assignments found</div>';
+    document.getElementById('totals-bar').innerHTML = '';
+    return;
+  }
+  resultsEl.innerHTML = buildTable(filtered, true);
+  document.getElementById('totals-bar').innerHTML = buildTotals(filtered);
+}
+
+// Build person dropdown
+let selectedPerson = null;
+const allNames = [...new Set(RAW_DATA.map(r => r.name))].sort();
+
+function renderPersonButtons() {
+  const el = document.getElementById('person-select');
+  if (!el) return;
+  el.innerHTML = '<option value="">-- Choose a name --</option>' +
+    allNames.map(name => `<option value="${name}">${name}</option>`).join('');
+}
+
+function selectPerson(name) {
+  selectedPerson = name;
+  if (!name) {
+    document.getElementById('person-detail').innerHTML = '<div class="empty">Select a name above to see their full schedule</div>';
+    document.getElementById('person-shift-count').textContent = '';
+    return;
+  }
+  const rows = RAW_DATA.filter(e => e.name === name).sort((a,b) => {
+    const mi = m => MONTHS.indexOf(m);
+    const dn = d => parseInt(d.split(' ')[1]);
+    if (mi(a.month) !== mi(b.month)) return mi(a.month) - mi(b.month);
+    return dn(a.date) - dn(b.date);
+  });
+  document.getElementById('person-shift-count').textContent = `${rows.length} shift${rows.length !== 1 ? 's' : ''} scheduled`;
+  const detail = document.getElementById('person-detail');
+  detail.innerHTML = `
+    <div id="person-name">${name}</div>
+    ${rows.length === 0 ? '<div class="empty">No shifts found</div>' : buildTable(rows, false)}
+    <div id="person-totals-bar" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">${buildTotals(rows)}</div>
+  `;
+}
+
+function switchView(view) {
+  ['search','person','requests','scheduler'].forEach(v => {
+    const el = document.getElementById('view-' + v);
+    if (el) el.classList.toggle('active', v === view);
+  });
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    const isActive = btn.getAttribute('onclick') && btn.getAttribute('onclick').includes("'" + view + "'");
+    btn.className = 'tab-btn ' + (isActive ? 'active' : 'inactive');
+  });
+}
+
+
+// Password protection
+const STARTER_PASSWORD = 'wilddunes';
+const ADMIN_PASSWORD = 'schedule';
+let currentRole = 'starter'; // 'starter' or 'admin'
+
+function checkPassword() {
+  const input = document.getElementById('password-input').value;
+  if (input === ADMIN_PASSWORD) {
+    currentRole = 'admin';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('password-input').value = '';
+    // Show all tabs including admin
+    document.getElementById('tab-requests').style.display = 'inline-block';
+    document.getElementById('tab-scheduler').style.display = 'inline-block';
+    initRequestsTab();
+    initSchedulerTab();
+  } else if (input === STARTER_PASSWORD) {
+    currentRole = 'starter';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('password-input').value = '';
+    // Show requests tab but not admin scheduler
+    document.getElementById('tab-requests').style.display = 'inline-block';
+    document.getElementById('tab-scheduler').style.display = 'none';
+    initRequestsTab();
+  } else {
+    document.getElementById('login-error').textContent = 'Incorrect password. Try again.';
+    document.getElementById('password-input').value = '';
+    document.getElementById('password-input').focus();
+  }
+}
+
+// Auto-focus password field
+document.getElementById('password-input').focus();
+
+// Init
+// Populate search name dropdown
+const searchSelect = document.getElementById('search-input');
+allNames.forEach(name => {
+  const opt = document.createElement('option');
+  opt.value = name;
+  opt.textContent = name;
+  searchSelect.appendChild(opt);
+});
+
+renderSearch();
+renderPersonButtons();
+document.getElementById('person-detail').innerHTML = '<div class="empty">Select a name above to see their full schedule</div>';
+document.getElementById('person-shift-count').textContent = '';
+
+// ═══════════════════════════════════════════════════════════════
+// GOOGLE SHEETS API CONNECTION
+// ═══════════════════════════════════════════════════════════════
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwA9WFMT0MCr-ZLCjBNESRkjdUVJNGJ9rrKsGMFoRxfpAZMDVSF_GxvKIx1x0IhNLCB/exec';
+
+function apiCall(params) {
+  const url = APPS_SCRIPT_URL + '?' + Object.entries(params)
+    .map(([k,v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v))
+    .join('&');
+  return fetch(url).then(r => r.json());
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REQUESTS TAB
+// ═══════════════════════════════════════════════════════════════
+
+const MONTH_DAYS = {
+  January:31, February:28, March:31, April:30, May:31, June:30,
+  July:31, August:31, September:30, October:31, November:30, December:31
+};
+const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTH_START_DAY = {
+  January:4, February:0, March:0, April:3, May:5, June:1,
+  July:3, August:6, September:2, October:4, November:0, December:2
+};
+
+// Local cache of requests for current session
+let requestsCache = {};
+
+function initRequestsTab() {
+  const sel = document.getElementById('req-name');
+  if (sel.options.length <= 1) {
+    allNames.forEach(function(name) {
+      const opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      sel.appendChild(opt);
+    });
+  }
+}
+
+function getKey(name, month) { return name + '|' + month; }
+
+function renderCalendar() {
+  const name = document.getElementById('req-name').value;
+  const month = document.getElementById('req-month').value;
+  const container = document.getElementById('req-calendar');
+  const status = document.getElementById('req-status');
+
+  if (!name || !month) { container.innerHTML = ''; status.textContent = ''; return; }
+
+  status.textContent = 'Loading...';
+
+  // Load existing requests from Google Sheet
+  apiCall({action: 'getRequests', month: month}).then(function(data) {
+    if (data.status === 'success') {
+      // Update cache with sheet data
+      Object.entries(data.requests).forEach(function([n, days]) {
+        requestsCache[getKey(n, month)] = days;
+      });
+    }
+    renderCalendarUI(name, month);
+  }).catch(function() {
+    renderCalendarUI(name, month);
+  });
+}
+
+function renderCalendarUI(name, month) {
+  const container = document.getElementById('req-calendar');
+  const status = document.getElementById('req-status');
+  const key = getKey(name, month);
+  if (!requestsCache[key]) requestsCache[key] = [];
+  const offDays = requestsCache[key];
+  const totalDays = MONTH_DAYS[month];
+  const startDay = MONTH_START_DAY[month] || 0;
+
+  let html = '<div class="cal-grid">';
+  DAY_NAMES.forEach(function(d) { html += '<div class="cal-header">' + d + '</div>'; });
+
+  for (let i = 0; i < startDay; i++) html += '<div class="cal-day empty-day"></div>';
+
+  for (let d = 1; d <= totalDays; d++) {
+    const isOff = offDays.includes(d);
+    const date = new Date(2026, Object.keys(MONTH_DAYS).indexOf(month), d);
+    const dayName = DAY_NAMES[date.getDay()];
+    html += '<div class="cal-day ' + (isOff ? 'unavailable' : '') + '" onclick="toggleDay('' + name + '','' + month + '',' + d + ')">' +
+      '<div class="day-num">' + d + '</div>' +
+      '<div class="day-name">' + dayName + '</div>' +
+      '</div>';
+  }
+  html += '</div>';
+
+  if (offDays.length > 0) {
+    const sorted = [...offDays].sort(function(a,b) { return a-b; });
+    const monthIdx = Object.keys(MONTH_DAYS).indexOf(month);
+    html += '<div style="background:#fff3f3; border:1px solid #e0c0c0; border-radius:8px; padding:12px 16px; margin-top:8px;">' +
+      '<strong style="color:#8b1a1a;">Your requested days off in ' + month + ':</strong>' +
+      '<div style="margin-top:4px; font-size:14px; color:#444;">' +
+      sorted.map(function(d) {
+        const date = new Date(2026, monthIdx, d);
+        return DAY_NAMES[date.getDay()] + ' ' + month.substring(0,3) + ' ' + d;
+      }).join(', ') + '</div></div>';
+    status.textContent = '✓ ' + offDays.length + ' day' + (offDays.length !== 1 ? 's' : '') + ' marked. Click Submit to save, or click a day to remove it.';
+  } else {
+    status.textContent = 'Click any day to mark it as unavailable, then click Submit.';
+  }
+
+  // Add submit button
+  html += '<div style="margin-top:16px;">' +
+    '<button onclick="submitRequest('' + name + '','' + month + '')" ' +
+    'style="padding:10px 28px; background:#1a3a1a; color:#e8d8a0; border:none; border-radius:8px; ' +
+    'cursor:pointer; font-family:Georgia,serif; font-size:15px; font-weight:bold;">✓ Submit Request</button>' +
+    '<span id="submit-status" style="margin-left:14px; font-size:13px; color:#1a6b3a;"></span></div>';
+
+  container.innerHTML = html;
+}
+
+function toggleDay(name, month, day) {
+  const key = getKey(name, month);
+  if (!requestsCache[key]) requestsCache[key] = [];
+  const idx = requestsCache[key].indexOf(day);
+  if (idx >= 0) {
+    requestsCache[key].splice(idx, 1);
+  } else {
+    requestsCache[key].push(day);
+  }
+  renderCalendarUI(name, month);
+}
+
+function submitRequest(name, month) {
+  const key = getKey(name, month);
+  const days = requestsCache[key] || [];
+  const submitStatus = document.getElementById('submit-status');
+  submitStatus.textContent = 'Saving...';
+
+  apiCall({
+    action: 'submitRequest',
+    name: name,
+    month: month,
+    days: days.join(',')
+  }).then(function(data) {
+    if (data.status === 'success') {
+      submitStatus.textContent = '✓ Saved successfully!';
+      setTimeout(function() { submitStatus.textContent = ''; }, 3000);
+    } else {
+      submitStatus.textContent = '⚠ Error saving. Please try again.';
+    }
+  }).catch(function() {
+    submitStatus.textContent = '⚠ Connection error. Please try again.';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCHEDULER TAB (Admin)
+// ═══════════════════════════════════════════════════════════════
+
+let scheduleAssignments = {};  // key: "month|day|course|slot" -> {name, shift}
+let schedulerRequests = {};    // loaded from sheet
+
+function initSchedulerTab() {
+  // nothing needed on init
+}
+
+function renderScheduler() {
+  const month = document.getElementById('sched-month').value;
+  const container = document.getElementById('sched-content');
+  if (!month) { container.innerHTML = '<div class="empty">Select a month to view availability</div>'; return; }
+
+  container.innerHTML = '<div class="empty">Loading requests...</div>';
+
+  // Load requests and existing schedule from Google Sheet
+  Promise.all([
+    apiCall({action: 'getRequests', month: month}),
+    apiCall({action: 'getSchedule', month: month})
+  ]).then(function(results) {
+    const reqData = results[0];
+    const schedData = results[1];
+
+    if (reqData.status === 'success') {
+      schedulerRequests = reqData.requests || {};
+      // Also update local cache
+      Object.entries(schedulerRequests).forEach(function([n, days]) {
+        requestsCache[getKey(n, month)] = days;
+      });
+    }
+
+    if (schedData.status === 'success') {
+      schedData.entries.forEach(function(e) {
+        const key = month + '|' + e.date + '|' + e.course + '|' + e.slot;
+        scheduleAssignments[key] = {name: e.name, shift: e.shift};
+      });
+    }
+
+    renderSchedulerUI(month);
+  }).catch(function() {
+    renderSchedulerUI(month);
+  });
+}
+
+function renderSchedulerUI(month) {
+  const container = document.getElementById('sched-content');
+  const totalDays = MONTH_DAYS[month];
+  const monthIdx = Object.keys(MONTH_DAYS).indexOf(month);
+  let html = '';
+  let totalFilled = 0, totalSlots = 0;
+
+  for (let d = 1; d <= totalDays; d++) {
+    const date = new Date(2026, monthIdx, d);
+    const dayName = DAY_NAMES[date.getDay()];
+    const dateStr = month.substring(0,3) + ' ' + d;
+
+    // Who requested off?
+    const offThisDay = [];
+    allNames.forEach(function(name) {
+      if (schedulerRequests[name] && schedulerRequests[name].includes(d)) {
+        offThisDay.push(name);
+      }
+    });
+
+    const available = allNames.filter(function(n) { return !offThisDay.includes(n); });
+    const hasRequests = offThisDay.length > 0;
+
+    // Check how many slots filled for this day
+    let dayFilled = 0;
+    ['Links','Harbor'].forEach(function(course) {
+      ['Early','Late'].forEach(function(slot) {
+        totalSlots++;
+        const key = month + '|' + dateStr + '|' + course + '|' + slot;
+        if (scheduleAssignments[key] && scheduleAssignments[key].name) dayFilled++;
+      });
+    });
+    totalFilled += dayFilled;
+    const allFilled = dayFilled === 4;
+
+    html += '<div class="sched-day">' +
+      '<div class="sched-day-header ' + (allFilled ? 'all-filled' : hasRequests ? 'has-requests' : '') + '">' +
+      '<span style="font-weight:bold;">' + dayName + ' ' + dateStr + '</span>' +
+      '<span style="font-size:12px; opacity:0.85;">' +
+      (allFilled ? '✓ All slots filled' : dayFilled + '/4 filled') +
+      (offThisDay.length > 0 ? ' · ' + offThisDay.length + ' unavailable' : '') +
+      '</span></div>' +
+      '<div class="sched-day-body">';
+
+    ['Links','Harbor'].forEach(function(course) {
+      html += '<div class="sched-course"><h4 class="' + course.toLowerCase() + '">' +
+        (course === 'Links' ? '⛳' : '⚓') + ' ' + course + ' Course</h4>';
+
+      if (offThisDay.length > 0) {
+        html += '<div class="unavail-list">❌ Unavailable: ' + offThisDay.join(', ') + '</div>';
+      }
+
+      ['Early','Late'].forEach(function(slot) {
+        const key = month + '|' + dateStr + '|' + course + '|' + slot;
+        const assigned = scheduleAssignments[key] || {name: '', shift: ''};
+        const assignedName = assigned.name || '';
+        const assignedShift = assigned.shift || '';
+
+        // Available starters not already assigned today
+        const assignedToday = [];
+        ['Links','Harbor'].forEach(function(c) {
+          ['Early','Late'].forEach(function(s) {
+            const k = month + '|' + dateStr + '|' + c + '|' + s;
+            if (scheduleAssignments[k] && scheduleAssignments[k].name && !(c===course && s===slot)) {
+              assignedToday.push(scheduleAssignments[k].name);
+            }
+          });
+        });
+
+        const slotAvailable = available.filter(function(n) { return !assignedToday.includes(n) || n === assignedName; });
+
+        html += '<div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">' +
+          '<span style="font-size:11px; color:#888; min-width:32px;">' + slot + ':</span>' +
+          '<select onchange="assignSlot('' + month + '','' + dateStr + '','' + course + '','' + slot + '',this.value)" ' +
+          'style="flex:1; padding:4px 6px; border-radius:6px; border:1px solid #c8b87a; font-size:12px; font-family:Georgia,serif;">' +
+          '<option value="">-- Assign starter --</option>' +
+          slotAvailable.map(function(n) {
+            return '<option value="' + n + '" ' + (n === assignedName ? 'selected' : '') + '>' + n + '</option>';
+          }).join('') +
+          '</select>' +
+          '<input type="text" placeholder="Shift (e.g. 7-3)" value="' + assignedShift + '" ' +
+          'onchange="assignShift('' + month + '','' + dateStr + '','' + course + '','' + slot + '',this.value)" ' +
+          'style="width:80px; padding:4px 6px; border-radius:6px; border:1px solid #c8b87a; font-size:12px; font-family:Georgia,serif;">' +
+          '</div>';
+      });
+
+      html += '</div>';
+    });
+
+    html += '</div></div>';
+  }
+
+  // Progress summary
+  html = '<div style="background:#e8f5ed; border-radius:10px; padding:12px 18px; margin-bottom:16px; display:flex; gap:24px; align-items:center; flex-wrap:wrap;">' +
+    '<span style="font-size:14px; color:#1a6b3a; font-weight:bold;">📋 ' + month + ' Schedule Progress</span>' +
+    '<span style="font-size:14px; color:#444;">' + totalFilled + ' of ' + totalSlots + ' slots filled</span>' +
+    '<button onclick="saveSchedule('' + month + '')" style="padding:8px 18px; background:#1a3a1a; color:#e8d8a0; border:none; border-radius:8px; cursor:pointer; font-family:Georgia,serif; font-size:13px;">💾 Save Schedule</button>' +
+    '<span id="save-status" style="font-size:13px; color:#1a6b3a;"></span>' +
+    '</div>' + html;
+
+  container.innerHTML = html;
+}
+
+function assignSlot(month, dateStr, course, slot, name) {
+  const key = month + '|' + dateStr + '|' + course + '|' + slot;
+  if (!scheduleAssignments[key]) scheduleAssignments[key] = {name:'', shift:''};
+  scheduleAssignments[key].name = name;
+  renderSchedulerUI(month);
+}
+
+function assignShift(month, dateStr, course, slot, shift) {
+  const key = month + '|' + dateStr + '|' + course + '|' + slot;
+  if (!scheduleAssignments[key]) scheduleAssignments[key] = {name:'', shift:''};
+  scheduleAssignments[key].shift = shift;
+}
+
+function saveSchedule(month) {
+  const saveStatus = document.getElementById('save-status');
+  saveStatus.textContent = 'Saving...';
+
+  const entries = [];
+  Object.entries(scheduleAssignments).forEach(function([key, val]) {
+    if (val.name && key.startsWith(month + '|')) {
+      const parts = key.split('|');
+      entries.push({date: parts[1], course: parts[2], slot: parts[3], name: val.name, shift: val.shift});
+    }
+  });
+
+  apiCall({
+    action: 'saveSchedule',
+    month: month,
+    entries: JSON.stringify(entries)
+  }).then(function(data) {
+    if (data.status === 'success') {
+      saveStatus.textContent = '✓ Schedule saved!';
+      setTimeout(function() { saveStatus.textContent = ''; }, 3000);
+    } else {
+      saveStatus.textContent = '⚠ Error saving.';
+    }
+  }).catch(function() {
+    saveStatus.textContent = '⚠ Connection error.';
+  });
+}
+
+function clearAllRequests() {
+  const month = document.getElementById('sched-month').value;
+  if (!month) return;
+  if (!confirm('Clear ALL day-off requests for ' + month + '? This cannot be undone.')) return;
+  allNames.forEach(function(name) {
+    const key = getKey(name, month);
+    delete requestsCache[key];
+    delete schedulerRequests[name];
+  });
+  renderSchedulerUI(month);
+}
+
+function printSummary() {
+  const month = document.getElementById('sched-month').value;
+  if (!month) { alert('Please select a month first.'); return; }
+
+  const monthIdx = Object.keys(MONTH_DAYS).indexOf(month);
+  let rows = '';
+  let anyRequests = false;
+
+  allNames.forEach(function(name) {
+    const days = schedulerRequests[name];
+    if (days && days.length > 0) {
+      anyRequests = true;
+      const sorted = [...days].sort(function(a,b) { return a-b; });
+      const dayList = sorted.map(function(d) {
+        const date = new Date(2026, monthIdx, d);
+        return DAY_NAMES[date.getDay()] + ' ' + d;
+      }).join(', ');
+      rows += '<tr><td style="padding:8px 12px; border-bottom:1px solid #eee; font-weight:bold;">' + name + '</td>' +
+        '<td style="padding:8px 12px; border-bottom:1px solid #eee;">' + dayList + '</td>' +
+        '<td style="padding:8px 12px; border-bottom:1px solid #eee; text-align:center;">' + days.length + '</td></tr>';
+    }
+  });
+
+  if (!anyRequests) { alert('No day-off requests have been submitted for ' + month + ' yet.'); return; }
+
+  const win = window.open('', '_blank');
+  win.document.write('<html><head><title>Day Off Requests - ' + month + ' 2026</title>' +
+    '<style>body{font-family:Georgia,serif;padding:30px;color:#1a1a1a;}' +
+    'h1{font-size:22px;color:#1a3a1a;margin-bottom:4px;}' +
+    'h2{font-size:15px;color:#666;font-weight:normal;margin-bottom:24px;}' +
+    'table{width:100%;border-collapse:collapse;}' +
+    'th{background:#1a3a1a;color:#e8d8a0;padding:10px 12px;text-align:left;font-size:14px;}' +
+    'td{font-size:14px;}.footer{margin-top:30px;font-size:12px;color:#999;}</style></head>' +
+    '<body><h1>⛳ Wild Dunes Starter Schedule</h1>' +
+    '<h2>Day-Off Requests — ' + month + ' 2026</h2>' +
+    '<table><thead><tr>' +
+    '<th style="width:25%">Starter Name</th><th>Requested Days Off</th>' +
+    '<th style="width:15%;text-align:center;">Total Days</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table>' +
+    '<div class="footer">Printed ' + new Date().toLocaleDateString() + ' · Wild Dunes Resort</div>' +
+    '<script>window.onload=function(){window.print();}<\/script>' +
+    '</body></html>');
+  win.document.close();
+}
+
+</script>
+</body>
+</html>
