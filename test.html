@@ -1002,7 +1002,15 @@ function printSummary(){
   }
   if(!any){alert('No requests for '+month+' yet.');return;}
   var win=window.open('','_blank');
-  win.document.write('<!DOCTYPE html><html><head><title>Requests '+month+'</title><style>body{font-family:Georgia,serif;padding:30px;}h1{color:#1a3a1a;}table{width:100%;border-collapse:collapse;}th{background:#1a3a1a;color:#e8d8a0;padding:10px 12px;text-align:left;}</style></head><body><h1>Day-Off Requests - '+month+' 2026</h1><table><thead><tr><th>Starter</th><th>Days Off</th><th style="text-align:center">Total</th></tr></thead><tbody>'+rows+'</tbody></table><p style="color:#999;font-size:12px;margin-top:20px">Printed '+new Date().toLocaleDateString()+'</p></body></html>');
+  var html='<!DOCTYPE html><html><head><title>Requests '+month+'</title>';
+  html+='<style>body{font-family:Georgia,serif;padding:30px;}h1{color:#1a3a1a;}';
+  html+='table{width:100%;border-collapse:collapse;}';
+  html+='th{background:#1a3a1a;color:#e8d8a0;padding:10px 12px;text-align:left;}</style></head>';
+  html+='<body><h1>Day-Off Requests - '+month+' 2026</h1>';
+  html+='<table><thead><tr><th>Starter</th><th>Days Off</th><th>Total</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  html+='<p style="color:#999;font-size:12px;margin-top:20px">Printed '+new Date().toLocaleDateString()+'</p>';
+  html+='</body></html>';
+  win.document.write(html);
   win.document.close();
   setTimeout(function(){win.print();},500);
 }
