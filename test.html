@@ -1029,8 +1029,8 @@ function loadScheduler(){
   Promise.all([apiCall({action:'getRequests',month:month}),apiCall({action:'getSchedule',month:month})]).then(function(r){
     if(r[0].status==='success')schedRequests=r[0].requests||{};
     if(r[1].status==='success')r[1].entries.forEach(function(e){schedAssignments[month+'|'+e.date+'|'+e.course+'|'+e.slot]={name:e.name,shift:e.shift};});
-    renderCalendarView(month);
-    renderSchedUI(month);
+    // Default to calendar view
+    switchSchedView('calendar');
   }).catch(function(){document.getElementById('sched-cal-view').innerHTML='<div class="empty">Error loading. Try again.</div>';});
 }
 
@@ -1047,7 +1047,7 @@ function switchSchedView(view){
     listBtn.style.background = '#e0d8c8';
     listBtn.style.color = '#1a1a1a';
     var month = document.getElementById('sched-month').value;
-    if(month) renderCalendarView(month);
+    if(month){ document.getElementById('sched-cal-view').innerHTML=''; renderCalendarView(month); }
   } else {
     calView.style.display = 'none';
     listView.style.display = 'block';
@@ -1056,41 +1056,53 @@ function switchSchedView(view){
     listBtn.style.background = '#1a3a1a';
     listBtn.style.color = '#e8d8a0';
     var month = document.getElementById('sched-month').value;
-    if(month) renderSchedUI(month);
+    if(month){ document.getElementById('sched-list-view').innerHTML=''; renderSchedUI(month); }
   }
 }
 
 function renderCalendarView(month){
   var container = document.getElementById('sched-cal-view');
+  container.innerHTML = '';
+
   var totalDays = MDAYS[month] || 30;
   var monthIdx = Object.keys(MDAYS).indexOf(month);
   var startDay = MSTART[month] || 0;
-  var courses = ['Links','Harbor'], slots = ['Early','Late'];
+  var courses = ['Links','Harbor'];
+  var slots = ['Early','Late'];
+  var dayHeaders = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-  // Add detail panel placeholder
-  var html = '<div id="day-detail-panel"><button class="close-btn" onclick="closeDayPanel()">&#10005;</button><div id="day-detail-content"></div></div>';
+  // Detail panel
+  var panel = document.createElement('div');
+  panel.id = 'day-detail-panel';
+  panel.style.display = 'none';
+  panel.innerHTML = '<div id="day-detail-content"></div>';
+  container.appendChild(panel);
 
-  // Progress summary
-  var filled=0, total=0;
+  // Progress bar
+  var filled=0, total=totalDays*4;
   for(var d=1;d<=totalDays;d++){
-    var dateStr=month.substring(0,3)+' '+d;
+    var ds=month.substring(0,3)+' '+d;
     for(var ci=0;ci<2;ci++)for(var si=0;si<2;si++){
-      total++;
-      var k=month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si];
-      if(schedAssignments[k]&&schedAssignments[k].name)filled++;
+      if(schedAssignments[month+'|'+ds+'|'+courses[ci]+'|'+slots[si]]&&schedAssignments[month+'|'+ds+'|'+courses[ci]+'|'+slots[si]].name)filled++;
     }
   }
-  html += '<div style="background:#e8f5ed;border-radius:10px;padding:10px 18px;margin-bottom:12px;font-size:14px;color:#1a6b3a;display:flex;gap:20px;flex-wrap:wrap;">'
-    + '<strong>'+month+' Progress:</strong> '+filled+' of '+total+' slots filled'
-    + '<span style="font-size:12px;margin-left:8px;">&#9632; <span style="color:#1a6b3a">Full</span> &nbsp; &#9632; <span style="color:#c8a000">Partial</span> &nbsp; &#9632; <span style="color:#8b1a1a">Needs attention</span> &nbsp; &#9632; <span style="color:#ccc">Empty</span></span>'
-    + '</div>';
+  var prog = document.createElement('div');
+  prog.id = 'cal-progress';
+  prog.style.cssText = 'background:#e8f5ed;border-radius:10px;padding:10px 18px;margin-bottom:12px;font-size:14px;color:#1a6b3a;';
+  prog.innerHTML = '<strong>'+month+' Progress:</strong> '+filled+' of '+total+' slots filled'
+    +'<span style="font-size:12px;margin-left:16px;color:#444;">'
+    +'<span style="color:#1a6b3a;font-weight:bold;">&#9632;</span> Full &nbsp;'
+    +'<span style="color:#c8a000;font-weight:bold;">&#9632;</span> Partial &nbsp;'
+    +'<span style="color:#8b1a1a;font-weight:bold;">&#9632;</span> Needs attention &nbsp;'
+    +'<span style="color:#ccc;font-weight:bold;">&#9632;</span> Empty'
+    +'</span>';
+  container.appendChild(prog);
 
-  // Calendar grid - built with DOM for reliable click handlers
+  // Grid
   var grid = document.createElement('div');
   grid.className = 'month-cal-grid';
-  var dayHeaders = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  
-  // Day headers
+
+  // Headers
   for(var i=0;i<7;i++){
     var hdr = document.createElement('div');
     hdr.className = 'month-cal-header';
@@ -1098,7 +1110,7 @@ function renderCalendarView(month){
     grid.appendChild(hdr);
   }
 
-  // Empty cells before month starts
+  // Empty leading cells
   for(var i=0;i<startDay;i++){
     var empty = document.createElement('div');
     empty.className = 'month-cal-cell empty-cell';
@@ -1111,50 +1123,48 @@ function renderCalendarView(month){
     var dateStr = month.substring(0,3)+' '+d;
     var dayName = dayHeaders[dt.getDay()];
 
-    // Count filled slots
     var dayFilled=0;
     for(var ci=0;ci<2;ci++)for(var si=0;si<2;si++){
-      var k=month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si];
-      if(schedAssignments[k]&&schedAssignments[k].name)dayFilled++;
+      if(schedAssignments[month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si]]&&schedAssignments[month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si]].name)dayFilled++;
     }
 
-    // Who is off
     var offToday=[];
-    for(var n in schedRequests){if(schedRequests[n]&&schedRequests[n].indexOf(d)>=0)offToday.push(n);}
+    for(var n in schedRequests){
+      if(schedRequests[n]&&schedRequests[n].indexOf(d)>=0)offToday.push(n);
+    }
 
-    // Status class
     var statusClass='status-empty';
-    if(dayFilled===4) statusClass='status-full';
-    else if(dayFilled>0) statusClass='status-partial';
-    else if(offToday.length>0) statusClass='status-urgent';
+    if(dayFilled===4)statusClass='status-full';
+    else if(dayFilled>0)statusClass='status-partial';
+    else if(offToday.length>0)statusClass='status-urgent';
 
-    // Build dots
     var dotsHtml='';
     for(var ci=0;ci<2;ci++){
       for(var si=0;si<2;si++){
-        var k=month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si];
-        var isFilled=schedAssignments[k]&&schedAssignments[k].name;
-        dotsHtml+='<span class="dot '+(isFilled?'dot-filled':'dot-empty')+'" title="'+(ci===0?'Links':'Harbor')+' '+slots[si]+'"></span>';
+        var isFilled=schedAssignments[month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si]]&&schedAssignments[month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si]].name;
+        dotsHtml+='<span class="dot '+(isFilled?'dot-filled':'dot-empty')+'"></span>';
       }
     }
 
-    // Build cell using DOM
     var cell=document.createElement('div');
     cell.className='month-cal-cell '+statusClass;
     cell.innerHTML='<div class="cal-date">'+d+'</div>'
       +'<div class="cal-day-name">'+dayName+'</div>'
       +'<div class="cal-status-dots">'+dotsHtml+'</div>'
       +(offToday.length>0?'<div class="unavail-badge">&#10005; '+offToday.join(', ')+'</div>':'');
-    
-    // Attach click handler with closure
+
     (function(m,day,ds,dn){
-      cell.addEventListener('click', function(){ openDayPanel(m,day,ds,dn); });
-    })(month,d,dateStr,dayName);
-    
+      cell.addEventListener('click', function(){
+        openDayPanel(m, day, ds, dn);
+      });
+    })(month, d, dateStr, dayName);
+
     grid.appendChild(cell);
   }
+
   container.appendChild(grid);
 }
+
 
 function openDayPanel(month, d, dateStr, dayName){
   var panel = document.getElementById('day-detail-panel');
