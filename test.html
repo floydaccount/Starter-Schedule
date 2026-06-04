@@ -873,10 +873,23 @@ function loadAndRenderCalendar(){
   var name=document.getElementById('req-name').value,month=document.getElementById('req-month').value;
   if(!name||!month){alert('Please select your name and a month.');return;}
   document.getElementById('req-status').textContent='Loading...';
+  
+  // Set a 5 second timeout - if API doesn't respond, show calendar anyway
+  var done = false;
+  var timeout = setTimeout(function(){
+    if(!done){ done=true; renderCalUI(name,month); }
+  }, 5000);
+  
   apiCall({action:'getRequests',month:month}).then(function(data){
-    if(data.status==='success'){for(var n in data.requests)requestsCache[getKey(n,month)]=data.requests[n];}
-    renderCalUI(name,month);
-  }).catch(function(){renderCalUI(name,month);});
+    if(!done){
+      done=true;
+      clearTimeout(timeout);
+      if(data.status==='success'){for(var n in data.requests)requestsCache[getKey(n,month)]=data.requests[n];}
+      renderCalUI(name,month);
+    }
+  }).catch(function(){
+    if(!done){ done=true; clearTimeout(timeout); renderCalUI(name,month); }
+  });
 }
 
 function renderCalUI(name, month) {
