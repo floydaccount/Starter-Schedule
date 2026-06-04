@@ -112,7 +112,7 @@ tr{border-bottom:1px solid #f0ece0;}
   <div id="header-titles">
     <h1>2026 Starter Schedule</h1>
     <p>Links &amp; Harbor Courses</p>
-    <div id="coverage-badge">Covers: January - June 2026</div>
+    <div id="coverage-badge">Jan-Jun 2026 static · Jul+ from scheduler</div>
   </div>
   <div id="tab-bar">
     <button class="tab-btn active" id="tab-search" onclick="switchView('search')">Schedule</button>
@@ -125,7 +125,7 @@ tr{border-bottom:1px solid #f0ece0;}
   <div id="view-search" class="view active">
     <div id="filters">
       <select class="filter-select" id="search-input" style="font-size:15px;padding:10px 16px;min-width:200px;"><option value="">All Starters</option></select>
-      <select class="filter-select" id="month-filter"><option value="All">All Months</option><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option></select>
+      <select class="filter-select" id="month-filter"><option value="All">All Months</option><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select>
       <select class="filter-select" id="course-filter"><option value="All">All Courses</option><option>Links</option><option>Harbor</option></select>
     </div>
     <div id="result-count"></div>
@@ -914,8 +914,66 @@ function switchView(v){
   for(var i=0;i<bs.length;i++){var oc=bs[i].getAttribute('onclick')||'';bs[i].className='tab-btn '+(oc.indexOf("'"+v+"'")>=0?'active':'inactive');}
 }
 
+// Months covered by static RAW_DATA
+var STATIC_MONTHS = ['January','February','March','April','May','June'];
+
 function renderSearch(){
-  var q=document.getElementById('search-input').value,m=document.getElementById('month-filter').value,c=document.getElementById('course-filter').value;
+  var q=document.getElementById('search-input').value;
+  var m=document.getElementById('month-filter').value;
+  var c=document.getElementById('course-filter').value;
+
+  // If month is in static data or All Months - use RAW_DATA
+  var needsSheets = (m !== 'All' && STATIC_MONTHS.indexOf(m) < 0);
+
+  if(needsSheets){
+    // Pull from Google Sheets for future months
+    document.getElementById('result-count').innerHTML='Loading...';
+    document.getElementById('search-results').innerHTML='';
+    document.getElementById('totals-bar').innerHTML='';
+    apiCall({action:'getSchedule', month:m}).then(function(data){
+      if(data.status==='success' && data.entries.length>0){
+        // Convert sheet entries to RAW_DATA format
+        var rows = data.entries.map(function(e){
+          // slot is Early/Late, convert to shift display
+          var dayOfMonth = parseInt(e.date.split(' ')[1]);
+          var dt = new Date(2026, MONTHS.indexOf(m), dayOfMonth);
+          var dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dt.getDay()];
+          return {
+            date: e.date,
+            day: dayName,
+            month: m,
+            course: e.course,
+            name: e.name,
+            shift: e.shift || (e.slot === 'Early' ? '7-3' : '9-6')
+          };
+        });
+        // Apply name and course filters
+        var filtered = rows.filter(function(e){
+          return (q===''||e.name===q)&&(c==='All'||e.course===c);
+        });
+        // Sort by date
+        filtered.sort(function(a,b){
+          return parseInt(a.date.split(' ')[1]) - parseInt(b.date.split(' ')[1]);
+        });
+        document.getElementById('result-count').innerHTML=filtered.length+' assignment'+(filtered.length!==1?'s':'')+' found'+(q?' <span class="search-badge">'+q+'</span>':'');
+        if(filtered.length===0){
+          document.getElementById('search-results').innerHTML='<div class="empty">No assignments found</div>';
+          return;
+        }
+        document.getElementById('search-results').innerHTML=buildTable(filtered,true);
+        document.getElementById('totals-bar').innerHTML=buildTotals(filtered);
+      } else {
+        document.getElementById('result-count').innerHTML='0 assignments found';
+        document.getElementById('search-results').innerHTML='<div class="empty">No schedule built yet for '+m+'. Adam needs to complete and save the '+m+' schedule first.</div>';
+      }
+    }).catch(function(){
+      document.getElementById('result-count').innerHTML='';
+      document.getElementById('search-results').innerHTML='<div class="empty">Error loading '+m+' schedule. Please try again.</div>';
+    });
+    return;
+  }
+
+  // Static months - use RAW_DATA as before
   var f=RAW_DATA.filter(function(e){return(q===''||e.name===q)&&(m==='All'||e.month===m)&&(c==='All'||e.course===c);});
   document.getElementById('result-count').innerHTML=f.length+' assignment'+(f.length!==1?'s':'')+' found'+(q?' <span class="search-badge">'+q+'</span>':'');
   if(f.length===0){document.getElementById('search-results').innerHTML='<div class="empty">No assignments found</div>';document.getElementById('totals-bar').innerHTML='';return;}
@@ -928,7 +986,22 @@ function selectPerson(name){
   if(!name){d.innerHTML='<div class="empty">Select a name above</div>';c.textContent='';return;}
   var rows=RAW_DATA.filter(function(e){return e.name===name;});
   rows.sort(function(a,b){var mi=MONTHS.indexOf(a.month)-MONTHS.indexOf(b.month);if(mi!==0)return mi;return parseInt(a.date.split(' ')[1])-parseInt(b.date.split(' ')[1]);});
-  c.textContent=rows.length+' shift'+(rows.length!==1?'s':'')+' scheduled';
+  c.textContent=rows.length+' shift'+(rows.length!==1?'s':'')+' scheduled (Jan-Jun)';
+  // Also load future months from Google Sheets
+  apiCall({action:'getSchedule',month:'July'}).then(function(data){
+    if(data.status==='success'&&data.entries.length>0){
+      var extra=data.entries.filter(function(e){return e.name===name;}).map(function(e){
+        var dayOfMonth=parseInt(e.date.split(' ')[1]);
+        var dt=new Date(2026,6,dayOfMonth);
+        return {date:e.date,day:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dt.getDay()],month:'July',course:e.course,name:e.name,shift:e.shift||(e.slot==='Early'?'7-3':'9-6')};
+      });
+      if(extra.length>0){
+        var allRows=rows.concat(extra);
+        c.textContent=allRows.length+' shift'+(allRows.length!==1?'s':'')+' scheduled';
+        d.innerHTML='<div id="person-name">'+name+'</div>'+buildTable(allRows,false)+'<div class="totals-bar">'+buildTotals(allRows)+'</div>';
+      }
+    }
+  }).catch(function(){});
   d.innerHTML='<div id="person-name">'+name+'</div>'+buildTable(rows,false)+'<div class="totals-bar">'+buildTotals(rows)+'</div>';
 }
 
