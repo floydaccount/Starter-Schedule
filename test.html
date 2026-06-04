@@ -1084,29 +1084,8 @@ function initRequestsTab() {
 
 function getKey(name, month) { return name + '|' + month; }
 
-function renderCalendar() {
-  const name = document.getElementById('req-name').value;
-  const month = document.getElementById('req-month').value;
-  const container = document.getElementById('req-calendar');
-  const status = document.getElementById('req-status');
+// renderCalendar defined below
 
-  if (!name || !month) { container.innerHTML = ''; status.textContent = ''; return; }
-
-  status.textContent = 'Loading...';
-
-  // Load existing requests from Google Sheet
-  apiCall({action: 'getRequests', month: month}).then(function(data) {
-    if (data.status === 'success') {
-      // Update cache with sheet data
-      Object.entries(data.requests).forEach(function([n, days]) {
-        requestsCache[getKey(n, month)] = days;
-      });
-    }
-    renderCalendarUI(name, month);
-  }).catch(function() {
-    renderCalendarUI(name, month);
-  });
-}
 
 function renderCalendarUI(name, month) {
   const container = document.getElementById('req-calendar');
@@ -1204,41 +1183,8 @@ function initSchedulerTab() {
   // nothing needed on init
 }
 
-function renderScheduler() {
-  const month = document.getElementById('sched-month').value;
-  const container = document.getElementById('sched-content');
-  if (!month) { container.innerHTML = '<div class="empty">Select a month to view availability</div>'; return; }
+// renderScheduler defined below
 
-  container.innerHTML = '<div class="empty">Loading requests...</div>';
-
-  // Load requests and existing schedule from Google Sheet
-  Promise.all([
-    apiCall({action: 'getRequests', month: month}),
-    apiCall({action: 'getSchedule', month: month})
-  ]).then(function(results) {
-    const reqData = results[0];
-    const schedData = results[1];
-
-    if (reqData.status === 'success') {
-      schedulerRequests = reqData.requests || {};
-      // Also update local cache
-      Object.entries(schedulerRequests).forEach(function([n, days]) {
-        requestsCache[getKey(n, month)] = days;
-      });
-    }
-
-    if (schedData.status === 'success') {
-      schedData.entries.forEach(function(e) {
-        const key = month + '|' + e.date + '|' + e.course + '|' + e.slot;
-        scheduleAssignments[key] = {name: e.name, shift: e.shift};
-      });
-    }
-
-    renderSchedulerUI(month);
-  }).catch(function() {
-    renderSchedulerUI(month);
-  });
-}
 
 function renderSchedulerUI(month) {
   const container = document.getElementById('sched-content');
