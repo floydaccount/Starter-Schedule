@@ -1130,7 +1130,7 @@ function renderCalendarView(month){
       +'<div class="cal-date">'+d+'</div>'
       +'<div class="cal-day-name">'+dayName+'</div>'
       +'<div class="cal-status-dots">'+dots+'</div>'
-      +(offToday.length>0?'<div class="unavail-badge" onclick="showOffList(event,'+JSON.stringify(offToday)+')">'+offToday.length+' off &#9660;</div>':'')
+      +(offToday.length>0?'<div class="unavail-badge" data-names="'+offToday.join('|')+'" onclick="showOffList(event,this)">'+offToday.length+' off &#9660;</div>':'')
       +'</div>';
   }
   html += '</div>';
@@ -1197,8 +1197,9 @@ function panelAssign(month, dateStr, course, slot, name, d){
   openDayPanel(month, d, dateStr, dayName);
 }
 
-function showOffList(e, names){
+function showOffList(e, el){
   e.stopPropagation();
+  var names = el.getAttribute('data-names').split('|');
   var popup = document.getElementById('off-popup');
   var html = '<strong style="color:#e8d8a0;">Unavailable:</strong><ul>';
   for(var i=0;i<names.length;i++) html += '<li>'+names[i]+'</li>';
