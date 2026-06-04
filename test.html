@@ -1168,63 +1168,100 @@ function renderCalendarView(month){
 
 function openDayPanel(month, d, dateStr, dayName){
   var panel = document.getElementById('day-detail-panel');
-  var content = document.getElementById('day-detail-content');
+  var detailContent = document.getElementById('day-detail-content');
   var courses = ['Links','Harbor'], slots = ['Early','Late'];
-  var monthIdx = Object.keys(MDAYS).indexOf(month);
 
-  // Who is off
   var offToday=[];
   for(var n in schedRequests){if(schedRequests[n]&&schedRequests[n].indexOf(d)>=0)offToday.push(n);}
   var avail = allNames.filter(function(n){return offToday.indexOf(n)<0;});
 
-  var html = '<h3>'+dayName+' '+dateStr+'</h3>';
-  if(offToday.length>0) html+='<div style="font-size:12px;color:#8b1a1a;margin-bottom:12px;font-weight:bold;">Unavailable: '+offToday.join(', ')+'</div>';
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">';
+  detailContent.innerHTML = '';
 
-  for(var ci=0;ci<2;ci++){
-    var course=courses[ci];
-    html+='<div><h4 style="font-size:13px;font-weight:bold;margin-bottom:8px;color:'+(course==='Links'?'#1a6b3a':'#1a4a8a')+';">'+course+' Course</h4>';
-    for(var si=0;si<2;si++){
-      var slot=slots[si];
-      var key=month+'|'+dateStr+'|'+course+'|'+slot;
-      var asgn=schedAssignments[key]||{name:'',shift:''};
+  var closeBtn = document.createElement('button');
+  closeBtn.innerHTML = '&#10005; Close';
+  closeBtn.style.cssText = 'float:right;background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;cursor:pointer;font-size:12px;';
+  closeBtn.onclick = function(){ panel.style.display='none'; };
+  detailContent.appendChild(closeBtn);
+
+  var title = document.createElement('h3');
+  title.textContent = dayName+' '+dateStr;
+  title.style.cssText = 'font-size:16px;color:#1a3a1a;margin-bottom:8px;margin-top:4px;';
+  detailContent.appendChild(title);
+
+  if(offToday.length>0){
+    var unavDiv = document.createElement('div');
+    unavDiv.style.cssText = 'font-size:12px;color:#8b1a1a;margin-bottom:12px;font-weight:bold;';
+    unavDiv.textContent = 'Unavailable: '+offToday.join(', ');
+    detailContent.appendChild(unavDiv);
+  }
+
+  var grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:16px;clear:both;';
+
+  for(var ci=0;ci<courses.length;ci++){
+    var course = courses[ci];
+    var courseDiv = document.createElement('div');
+    var courseTitle = document.createElement('h4');
+    courseTitle.textContent = course+' Course';
+    courseTitle.style.cssText = 'font-size:13px;font-weight:bold;margin-bottom:8px;color:'+(course==='Links'?'#1a6b3a':'#1a4a8a')+';';
+    courseDiv.appendChild(courseTitle);
+
+    for(var si=0;si<slots.length;si++){
+      var slot = slots[si];
+      var key = month+'|'+dateStr+'|'+course+'|'+slot;
+      var asgn = schedAssignments[key]||{name:'',shift:''};
+
       var assignedToday=[];
-      for(var ci2=0;ci2<2;ci2++)for(var si2=0;si2<2;si2++){
+      for(var ci2=0;ci2<courses.length;ci2++)for(var si2=0;si2<slots.length;si2++){
         var k2=month+'|'+dateStr+'|'+courses[ci2]+'|'+slots[si2];
         if(!(courses[ci2]===course&&slots[si2]===slot)&&schedAssignments[k2]&&schedAssignments[k2].name)
           assignedToday.push(schedAssignments[k2].name);
       }
       var slotAvail=avail.filter(function(n){return assignedToday.indexOf(n)<0||n===asgn.name;});
-      html+='<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">'
-        +'<span style="font-size:11px;color:#888;min-width:36px;">'+slot+':</span>'
-        +'<select id="sel-'+ci+'-'+si+'" onchange="panelAssign('+JSON.stringify(month)+','+JSON.stringify(dateStr)+','+JSON.stringify(course)+','+JSON.stringify(slot)+',this.value,'+d+')" style="flex:1;padding:5px;border-radius:6px;border:1px solid #c8b87a;font-size:13px;font-family:Georgia,serif;">'
-        +'<option value="">-- Assign --</option>';
-      for(var ni=0;ni<slotAvail.length;ni++){
-        html+='<option value="'+slotAvail[ni]+'"'+(slotAvail[ni]===asgn.name?' selected':'')+'>'+slotAvail[ni]+'</option>';
-      }
-      html+='</select>'
-        +'<input type="text" placeholder="e.g. 7-3" value="'+(asgn.shift||'')+'" '
-        +'onchange="aShift('+JSON.stringify(month)+','+JSON.stringify(dateStr)+','+JSON.stringify(course)+','+JSON.stringify(slot)+',this.value)" '
-        +'style="width:76px;padding:5px;border-radius:6px;border:1px solid #c8b87a;font-size:12px;font-family:Georgia,serif;"></div>';
-    }
-    html+='</div>';
-  }
-  html+='</div>';
 
-  content.innerHTML = html;
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:8px;';
+
+      var label = document.createElement('span');
+      label.textContent = slot+':';
+      label.style.cssText = 'font-size:11px;color:#888;min-width:36px;';
+      row.appendChild(label);
+
+      var sel = document.createElement('select');
+      sel.style.cssText = 'flex:1;padding:5px;border-radius:6px;border:1px solid #c8b87a;font-size:13px;font-family:Georgia,serif;';
+      var defOpt = document.createElement('option');
+      defOpt.value=''; defOpt.textContent='-- Assign --';
+      sel.appendChild(defOpt);
+      for(var ni=0;ni<slotAvail.length;ni++){
+        var opt=document.createElement('option');
+        opt.value=slotAvail[ni]; opt.textContent=slotAvail[ni];
+        if(slotAvail[ni]===asgn.name) opt.selected=true;
+        sel.appendChild(opt);
+      }
+      (function(m,ds,c,s,day){
+        sel.addEventListener('change',function(){
+          aSlot(m,ds,c,s,this.value);
+          renderCalendarView(m);
+          var dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(2026,Object.keys(MDAYS).indexOf(m),day).getDay()];
+          openDayPanel(m,day,ds,dn);
+        });
+      })(month,dateStr,course,slot,d);
+      row.appendChild(sel);
+
+      var inp = document.createElement('input');
+      inp.type='text'; inp.placeholder='e.g. 7-3'; inp.value=asgn.shift||'';
+      inp.style.cssText='width:76px;padding:5px;border-radius:6px;border:1px solid #c8b87a;font-size:12px;font-family:Georgia,serif;';
+      (function(m,ds,c,s){ inp.addEventListener('change',function(){ aShift(m,ds,c,s,this.value); }); })(month,dateStr,course,slot);
+      row.appendChild(inp);
+      courseDiv.appendChild(row);
+    }
+    grid.appendChild(courseDiv);
+  }
+  detailContent.appendChild(grid);
   panel.style.display = 'block';
   panel.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
-function panelAssign(month, dateStr, course, slot, name, d){
-  aSlot(month, dateStr, course, slot, name);
-  // Refresh calendar cell
-  renderCalendarView(month);
-  // Reopen panel to update dropdowns
-  var dt = new Date(2026, Object.keys(MDAYS).indexOf(month), d);
-  var dayName = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getDay()];
-  openDayPanel(month, d, dateStr, dayName);
-}
 
 function showOffList(e, el){
   e.stopPropagation();
@@ -1245,10 +1282,7 @@ function showOffList(e, el){
   setTimeout(function(){ popup.style.display='none'; }, 4000);
 }
 
-document.addEventListener('click', function(){
-  var popup = document.getElementById('off-popup');
-  if(popup) popup.style.display='none';
-});
+
 
 function closeDayPanel(){
   document.getElementById('day-detail-panel').style.display='none';
