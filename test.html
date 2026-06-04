@@ -112,7 +112,7 @@ tr{border-bottom:1px solid #f0ece0;}
   <div id="header-titles">
     <h1>2026 Starter Schedule</h1>
     <p>Links &amp; Harbor Courses</p>
-    <div id="coverage-badge">Covers: January - June 2026</div>
+    <div id="coverage-badge">Jan-Jun static · Jul+ from scheduler</div>
   </div>
   <div id="tab-bar">
     <button class="tab-btn active" id="tab-search" onclick="switchView('search')">Schedule</button>
@@ -125,7 +125,7 @@ tr{border-bottom:1px solid #f0ece0;}
   <div id="view-search" class="view active">
     <div id="filters">
       <select class="filter-select" id="search-input" style="font-size:15px;padding:10px 16px;min-width:200px;"><option value="">All Starters</option></select>
-      <select class="filter-select" id="month-filter"><option value="All">All Months</option><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option></select>
+      <select class="filter-select" id="month-filter"><option value="All">All Months</option><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select>
       <select class="filter-select" id="course-filter"><option value="All">All Courses</option><option>Links</option><option>Harbor</option></select>
     </div>
     <div id="result-count"></div>
@@ -911,10 +911,45 @@ function switchView(v){
   for(var i=0;i<bs.length;i++){var oc=bs[i].getAttribute('onclick')||'';bs[i].className='tab-btn '+(oc.indexOf("'"+v+"'")>=0?'active':'inactive');}
 }
 
+var STATIC_MONTHS=['January','February','March','April','May','June'];
+
 function renderSearch(){
   var q=document.getElementById('search-input').value;
   var m=document.getElementById('month-filter').value;
   var c=document.getElementById('course-filter').value;
+
+  // Future months - pull from Google Sheets via Cloudflare Worker
+  if(m!=='All' && STATIC_MONTHS.indexOf(m)<0){
+    document.getElementById('result-count').innerHTML='Loading...';
+    document.getElementById('search-results').innerHTML='';
+    document.getElementById('totals-bar').innerHTML='';
+    apiRead({action:'getSchedule',month:m}).then(function(data){
+      if(data.status==='success'&&data.entries.length>0){
+        var monthIdx=['January','February','March','April','May','June','July','August','September','October','November','December'].indexOf(m);
+        var rows=data.entries.map(function(e){
+          var day=parseInt(e.date.split(' ')[1]);
+          var dt=new Date(2026,monthIdx,day);
+          var dayName=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dt.getDay()];
+          return {date:e.date,day:dayName,month:m,course:e.course,name:e.name,shift:e.shift||''};
+        }).filter(function(e){return(q===''||e.name===q)&&(c==='All'||e.course===c);});
+        rows.sort(function(a,b){return parseInt(a.date.split(' ')[1])-parseInt(b.date.split(' ')[1]);});
+        document.getElementById('result-count').innerHTML=rows.length+' assignment'+(rows.length!==1?'s':'')+' found'+(q?' <span class="search-badge">'+q+'</span>':'');
+        if(rows.length===0){document.getElementById('search-results').innerHTML='<div class="empty">No assignments found</div>';document.getElementById('totals-bar').innerHTML='';return;}
+        document.getElementById('search-results').innerHTML=buildTable(rows,true);
+        document.getElementById('totals-bar').innerHTML=buildTotals(rows);
+      } else {
+        document.getElementById('result-count').innerHTML='0 assignments found';
+        document.getElementById('search-results').innerHTML='<div class="empty">No schedule built yet for '+m+'. Adam needs to complete and save the '+m+' schedule in the Scheduler tab first.</div>';
+        document.getElementById('totals-bar').innerHTML='';
+      }
+    }).catch(function(){
+      document.getElementById('result-count').innerHTML='';
+      document.getElementById('search-results').innerHTML='<div class="empty">Error loading '+m+' schedule. Please try again.</div>';
+    });
+    return;
+  }
+
+  // Jan-Jun static data
   var f=RAW_DATA.filter(function(e){return(q===''||e.name===q)&&(m==='All'||e.month===m)&&(c==='All'||e.course===c);});
   document.getElementById('result-count').innerHTML=f.length+' assignment'+(f.length!==1?'s':'')+' found'+(q?' <span class="search-badge">'+q+'</span>':'');
   if(f.length===0){document.getElementById('search-results').innerHTML='<div class="empty">No assignments found</div>';document.getElementById('totals-bar').innerHTML='';return;}
