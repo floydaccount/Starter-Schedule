@@ -887,7 +887,8 @@ function renderCalUI(name,month){
   for(var i=0;i<startDay;i++)h+='<div class="cal-day empty-day"></div>';
   for(var d=1;d<=totalDays;d++){
     var isOff=offDays.indexOf(d)>=0,dt=new Date(2026,monthIdx,d);
-    h+='<div class="cal-day'+(isOff?' unavailable':'')+'" onclick="toggleDay('+JSON.stringify(name)+','+JSON.stringify(month)+','+d+')">'+'<div class="day-num">'+d+'</div><div class="day-name">'+DNAMES[dt.getDay()]+'</div></div>';
+    var cls='cal-day'+(isOff?' unavailable':'');
+    h+='<div class="'+cls+'" data-d="'+d+'" data-name="'+name.replace(/"/g,'')+'" data-month="'+month+'"><div class="day-num">'+d+'</div><div class="day-name">'+DNAMES[dt.getDay()]+'</div></div>';
   }
   h+='</div>';
   if(offDays.length>0){
@@ -896,6 +897,15 @@ function renderCalUI(name,month){
   }
   h+='<div style="margin-top:16px;"><button onclick="submitReq('+JSON.stringify(name)+','+JSON.stringify(month)+')" style="padding:10px 28px;background:#1a3a1a;color:#e8d8a0;border:none;border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:15px;font-weight:bold;">Submit Request</button> <span id="sub-status" style="font-size:13px;color:#1a6b3a;"></span></div>';
   document.getElementById('req-calendar').innerHTML=h;
+  // Attach click handlers via event delegation
+  document.getElementById('req-calendar').onclick=function(e){
+    var el=e.target.closest('.cal-day');
+    if(!el||el.classList.contains('empty-day'))return;
+    var d=parseInt(el.getAttribute('data-d'));
+    var n=el.getAttribute('data-name');
+    var m=el.getAttribute('data-month');
+    if(d&&n&&m)toggleDay(n,m,d);
+  };
   document.getElementById('req-status').textContent=offDays.length>0?offDays.length+' day'+(offDays.length!==1?'s':'')+' marked. Click Submit to save.':'Click any day to mark unavailable, then Submit.';
 }
 
