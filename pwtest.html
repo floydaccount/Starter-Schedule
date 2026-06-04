@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Test</title>
+<style>
+body { font-family: Georgia, serif; background: #1a3a1a; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+.box { background: white; padding: 40px; border-radius: 14px; text-align: center; width: 300px; }
+input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; text-align: center; }
+button { width: 100%; padding: 10px; background: #1a3a1a; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
+#result { margin-top: 10px; font-size: 14px; }
+#content { display: none; margin-top: 20px; background: #e8f5ed; padding: 20px; border-radius: 8px; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>⛳ Password Test</h2>
+  <input type="password" id="pw" placeholder="Enter password" onkeydown="if(event.key==='Enter') tryLogin()">
+  <button onclick="tryLogin()">Enter</button>
+  <div id="result"></div>
+  <div id="content">
+    <strong>✓ Login successful!</strong><br>
+    Role: <span id="role"></span>
+  </div>
+</div>
+
+<script>
+const STARTER = 'wilddunes';
+const ADMIN = 'schedule';
+
+function tryLogin() {
+  var pw = document.getElementById('pw').value;
+  var result = document.getElementById('result');
+  var content = document.getElementById('content');
+  var role = document.getElementById('role');
+
+  if (pw === ADMIN) {
+    result.textContent = '';
+    content.style.display = 'block';
+    role.textContent = 'Admin (schedule)';
+  } else if (pw === STARTER) {
+    result.textContent = '';
+    content.style.display = 'block';
+    role.textContent = 'Starter (wilddunes)';
+  } else {
+    result.textContent = 'Wrong password: [' + pw + ']';
+    result.style.color = 'red';
+  }
+}
+</script>
+</body>
+</html>
