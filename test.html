@@ -1360,15 +1360,51 @@ function updateProgress(month){
 }
 
 function saveSchedule(){
-  var month=document.getElementById('sched-month').value,el=document.getElementById('save-status');
+  var month=document.getElementById('sched-month').value;
   if(!month){alert('Select a month first.');return;}
-  el.textContent='Saving...';
+  var el=document.getElementById('save-status');
+  if(el) el.textContent='Saving...';
+  
   var entries=[];
-  for(var key in schedAssignments){if(key.indexOf(month+'|')===0&&schedAssignments[key].name){var p=key.split('|');entries.push({date:p[1],course:p[2],slot:p[3],name:schedAssignments[key].name,shift:schedAssignments[key].shift});}}
+  for(var key in schedAssignments){
+    if(key.indexOf(month+'|')===0&&schedAssignments[key]&&schedAssignments[key].name){
+      var p=key.split('|');
+      if(p.length>=4){
+        entries.push({date:p[1],course:p[2],slot:p[3],name:schedAssignments[key].name,shift:schedAssignments[key].shift||''});
+      }
+    }
+  }
+  
+  if(entries.length===0){
+    alert('No assignments to save yet. Please assign starters to slots first.');
+    if(el) el.textContent='';
+    return;
+  }
+  
+  // Show what we are saving
+  console.log('Saving '+entries.length+' entries for '+month);
+  
+  var timeout = setTimeout(function(){
+    if(el) el.textContent='';
+    alert('Save timed out. Check your internet connection and try again.');
+  }, 10000);
+  
   apiCall({action:'saveSchedule',month:month,entries:JSON.stringify(entries)}).then(function(data){
-    el.textContent=data.status==='success'?'Schedule saved!':'Error saving.';
-    setTimeout(function(){el.textContent='';},3000);
-  }).catch(function(){el.textContent='Connection error.';});
+    clearTimeout(timeout);
+    if(data.status==='success'){
+      if(el) el.textContent='Schedule saved!';
+      alert('Schedule saved successfully! '+entries.length+' assignments saved.');
+      setTimeout(function(){if(el)el.textContent='';},3000);
+    } else {
+      if(el) el.textContent='Error saving.';
+      alert('Error saving: '+(data.message||'Unknown error'));
+    }
+  }).catch(function(err){
+    clearTimeout(timeout);
+    if(el) el.textContent='';
+    alert('Connection error saving schedule. Please try again.');
+    console.log('Save error:',err);
+  });
 }
 
 function printSummary(){
