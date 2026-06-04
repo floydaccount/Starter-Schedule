@@ -86,7 +86,7 @@ tr{border-bottom:1px solid #f0ece0;}
 .dot-filled{background:#1a6b3a;}
 .dot-empty{background:#ddd;}
 .dot-unavail{background:#8b1a1a;}
-.month-cal-cell .unavail-badge{font-size:9px;color:#8b1a1a;font-weight:bold;margin-top:3px;}
+.month-cal-cell .unavail-badge{font-size:9px;color:#8b1a1a;font-weight:bold;margin-top:4px;line-height:1.4;word-break:break-word;white-space:normal;}
 
 /* Day detail panel */
 #day-detail-panel{background:#fff;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.12);border-left:4px solid #1a3a1a;display:none;}
@@ -1130,7 +1130,7 @@ function renderCalendarView(month){
       +'<div class="cal-date">'+d+'</div>'
       +'<div class="cal-day-name">'+dayName+'</div>'
       +'<div class="cal-status-dots">'+dots+'</div>'
-      +(offToday.length>0?'<div class="unavail-badge" data-names="'+offToday.join('|')+'" onclick="showOffList(event,this)">'+offToday.length+' off &#9660;</div>':'')
+      +(offToday.length>0?'<div class="unavail-badge">&#10005; '+offToday.join(', ')+'</div>':'')
       +'</div>';
   }
   html += '</div>';
