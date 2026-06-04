@@ -72,7 +72,7 @@ tr{border-bottom:1px solid #f0ece0;}
 /* Monthly calendar view */
 .month-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px;}
 .month-cal-header{text-align:center;font-size:12px;font-weight:bold;color:#888;padding:6px;text-transform:uppercase;background:#f4f1ea;border-radius:4px;}
-.month-cal-cell{border-radius:8px;padding:6px;min-height:80px;cursor:pointer;border:2px solid transparent;transition:all 0.15s;position:relative;}
+.month-cal-cell{border-radius:8px;padding:6px;min-height:95px;cursor:pointer;border:2px solid transparent;transition:all 0.15s;position:relative;}
 .month-cal-cell:hover{border-color:#c8b87a;transform:scale(1.02);}
 .month-cal-cell.empty-cell{background:transparent;cursor:default;border:none;}
 .month-cal-cell.status-empty{background:#fff;border-color:#e0d8c8;}
@@ -87,6 +87,8 @@ tr{border-bottom:1px solid #f0ece0;}
 .dot-empty{background:#ddd;}
 .dot-unavail{background:#8b1a1a;}
 .month-cal-cell .unavail-badge{font-size:9px;color:#8b1a1a;font-weight:bold;margin-top:4px;line-height:1.4;word-break:break-word;white-space:normal;}
+.cal-course-label{font-size:9px;color:#1a3a1a;line-height:1.4;margin-top:2px;word-break:break-word;white-space:normal;}
+.cal-empty-label{font-size:9px;color:#bbb;margin-top:2px;font-style:italic;}
 
 /* Day detail panel */
 #day-detail-panel{background:#fff;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.12);border-left:4px solid #1a3a1a;display:none;}
@@ -123,7 +125,7 @@ tr{border-bottom:1px solid #f0ece0;}
   <div id="view-search" class="view active">
     <div id="filters">
       <select class="filter-select" id="search-input" style="font-size:15px;padding:10px 16px;min-width:200px;"><option value="">All Starters</option></select>
-      <select class="filter-select" id="month-filter"><option value="All">All Months</option><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option></select>
+      <select class="filter-select" id="month-filter"><option value="All">All Months</option><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option></select>
       <select class="filter-select" id="course-filter"><option value="All">All Courses</option><option>Links</option><option>Harbor</option></select>
     </div>
     <div id="result-count"></div>
@@ -1138,11 +1140,18 @@ function renderCalendarView(month){
     else if(dayFilled>0)statusClass='status-partial';
     else if(offToday.length>0)statusClass='status-urgent';
 
-    var dotsHtml='';
-    for(var ci=0;ci<2;ci++){
-      for(var si=0;si<2;si++){
-        var isFilled=schedAssignments[month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si]]&&schedAssignments[month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si]].name;
-        dotsHtml+='<span class="dot '+(isFilled?'dot-filled':'dot-empty')+'"></span>';
+    // Build assignment summary
+    var assignHtml='';
+    for(var ci=0;ci<courses.length;ci++){
+      var courseAssigns=[];
+      for(var si=0;si<slots.length;si++){
+        var k=month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si];
+        if(schedAssignments[k]&&schedAssignments[k].name){
+          courseAssigns.push(schedAssignments[k].name+(schedAssignments[k].shift?' '+schedAssignments[k].shift:''));
+        }
+      }
+      if(courseAssigns.length>0){
+        assignHtml+='<div class="cal-course-label">'+(courses[ci]==='Links'?'L':'H')+': '+courseAssigns.join(', ')+'</div>';
       }
     }
 
@@ -1150,7 +1159,7 @@ function renderCalendarView(month){
     cell.className='month-cal-cell '+statusClass;
     cell.innerHTML='<div class="cal-date">'+d+'</div>'
       +'<div class="cal-day-name">'+dayName+'</div>'
-      +'<div class="cal-status-dots">'+dotsHtml+'</div>'
+      +(assignHtml||'<div class="cal-empty-label">No assignments</div>')
       +(offToday.length>0?'<div class="unavail-badge">&#10005; '+offToday.join(', ')+'</div>':'');
 
     (function(m,day,ds,dn){
