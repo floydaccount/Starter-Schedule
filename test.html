@@ -905,15 +905,9 @@ function apiRead(params){
   });
 }
 
-// WRITE: use fetch POST with no-cors (fire and forget)
+// WRITE: use JSONP GET (same as read, works for writes too since Apps Script handles GET)
 function apiWrite(params){
-  return new Promise(function(resolve, reject){
-    var formData = new FormData();
-    for(var k in params) formData.append(k, params[k]);
-    fetch(AURL, {method:'POST', body:formData, mode:'no-cors'})
-      .then(function(){ resolve({status:'success'}); })
-      .catch(function(err){ reject(err); });
-  });
+  return apiRead(params);
 }
 
 // Route to correct method based on action
@@ -1134,25 +1128,13 @@ function submitReq(name,month){
   var days=requestsCache[getKey(name,month)]||[];
   var el=document.getElementById('sub-status');
   el.textContent='Saving...';
-  var params={action:'submitRequest',name:name,month:month,days:days.join(',')};
-  apiCall(params).then(function(data){
-    if(data.status==='success'){
-      el.textContent='Saved! '+days.length+' day'+(days.length!==1?'s':'')+' submitted.';
-    } else {
-      el.textContent='Error: '+(data.message||'Unknown error');
-    }
+  apiCall({action:'submitRequest',name:name,month:month,days:days.join(',')}).then(function(data){
+    el.textContent=data.status==='success'
+      ?'Saved! '+days.length+' day'+(days.length!==1?'s':'')+' submitted.'
+      :'Error: '+(data.message||'Unknown error');
     setTimeout(function(){el.textContent='';},4000);
-  }).catch(function(err){
-    // Retry once after 2 seconds
-    el.textContent='Retrying...';
-    setTimeout(function(){
-      apiCall(params).then(function(data){
-        el.textContent=data.status==='success'?'Saved!':'Error saving.';
-        setTimeout(function(){el.textContent='';},3000);
-      }).catch(function(){
-        el.textContent='Connection error. Please try submitting again.';
-      });
-    }, 2000);
+  }).catch(function(){
+    el.textContent='Error. Please try again.';
   });
 }
 
