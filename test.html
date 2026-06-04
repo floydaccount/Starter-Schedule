@@ -876,32 +876,49 @@ function buildTotals(rows){
   return h;
 }
 
-// READ: use JSONP (GET with callback)
+// READ: use fetch with cors mode - follows redirects automatically
 function apiRead(params){
   return new Promise(function(resolve, reject){
-    var callbackName = 'cb_' + Date.now();
-    var url = AURL + '?callback=' + callbackName;
-    for(var k in params) url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
-    var script = document.createElement('script');
-    var timeout = setTimeout(function(){
-      delete window[callbackName];
-      if(document.body.contains(script)) document.body.removeChild(script);
-      reject(new Error('Timeout'));
-    }, 15000);
-    window[callbackName] = function(data){
-      clearTimeout(timeout);
-      delete window[callbackName];
-      if(document.body.contains(script)) document.body.removeChild(script);
+    var url = AURL + '?';
+    var parts = [];
+    for(var k in params) parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
+    url += parts.join('&');
+    
+    fetch(url, {
+      method: 'GET',
+      mode: 'cors',
+      credentials: 'omit',
+      redirect: 'follow'
+    }).then(function(response){
+      return response.json();
+    }).then(function(data){
       resolve(data);
-    };
-    script.onerror = function(){
-      clearTimeout(timeout);
-      delete window[callbackName];
-      if(document.body.contains(script)) document.body.removeChild(script);
-      reject(new Error('Load error'));
-    };
-    script.src = url;
-    document.body.appendChild(script);
+    }).catch(function(err){
+      // CORS failed - try JSONP as fallback
+      var callbackName = 'cb_' + Date.now();
+      var jsonpUrl = AURL + '?callback=' + callbackName;
+      for(var k in params) jsonpUrl += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+      var script = document.createElement('script');
+      var timeout = setTimeout(function(){
+        delete window[callbackName];
+        if(document.body.contains(script)) document.body.removeChild(script);
+        reject(new Error('Timeout'));
+      }, 15000);
+      window[callbackName] = function(data){
+        clearTimeout(timeout);
+        delete window[callbackName];
+        if(document.body.contains(script)) document.body.removeChild(script);
+        resolve(data);
+      };
+      script.onerror = function(){
+        clearTimeout(timeout);
+        delete window[callbackName];
+        if(document.body.contains(script)) document.body.removeChild(script);
+        reject(new Error('Load error'));
+      };
+      script.src = jsonpUrl;
+      document.body.appendChild(script);
+    });
   });
 }
 
