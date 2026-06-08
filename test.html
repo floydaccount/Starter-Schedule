@@ -62,6 +62,22 @@ tr{border-bottom:1px solid #f0ece0;}
 .sched-course h4.harbor{color:#1a4a8a;}
 .unavail-list{font-size:12px;color:#8b1a1a;margin-bottom:6px;}
 
+/* Requests calendar grid */
+.req-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:20px;}
+.req-cal-header{text-align:center;font-size:11px;font-weight:bold;color:#888;padding:5px;text-transform:uppercase;background:#f4f1ea;border-radius:4px;}
+.req-cal-cell{border-radius:8px;padding:6px;min-height:70px;border:1px solid #e0d8c8;background:#fff;font-size:11px;}
+.req-cal-cell.empty-cell{background:transparent;border-color:transparent;}
+.req-cal-cell.has-requests{background:#fff8f0;border-color:#c8b87a;}
+.req-cal-cell .req-day-num{font-size:14px;font-weight:bold;color:#1a1a1a;margin-bottom:4px;}
+.req-cal-cell .req-day-name{font-size:10px;color:#888;margin-bottom:4px;}
+.req-cal-cell .req-name-tag{display:inline-block;background:#8b1a1a;color:#fff;border-radius:10px;padding:1px 7px;margin:1px;font-size:10px;font-weight:bold;}
+.req-summary-table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.req-summary-table th{background:#1a3a1a;color:#e8d8a0;padding:12px 18px;text-align:left;font-size:14px;}
+.req-summary-table td{padding:10px 18px;font-size:14px;border-bottom:1px solid #f0ece0;}
+.req-summary-table tr:last-child td{border-bottom:none;}
+.req-summary-table tr.even{background:#fff;}
+.req-summary-table tr.odd{background:#faf8f3;}
+
 /* Off list popup */
 #off-popup{position:fixed;background:#1a1a1a;color:#fff;border-radius:8px;padding:10px 14px;font-size:13px;font-family:Georgia,serif;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:200px;display:none;}
 #off-popup ul{margin:4px 0 0 0;padding:0 0 0 16px;}
@@ -160,7 +176,7 @@ tr{border-bottom:1px solid #f0ece0;}
         <select id="sched-month" class="filter-select" style="font-size:14px;"><option value="">-- Select month --</option><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select>
         <button onclick="loadScheduler()" style="padding:9px 18px;background:#1a4a8a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:14px;">Load Month</button>
         <button onclick="saveSchedule()" style="padding:9px 18px;background:#1a3a1a;color:#e8d8a0;border:none;border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:14px;">Save Schedule</button>
-        <button onclick="printSummary()" style="padding:9px 18px;background:#8b4a00;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:14px;">Print Requests</button>
+        <button onclick="showRequestsView()" style="padding:9px 18px;background:#8b4a00;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:14px;">View All Requests</button>
       </div>
     </div>
     <div id="save-status" style="font-size:13px;color:#1a6b3a;margin-bottom:12px;"></div>
@@ -174,6 +190,31 @@ tr{border-bottom:1px solid #f0ece0;}
     <div id="sched-content" style="display:none;"><div class="empty">Select a month and click Load Month</div></div>
   </div>
 </div>
+
+<!-- REQUESTS VIEW OVERLAY -->
+<div id="requests-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#f4f1ea; z-index:1000; overflow-y:auto;">
+  <div style="max-width:1100px; margin:0 auto; padding:24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+      <div>
+        <h1 style="font-size:22px; color:#1a3a1a; margin-bottom:4px;">Day-Off Requests</h1>
+        <div id="req-view-subtitle" style="font-size:13px; color:#666;"></div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <select id="req-view-month" onchange="renderRequestsView()" style="padding:9px 12px; border-radius:8px; border:1.5px solid #c8b87a; font-size:14px; background:#fff; font-family:Georgia,serif; cursor:pointer;">
+          <option value="">-- Select month --</option>
+          <option>January</option><option>February</option><option>March</option>
+          <option>April</option><option>May</option><option>June</option>
+          <option>July</option><option>August</option><option>September</option>
+          <option>October</option><option>November</option><option>December</option>
+        </select>
+        <button onclick="printRequestsView()" style="padding:9px 18px; background:#1a3a1a; color:#e8d8a0; border:none; border-radius:8px; cursor:pointer; font-family:Georgia,serif; font-size:14px;">🖨️ Print</button>
+        <button onclick="hideRequestsView()" style="padding:9px 18px; background:#c8b87a; color:#1a1a1a; border:none; border-radius:8px; cursor:pointer; font-family:Georgia,serif; font-size:14px; font-weight:bold;">← Back to Scheduler</button>
+      </div>
+    </div>
+    <div id="requests-view-content"></div>
+  </div>
+</div>
+
 <script>
 var SPW='wilddunes',APW='schedule',AURL='https://schedule-proxy.fsmattern.workers.dev',role='',allNames=[],requestsCache={},schedAssignments={},schedRequests={};
 var MONTHS=['January','February','March','April','May','June'];
@@ -1114,7 +1155,7 @@ function loadScheduler(){
   schedAssignments={};schedRequests={};
   Promise.all([apiCall({action:'getRequests',month:month}),apiCall({action:'getSchedule',month:month})]).then(function(r){
     if(r[0].status==='success')schedRequests=r[0].requests||{};
-    if(r[1].status==='success')r[1].entries.forEach(function(e){schedAssignments[month+'|'+e.date+'|'+e.course+'|'+e.slot]={name:e.name,shift:e.shift};});
+    if(r[1].status==='success')r[1].entries.forEach(function(e){ var s=String(e.shift||''); schedAssignments[month+'|'+e.date+'|'+e.course+'|'+e.slot]={name:String(e.name||''),shift:s}; });
     // Default to calendar view
     switchSchedView('calendar');
   }).catch(function(){document.getElementById('sched-cal-view').innerHTML='<div class="empty">Error loading. Try again.</div>';});
@@ -1500,31 +1541,82 @@ function saveSchedule(){
   });
 }
 
-function printSummary(){
-  var month=document.getElementById('sched-month').value;if(!month){alert('Select a month first.');return;}
-  var monthIdx=Object.keys(MDAYS).indexOf(month),rows='',any=false;
-  for(var i=0;i<allNames.length;i++){
-    var name=allNames[i],days=schedRequests[name];
-    if(days&&days.length>0){
-      any=true;
-      var s=days.slice().sort(function(a,b){return a-b;}),list=s.map(function(d){var dt=new Date(2026,monthIdx,d);return DNAMES[dt.getDay()]+' '+d;}).join(', ');
-      rows+='<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;font-weight:bold">'+name+'</td><td style="padding:8px 12px;border-bottom:1px solid #eee">'+list+'</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center">'+days.length+'</td></tr>';
-    }
+function showRequestsView(){
+  var month = document.getElementById('sched-month').value;
+  document.getElementById('requests-overlay').style.display = 'block';
+  if(month){
+    document.getElementById('req-view-month').value = month;
+    renderRequestsView();
   }
-  if(!any){alert('No requests for '+month+' yet.');return;}
-  var win=window.open('','_blank');
-  var html='<!DOCTYPE html><html><head><title>Requests '+month+'</title>';
-  html+='<style>body{font-family:Georgia,serif;padding:30px;}h1{color:#1a3a1a;}';
-  html+='table{width:100%;border-collapse:collapse;}';
-  html+='th{background:#1a3a1a;color:#e8d8a0;padding:10px 12px;text-align:left;}</style></head>';
-  html+='<body><h1>Day-Off Requests - '+month+' 2026</h1>';
-  html+='<table><thead><tr><th>Starter</th><th>Days Off</th><th>Total</th></tr></thead><tbody>'+rows+'</tbody></table>';
-  html+='<p style="color:#999;font-size:12px;margin-top:20px">Printed '+new Date().toLocaleDateString()+'</p>';
-  html+='</body></html>';
-  win.document.write(html);
-  win.document.close();
-  setTimeout(function(){win.print();},500);
 }
+
+function hideRequestsView(){
+  document.getElementById('requests-overlay').style.display = 'none';
+}
+
+function renderRequestsView(){
+  var month = document.getElementById('req-view-month').value;
+  var container = document.getElementById('requests-view-content');
+  var subtitle = document.getElementById('req-view-subtitle');
+  if(!month){ container.innerHTML = '<div class="empty">Select a month above</div>'; return; }
+  subtitle.textContent = month + ' 2026';
+  apiRead({action:'getRequests', month:month}).then(function(data){
+    var requests = (data.status === 'success') ? data.requests : schedRequests;
+    renderRequestsContent(month, requests);
+  }).catch(function(){ renderRequestsContent(month, schedRequests); });
+}
+
+function renderRequestsContent(month, requests){
+  var container = document.getElementById('requests-view-content');
+  var monthIdx = Object.keys(MDAYS).indexOf(month);
+  var totalDays = MDAYS[month] || 30;
+  var startDay = MSTART[month] || 0;
+  var dh = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  var calHtml = '<div class="req-cal-grid">';
+  for(var i=0;i<7;i++) calHtml += '<div class="req-cal-header">'+dh[i]+'</div>';
+  for(var i=0;i<startDay;i++) calHtml += '<div class="req-cal-cell empty-cell"></div>';
+  for(var d=1;d<=totalDays;d++){
+    var dt = new Date(2026, monthIdx, d);
+    var offNames = [];
+    for(var n in requests){ if(requests[n]&&requests[n].indexOf(d)>=0) offNames.push(n); }
+    var hasReq = offNames.length > 0;
+    calHtml += '<div class="req-cal-cell'+(hasReq?' has-requests':'')+'">';
+    calHtml += '<div class="req-day-num">'+d+'</div><div class="req-day-name">'+dh[dt.getDay()]+'</div>';
+    offNames.forEach(function(n){ calHtml += '<span class="req-name-tag">'+n+'</span>'; });
+    calHtml += '</div>';
+  }
+  calHtml += '</div>';
+
+  var rows = '', anyReqs = false, rowNum = 0;
+  allNames.forEach(function(name){
+    var days = requests[name];
+    if(days&&days.length>0){
+      anyReqs = true; rowNum++;
+      var sorted = days.slice().sort(function(a,b){return a-b;});
+      var list = sorted.map(function(d){ var dt=new Date(2026,monthIdx,d); return dh[dt.getDay()]+' '+d; }).join(', ');
+      rows += '<tr class="'+(rowNum%2===0?'even':'odd')+'">';
+      rows += '<td style="font-weight:bold">'+name+'</td><td>'+list+'</td>';
+      rows += '<td style="text-align:center;font-weight:bold">'+days.length+'</td></tr>';
+    }
+  });
+
+  if(!anyReqs){ container.innerHTML = calHtml+'<div class="empty">No requests for '+month+' yet.</div>'; return; }
+
+  var tableHtml = '<table class="req-summary-table"><thead><tr>'
+    +'<th style="width:20%">Starter</th><th>Days Off</th>'
+    +'<th style="width:10%;text-align:center">Total Days</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table>';
+  container.innerHTML = calHtml + tableHtml;
+}
+
+function printRequestsView(){
+  var month = document.getElementById('req-view-month').value;
+  if(!month){ alert('Select a month first.'); return; }
+  window.print();
+}
+
+function printSummary(){ showRequestsView(); }
 
 </script>
 <div id="off-popup"></div>
