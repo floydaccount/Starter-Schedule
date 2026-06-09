@@ -1508,9 +1508,7 @@ function saveSchedule(){
       }
     }
   }
-  
-  // Allow saving even with 0 entries - this clears the month's schedule
-  console.log('Saving '+entries.length+' entries for '+month);
+  console.log('Saving '+entries.length+' entries for '+month+': '+JSON.stringify(entries));
   
   var timeout = setTimeout(function(){
     if(el) el.textContent='';
@@ -1522,6 +1520,14 @@ function saveSchedule(){
     if(data.status==='success'){
       if(el) el.textContent='Schedule saved!';
       alert(entries.length > 0 ? 'Schedule saved! '+entries.length+' assignments saved.' : 'Schedule cleared successfully.');
+      // Clear schedAssignments for this month and reload from saved entries
+      for(var key in schedAssignments){
+        if(key.indexOf(month+'|')===0) delete schedAssignments[key];
+      }
+      entries.forEach(function(e){
+        schedAssignments[month+'|'+e.date+'|'+e.course+'|'+e.slot]={name:e.name,shift:e.shift};
+      });
+      renderCalendarView(month);
       setTimeout(function(){if(el)el.textContent='';},3000);
     } else {
       if(el) el.textContent='Error saving.';
