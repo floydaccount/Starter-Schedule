@@ -1509,13 +1509,7 @@ function saveSchedule(){
     }
   }
   
-  if(entries.length===0){
-    alert('No assignments to save yet. Please assign starters to slots first.');
-    if(el) el.textContent='';
-    return;
-  }
-  
-  // Show what we are saving
+  // Allow saving even with 0 entries - this clears the month's schedule
   console.log('Saving '+entries.length+' entries for '+month);
   
   var timeout = setTimeout(function(){
@@ -1527,7 +1521,7 @@ function saveSchedule(){
     clearTimeout(timeout);
     if(data.status==='success'){
       if(el) el.textContent='Schedule saved!';
-      alert('Schedule saved successfully! '+entries.length+' assignments saved.');
+      alert(entries.length > 0 ? 'Schedule saved! '+entries.length+' assignments saved.' : 'Schedule cleared successfully.');
       setTimeout(function(){if(el)el.textContent='';},3000);
     } else {
       if(el) el.textContent='Error saving.';
