@@ -78,6 +78,19 @@ tr{border-bottom:1px solid #f0ece0;}
 .req-summary-table tr.even{background:#fff;}
 .req-summary-table tr.odd{background:#faf8f3;}
 
+/* Request grid matrix */
+.req-grid-table{border-collapse:collapse;font-family:Georgia,serif;font-size:12px;white-space:nowrap;}
+.req-grid-table thead th{background:#1a3a1a;color:#e8d8a0;padding:8px 6px;text-align:center;font-size:11px;border:1px solid #145a30;position:sticky;top:0;}
+.req-grid-day-col{text-align:left !important;padding-left:10px !important;min-width:80px;}
+.req-grid-day-cell{padding:4px 10px;border:1px solid #e0d8c8;font-size:12px;white-space:nowrap;}
+.req-grid-daynum{font-weight:bold;color:#1a1a1a;}
+.req-grid-dayname{color:#888;font-size:11px;}
+.req-grid-cell{padding:4px 6px;text-align:center;border:1px solid #e0d8c8;font-weight:bold;font-size:12px;}
+.req-grid-off{background:#8b1a1a;color:#fff;}
+.req-grid-open{background:#fff;color:transparent;}
+.req-grid-unknown{background:#fff3cd;border-color:#c8a000 !important;}
+.req-grid-assigned{background:#d4edda;color:#1a3a1a;font-size:9px;border-color:#1a6b3a !important;}
+
 /* Off list popup */
 #off-popup{position:fixed;background:#1a1a1a;color:#fff;border-radius:8px;padding:10px 14px;font-size:13px;font-family:Georgia,serif;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:200px;display:none;}
 #off-popup ul{margin:4px 0 0 0;padding:0 0 0 16px;}
@@ -210,6 +223,11 @@ tr{border-bottom:1px solid #f0ece0;}
         <button onclick="printRequestsView()" style="padding:9px 18px; background:#1a3a1a; color:#e8d8a0; border:none; border-radius:8px; cursor:pointer; font-family:Georgia,serif; font-size:14px;">🖨️ Print</button>
         <button onclick="hideRequestsView()" style="padding:9px 18px; background:#c8b87a; color:#1a1a1a; border:none; border-radius:8px; cursor:pointer; font-family:Georgia,serif; font-size:14px; font-weight:bold;">← Back to Scheduler</button>
       </div>
+    </div>
+    <!-- Sub-tabs for Calendar vs Matrix -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:2px solid #1a3a1a;padding-bottom:8px;">
+      <button id="req-subtab-cal" onclick="switchReqView('calendar')" style="padding:7px 20px;border-radius:8px 8px 0 0;border:none;cursor:pointer;font-family:Georgia,serif;font-size:14px;background:#1a3a1a;color:#e8d8a0;font-weight:bold;">📅 Calendar View</button>
+      <button id="req-subtab-matrix" onclick="switchReqView('matrix')" style="padding:7px 20px;border-radius:8px 8px 0 0;border:none;cursor:pointer;font-family:Georgia,serif;font-size:14px;background:#e0d8c8;color:#1a1a1a;">📊 Matrix View</button>
     </div>
     <div id="requests-view-content"></div>
   </div>
@@ -1374,7 +1392,10 @@ function openDayPanel(month, d, dateStr, dayName){
       }
       (function(m,ds,c,s,day){
         sel.addEventListener('change',function(){
-          aSlot(m,ds,c,s,this.value);
+          var selectedName = this.value;
+          aSlot(m,ds,c,s,selectedName);
+          // Check consecutive days warning
+          if(selectedName) checkConsecutiveWarning(m,day,selectedName);
           renderCalendarView(m);
           var dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(2026,Object.keys(MDAYS).indexOf(m),day).getDay()];
           openDayPanel(m,day,ds,dn);
@@ -1493,6 +1514,48 @@ function updateProgress(month){
   if(prog)prog.innerHTML='<strong>'+month+' Progress:</strong> '+filled+' of '+total+' slots filled';
 }
 
+function isAssignedOnDay(month, dayNum, name){
+  if(dayNum < 1) return false;
+  var dateStr = month.substring(0,3)+' '+dayNum;
+  var courses = ['Links','Harbor'], slots = ['Early','Late'];
+  for(var ci=0;ci<courses.length;ci++){
+    for(var si=0;si<slots.length;si++){
+      var key = month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si];
+      if(schedAssignments[key] && schedAssignments[key].name === name) return true;
+    }
+  }
+  return false;
+}
+
+function checkConsecutiveWarning(month, day, name){
+  var prev1 = isAssignedOnDay(month, day-1, name);
+  var prev2 = isAssignedOnDay(month, day-2, name);
+  var next1 = isAssignedOnDay(month, day+1, name);
+  var next2 = isAssignedOnDay(month, day+2, name);
+
+  // Warn if working 3+ consecutive days
+  var warningDays = [];
+  if(prev2 && prev1) warningDays.push((day-2)+', '+(day-1)+', '+day);
+  if(prev1 && next1) warningDays.push((day-1)+', '+day+', '+(day+1));
+  if(next1 && next2) warningDays.push(day+', '+(day+1)+', '+(day+2));
+
+  if(warningDays.length > 0){
+    // Show warning banner in the day panel
+    var existing = document.getElementById('consec-warning');
+    if(existing) existing.parentNode.removeChild(existing);
+    var panel = document.getElementById('day-detail-content');
+    var warning = document.createElement('div');
+    warning.id = 'consec-warning';
+    warning.style.cssText = 'background:#fff3cd;border:1px solid #c8a000;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#856404;';
+    warning.innerHTML = '&#9888; <strong>Consecutive days warning:</strong> '+name+' would work 3+ days in a row (days '+warningDays[0]+'). Adam can override.';
+    panel.insertBefore(warning, panel.firstChild);
+  } else {
+    // Remove warning if it exists
+    var existing = document.getElementById('consec-warning');
+    if(existing) existing.parentNode.removeChild(existing);
+  }
+}
+
 function saveSchedule(){
   var month=document.getElementById('sched-month').value;
   if(!month){alert('Select a month first.');return;}
@@ -1566,12 +1629,69 @@ function renderRequestsView(){
   }).catch(function(){ renderRequestsContent(month, schedRequests); });
 }
 
+var currentReqView = 'calendar';
+var currentReqData = {};
+
+function switchReqView(view){
+  currentReqView = view;
+  var calBtn = document.getElementById('req-subtab-cal');
+  var matBtn = document.getElementById('req-subtab-matrix');
+  if(calBtn && matBtn){
+    if(view === 'calendar'){
+      calBtn.style.background = '#1a3a1a'; calBtn.style.color = '#e8d8a0';
+      matBtn.style.background = '#e0d8c8'; matBtn.style.color = '#1a1a1a';
+    } else {
+      matBtn.style.background = '#1a3a1a'; matBtn.style.color = '#e8d8a0';
+      calBtn.style.background = '#e0d8c8'; calBtn.style.color = '#1a1a1a';
+    }
+  }
+  var month = document.getElementById('req-view-month').value;
+  if(month) renderRequestsContent(month, currentReqData);
+}
+
 function renderRequestsContent(month, requests){
+  currentReqData = requests;
+  if(currentReqView === 'matrix'){
+    renderMatrixContent(month, requests);
+  } else {
+    renderCalendarContent(month, requests);
+  }
+}
+
+function buildSummaryTable(month, requests){
+  var monthIdx = Object.keys(MDAYS).indexOf(month);
+  var dh = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var rows = '', rowNum = 0;
+  allNames.forEach(function(name){
+    var days = requests[name];
+    if(days&&days.length>0){
+      rowNum++;
+      var sorted = days.slice().sort(function(a,b){return a-b;});
+      var list = sorted.map(function(d){ var dt=new Date(2026,monthIdx,d); return dh[dt.getDay()]+' '+d; }).join(', ');
+      rows += '<tr class="'+(rowNum%2===0?'even':'odd')+'">';
+      rows += '<td style="font-weight:bold">'+name+'</td><td>'+list+'</td>';
+      rows += '<td style="text-align:center;font-weight:bold">'+days.length+'</td></tr>';
+    }
+  });
+  if(!rows) return '';
+  return '<table class="req-summary-table" style="margin-top:20px;"><thead><tr>'
+    +'<th style="width:20%">Starter</th><th>Days Off</th>'
+    +'<th style="width:10%;text-align:center">Total Days</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+function renderCalendarContent(month, requests){
   var container = document.getElementById('requests-view-content');
   var monthIdx = Object.keys(MDAYS).indexOf(month);
   var totalDays = MDAYS[month] || 30;
   var startDay = MSTART[month] || 0;
   var dh = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var anyReqs = allNames.some(function(n){ return requests[n] && requests[n].length > 0; });
+
+  if(!anyReqs){
+    container.innerHTML = '<div class="empty">No requests for '+month+' yet.</div>';
+    return;
+  }
 
   var calHtml = '<div class="req-cal-grid">';
   for(var i=0;i<7;i++) calHtml += '<div class="req-cal-header">'+dh[i]+'</div>';
@@ -1588,26 +1708,280 @@ function renderRequestsContent(month, requests){
   }
   calHtml += '</div>';
 
-  var rows = '', anyReqs = false, rowNum = 0;
-  allNames.forEach(function(name){
-    var days = requests[name];
-    if(days&&days.length>0){
-      anyReqs = true; rowNum++;
-      var sorted = days.slice().sort(function(a,b){return a-b;});
-      var list = sorted.map(function(d){ var dt=new Date(2026,monthIdx,d); return dh[dt.getDay()]+' '+d; }).join(', ');
-      rows += '<tr class="'+(rowNum%2===0?'even':'odd')+'">';
-      rows += '<td style="font-weight:bold">'+name+'</td><td>'+list+'</td>';
-      rows += '<td style="text-align:center;font-weight:bold">'+days.length+'</td></tr>';
-    }
+  container.innerHTML = calHtml + buildSummaryTable(month, requests);
+}
+
+function renderMatrixContent(month, requests){
+  var container = document.getElementById('requests-view-content');
+  var monthIdx = Object.keys(MDAYS).indexOf(month);
+  var totalDays = MDAYS[month] || 30;
+  var dh = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  // Starters who responded (submitted ANY request this month)
+  var responded = {};
+  allNames.forEach(function(n){ responded[n] = requests[n] && requests[n].length > 0; });
+
+  // Legend
+  var legendHtml = '<div style="display:flex;gap:16px;margin-bottom:12px;font-size:12px;flex-wrap:wrap;align-items:center;">'
+    +'<span><span style="display:inline-block;width:14px;height:14px;background:#8b1a1a;border-radius:3px;margin-right:4px;vertical-align:middle;"></span>R = Requested off</span>'
+    +'<span><span style="display:inline-block;width:14px;height:14px;background:#fff;border:1px solid #ccc;border-radius:3px;margin-right:4px;vertical-align:middle;"></span>Available (responded)</span>'
+    +'<span><span style="display:inline-block;width:14px;height:14px;background:#fff3cd;border:1px solid #c8a000;border-radius:3px;margin-right:4px;vertical-align:middle;"></span>No response yet</span>'
+    +'<span><span style="display:inline-block;width:14px;height:14px;background:#d4edda;border:1px solid #1a6b3a;border-radius:3px;margin-right:4px;vertical-align:middle;"></span>Assigned</span>'
+    +'<span style="color:#666;font-style:italic;">Click any available/no-response cell to assign</span>'
+    +'</div>';
+
+  // Mini assignment panel placeholder
+  var miniPanel = '<div id="matrix-mini-panel" style="display:none;background:#fff;border:2px solid #1a3a1a;border-radius:10px;padding:16px;margin-bottom:16px;box-shadow:0 4px 12px rgba(0,0,0,0.15);">'
+    +'<div id="matrix-mini-content"></div>'
+    +'</div>';
+
+  // Build grid using DOM to avoid onclick string escaping issues
+  var wrapper = document.createElement('div');
+  wrapper.innerHTML = legendHtml + miniPanel;
+
+  var scrollDiv = document.createElement('div');
+  scrollDiv.style.cssText = 'overflow-x:auto;margin-bottom:24px;';
+
+  var table = document.createElement('table');
+  table.className = 'req-grid-table';
+
+  // Header row
+  var thead = document.createElement('thead');
+  var headerRow = document.createElement('tr');
+  var dayTh = document.createElement('th');
+  dayTh.className = 'req-grid-day-col';
+  dayTh.textContent = 'Day';
+  headerRow.appendChild(dayTh);
+  allNames.forEach(function(n){
+    var abbr = n.length > 8 ? n.substring(0,7)+'.' : n;
+    var hasResp = responded[n];
+    var th = document.createElement('th');
+    th.title = n;
+    th.style.fontSize = '10px';
+    if(!hasResp) th.style.color = '#c8a000';
+    th.innerHTML = abbr + (hasResp ? '' : '<br>⚠');
+    headerRow.appendChild(th);
   });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
 
-  if(!anyReqs){ container.innerHTML = calHtml+'<div class="empty">No requests for '+month+' yet.</div>'; return; }
+  // Body rows
+  var tbody = document.createElement('tbody');
+  for(var d=1;d<=totalDays;d++){
+    var dt = new Date(2026, monthIdx, d);
+    var dayName = dh[dt.getDay()];
+    var isWeekend = dt.getDay()===0||dt.getDay()===6;
+    var dateStr = month.substring(0,3)+' '+d;
 
-  var tableHtml = '<table class="req-summary-table"><thead><tr>'
-    +'<th style="width:20%">Starter</th><th>Days Off</th>'
-    +'<th style="width:10%;text-align:center">Total Days</th>'
-    +'</tr></thead><tbody>'+rows+'</tbody></table>';
-  container.innerHTML = calHtml + tableHtml;
+    var tr = document.createElement('tr');
+    if(isWeekend) tr.style.background = '#f0ece0';
+
+    // Day label cell
+    var dayTd = document.createElement('td');
+    dayTd.className = 'req-grid-day-cell';
+    dayTd.innerHTML = '<span class="req-grid-daynum">'+d+'</span><span class="req-grid-dayname"> '+dayName+'</span>';
+    tr.appendChild(dayTd);
+
+    // One cell per starter
+    allNames.forEach(function(n){
+      var isOff = requests[n] && requests[n].indexOf(d) >= 0;
+      var assignedToday = false;
+      var assignedInfo = '';
+      var courses = ['Links','Harbor'], slots = ['Early','Late'];
+      for(var ci=0;ci<courses.length;ci++){
+        for(var si=0;si<slots.length;si++){
+          var k = month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si];
+          if(schedAssignments[k] && schedAssignments[k].name === n){
+            assignedToday = true;
+            assignedInfo = courses[ci][0]+':'+slots[si][0]+(schedAssignments[k].shift?' '+schedAssignments[k].shift:'');
+          }
+        }
+      }
+
+      var td = document.createElement('td');
+      td.className = 'req-grid-cell';
+
+      if(isOff){
+        td.classList.add('req-grid-off');
+        td.textContent = 'R';
+      } else if(assignedToday){
+        td.classList.add('req-grid-assigned');
+        td.textContent = assignedInfo;
+        td.style.cursor = 'pointer';
+        (function(m,day,ds,dn,name){ td.addEventListener('click', function(){ openMatrixPanel(m,day,ds,dn,name); }); })(month,d,dateStr,dayName,n);
+      } else if(responded[n]){
+        td.classList.add('req-grid-open');
+        td.style.cursor = 'pointer';
+        (function(m,day,ds,dn,name){ td.addEventListener('click', function(){ openMatrixPanel(m,day,ds,dn,name); }); })(month,d,dateStr,dayName,n);
+      } else {
+        td.classList.add('req-grid-unknown');
+        td.style.cursor = 'pointer';
+        (function(m,day,ds,dn,name){ td.addEventListener('click', function(){ openMatrixPanel(m,day,ds,dn,name); }); })(month,d,dateStr,dayName,n);
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  }
+  // Totals footer row
+  var tfoot = document.createElement('tfoot');
+  var totalsRow = document.createElement('tr');
+  totalsRow.style.cssText = 'background:#1a3a1a;color:#e8d8a0;font-weight:bold;';
+  var totalLabel = document.createElement('td');
+  totalLabel.className = 'req-grid-day-cell';
+  totalLabel.style.cssText = 'font-weight:bold;color:#e8d8a0;background:#1a3a1a;font-size:12px;';
+  totalLabel.textContent = 'Total Off';
+  totalsRow.appendChild(totalLabel);
+  allNames.forEach(function(n){
+    var days = requests[n] ? requests[n].length : 0;
+    var td = document.createElement('td');
+    td.className = 'req-grid-cell';
+    td.style.cssText = 'background:#1a3a1a;color:'+(days>0?'#e8d8a0':'rgba(232,216,160,0.3)')+';font-weight:bold;font-size:12px;border-color:#145a30;';
+    td.textContent = days > 0 ? days : '';
+    totalsRow.appendChild(td);
+  });
+  tfoot.appendChild(totalsRow);
+  table.appendChild(tfoot);
+  table.appendChild(tbody);
+  scrollDiv.appendChild(table);
+  wrapper.appendChild(scrollDiv);
+
+  // Summary table
+  var summaryDiv = document.createElement('div');
+  summaryDiv.innerHTML = buildSummaryTable(month, requests);
+  wrapper.appendChild(summaryDiv);
+
+  container.innerHTML = '';
+  container.appendChild(wrapper);
+}
+
+function openMatrixPanel(month, day, dateStr, dayName, starterName){
+  var panel = document.getElementById('matrix-mini-panel');
+  var panelContent = document.getElementById('matrix-mini-content');
+  var courses = ['Links','Harbor'], slots = ['Early','Late'];
+
+  panelContent.innerHTML = '';
+
+  // Header
+  var header = document.createElement('div');
+  header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;';
+  var title = document.createElement('h3');
+  title.style.cssText = 'font-size:15px;color:#1a3a1a;margin:0;';
+  title.textContent = dayName+' '+dateStr+' — '+starterName;
+  var closeBtn = document.createElement('button');
+  closeBtn.style.cssText = 'background:none;border:1px solid #ccc;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:12px;';
+  closeBtn.textContent = '✕ Close';
+  closeBtn.addEventListener('click', closeMatrixPanel);
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+  panelContent.appendChild(header);
+
+  // Unavailable today
+  var offToday = [];
+  for(var n in currentReqData){ if(currentReqData[n]&&currentReqData[n].indexOf(day)>=0) offToday.push(n); }
+  if(offToday.length > 0){
+    var unavDiv = document.createElement('div');
+    unavDiv.style.cssText = 'font-size:12px;color:#8b1a1a;margin-bottom:10px;font-weight:bold;';
+    unavDiv.textContent = 'Unavailable today: '+offToday.join(', ');
+    panelContent.appendChild(unavDiv);
+  }
+
+  // Course grid
+  var grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:12px;';
+
+  courses.forEach(function(course){
+    var courseDiv = document.createElement('div');
+    var courseTitle = document.createElement('h4');
+    courseTitle.style.cssText = 'font-size:12px;font-weight:bold;margin-bottom:8px;color:'+(course==='Links'?'#1a6b3a':'#1a4a8a')+';';
+    courseTitle.textContent = course+' Course';
+    courseDiv.appendChild(courseTitle);
+
+    slots.forEach(function(slot){
+      var key = month+'|'+dateStr+'|'+course+'|'+slot;
+      var asgn = schedAssignments[key] || {name:'',shift:''};
+      var isThisStarter = asgn.name === starterName;
+
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;';
+
+      var label = document.createElement('span');
+      label.style.cssText = 'font-size:11px;color:#888;min-width:34px;';
+      label.textContent = slot+':';
+      row.appendChild(label);
+
+      if(isThisStarter){
+        var nameSpan = document.createElement('span');
+        nameSpan.style.cssText = 'flex:1;padding:4px 8px;background:#d4edda;border-radius:6px;border:1px solid #1a6b3a;font-size:12px;color:#1a3a1a;font-weight:bold;';
+        nameSpan.textContent = starterName;
+        row.appendChild(nameSpan);
+
+        var shiftInput = document.createElement('input');
+        shiftInput.type = 'text';
+        shiftInput.placeholder = 'shift';
+        shiftInput.value = asgn.shift || '';
+        shiftInput.style.cssText = 'width:70px;padding:4px;border-radius:6px;border:1px solid #c8b87a;font-size:11px;font-family:Georgia,serif;';
+        (function(m,ds,c,s){ shiftInput.addEventListener('change', function(){ aShift(m,ds,c,s,this.value); }); })(month,dateStr,course,slot);
+        row.appendChild(shiftInput);
+
+        var removeBtn = document.createElement('button');
+        removeBtn.style.cssText = 'padding:4px 8px;background:#8b1a1a;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;';
+        removeBtn.textContent = '✕';
+        (function(m,ds,c,s,nm,dy){ removeBtn.addEventListener('click', function(){ removeFromMatrix(m,ds,c,s,nm,dy); }); })(month,dateStr,course,slot,starterName,day);
+        row.appendChild(removeBtn);
+
+      } else if(asgn.name){
+        var takenSpan = document.createElement('span');
+        takenSpan.style.cssText = 'flex:1;padding:4px 8px;background:#f0ece0;border-radius:6px;border:1px solid #c8b87a;font-size:12px;color:#666;';
+        takenSpan.textContent = asgn.name;
+        row.appendChild(takenSpan);
+        var spacer = document.createElement('span');
+        spacer.style.width = '70px';
+        row.appendChild(spacer);
+
+      } else {
+        var assignBtn = document.createElement('button');
+        assignBtn.style.cssText = 'flex:1;padding:4px 8px;background:#1a3a1a;color:#e8d8a0;border:none;border-radius:6px;font-size:12px;font-family:Georgia,serif;cursor:pointer;';
+        assignBtn.textContent = '+ Assign here';
+        (function(m,ds,c,s,nm,dy){ assignBtn.addEventListener('click', function(){ assignFromMatrix(m,ds,c,s,nm,dy); }); })(month,dateStr,course,slot,starterName,day);
+        row.appendChild(assignBtn);
+        var spacer = document.createElement('span');
+        spacer.style.width = '70px';
+        row.appendChild(spacer);
+      }
+      courseDiv.appendChild(row);
+    });
+    grid.appendChild(courseDiv);
+  });
+  panelContent.appendChild(grid);
+
+  panel.style.display = 'block';
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function assignFromMatrix(month, dateStr, course, slot, name, day){
+  aSlot(month, dateStr, course, slot, name);
+  if(name) checkConsecutiveWarning(month, day, name);
+  // Refresh matrix and reopen panel
+  renderMatrixContent(month, currentReqData);
+  setTimeout(function(){
+    openMatrixPanel(month, day, dateStr,
+      ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(2026,Object.keys(MDAYS).indexOf(month),day).getDay()],
+      name);
+  }, 50);
+}
+
+function removeFromMatrix(month, dateStr, course, slot, name, day){
+  aSlot(month, dateStr, course, slot, '');
+  renderMatrixContent(month, currentReqData);
+  setTimeout(function(){
+    openMatrixPanel(month, day, dateStr,
+      ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(2026,Object.keys(MDAYS).indexOf(month),day).getDay()],
+      name);
+  }, 50);
+}
+
+function closeMatrixPanel(){
+  document.getElementById('matrix-mini-panel').style.display = 'none';
 }
 
 function printRequestsView(){
