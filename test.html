@@ -222,6 +222,10 @@ tr{border-bottom:1px solid #f0ece0;}
         </select>
         <button onclick="printRequestsView()" style="padding:9px 18px; background:#1a3a1a; color:#e8d8a0; border:none; border-radius:8px; cursor:pointer; font-family:Georgia,serif; font-size:14px;">🖨️ Print</button>
         <button id="excel-btn" onclick="downloadExcel()" style="padding:9px 18px; background:#1d6f42; color:#fff; border:none; border-radius:8px; cursor:pointer; font-family:Georgia,serif; font-size:14px; display:none;">📥 Download Excel</button>
+        <label id="upload-btn" style="padding:9px 18px; background:#1a4a8a; color:#fff; border:none; border-radius:8px; cursor:pointer; font-family:Georgia,serif; font-size:14px; display:none;">
+          📤 Upload Excel
+          <input type="file" id="upload-input" accept=".csv,.xlsx,.xls" style="display:none;" onchange="uploadExcel(this)">
+        </label>
         <button onclick="hideRequestsView()" style="padding:9px 18px; background:#c8b87a; color:#1a1a1a; border:none; border-radius:8px; cursor:pointer; font-family:Georgia,serif; font-size:14px; font-weight:bold;">← Back to Scheduler</button>
       </div>
     </div>
@@ -230,6 +234,10 @@ tr{border-bottom:1px solid #f0ece0;}
       <button id="req-subtab-cal" onclick="switchReqView('calendar')" style="padding:7px 20px;border-radius:8px 8px 0 0;border:none;cursor:pointer;font-family:Georgia,serif;font-size:14px;background:#1a3a1a;color:#e8d8a0;font-weight:bold;">📅 Calendar View</button>
       <button id="req-subtab-matrix" onclick="switchReqView('matrix')" style="padding:7px 20px;border-radius:8px 8px 0 0;border:none;cursor:pointer;font-family:Georgia,serif;font-size:14px;background:#e0d8c8;color:#1a1a1a;">📊 Matrix View</button>
     </div>
+    <div id="upload-warning" style="display:none; background:#fff3cd; border:2px solid #c8a000; border-radius:8px; padding:12px 18px; margin-bottom:12px; font-size:13px; color:#856404;">
+      ⚠ <strong>WARNING:</strong> UPLOADING A FILE WILL COMPLETELY REPLACE ALL EXISTING SCHEDULE DATA FOR THE SELECTED MONTH. THIS ACTION CANNOT BE UNDONE. MAKE SURE YOUR FILE IS CORRECT BEFORE UPLOADING.
+    </div>
+    <div id="upload-status" style="display:none; background:#e8f5ed; border:1px solid #1a6b3a; border-radius:8px; padding:10px 16px; margin-bottom:12px; font-size:13px; color:#1a3a1a;"></div>
     <div id="requests-view-content"></div>
   </div>
 </div>
@@ -1645,11 +1653,19 @@ function switchReqView(view){
       matBtn.style.background = '#e0d8c8'; matBtn.style.color = '#1a1a1a';
       if(titleEl) titleEl.textContent = 'Day-Off Requests';
       if(excelBtn) excelBtn.style.display = 'none';
+      var uploadBtn = document.getElementById('upload-btn');
+      var uploadWarn = document.getElementById('upload-warning');
+      if(uploadBtn) uploadBtn.style.display = 'none';
+      if(uploadWarn) uploadWarn.style.display = 'none';
     } else {
       matBtn.style.background = '#1a3a1a'; matBtn.style.color = '#e8d8a0';
       calBtn.style.background = '#e0d8c8'; calBtn.style.color = '#1a1a1a';
       if(titleEl) titleEl.textContent = 'Master Schedule View';
       if(excelBtn) excelBtn.style.display = 'inline-block';
+      var uploadBtn = document.getElementById('upload-btn');
+      var uploadWarn = document.getElementById('upload-warning');
+      if(uploadBtn) uploadBtn.style.display = 'inline-block';
+      if(uploadWarn) uploadWarn.style.display = 'block';
     }
   }
   var month = document.getElementById('req-view-month').value;
@@ -1998,14 +2014,30 @@ function downloadExcel(){
   var monthIdx = Object.keys(MDAYS).indexOf(month);
   var totalDays = MDAYS[month] || 30;
   var dh = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  var NEWLINE = String.fromCharCode(10);
-  var COMMA = ',';
+  var NL = String.fromCharCode(10);
+  var CM = ',';
 
   var rows = [];
+
+  // Format legend rows
+  rows.push('FORMAT GUIDE - DO NOT EDIT THIS SECTION'+CM);
+  rows.push('CELL VALUES:'+CM);
+  rows.push('R = Requested off (do not change)'+CM);
+  rows.push('? = No response submitted'+CM);
+  rows.push('blank = Available (responded - not yet assigned)'+CM);
+  rows.push('TO ASSIGN - use format: COURSE:SLOT SHIFT-TIME'+CM);
+  rows.push('  Course codes: L=Links  H=Harbor'+CM);
+  rows.push('  Slot codes:   E=Early  L=Late'+CM);
+  rows.push('  Examples: L:E 7-3  or  H:L 9-6pm  or  L:E 8:30-5'+CM);
+  rows.push('WARNING: UPLOADING THIS FILE BACK WILL REPLACE ALL EXISTING DATA FOR '+month.toUpperCase()+CM);
+  rows.push('---'+CM);
+
+  // Header row
   var header = ['Day'];
   allNames.forEach(function(n){ header.push(n); });
-  rows.push(header.join(COMMA));
+  rows.push(header.join(CM));
 
+  // Data rows
   for(var d=1;d<=totalDays;d++){
     var dt = new Date(2026, monthIdx, d);
     var row = [d+' '+dh[dt.getDay()]];
@@ -2026,14 +2058,15 @@ function downloadExcel(){
       else if(requests[n] && requests[n].length > 0) row.push('');
       else row.push('?');
     });
-    rows.push(row.join(COMMA));
+    rows.push(row.join(CM));
   }
 
-  var totalsRow = ['Total Off'];
+  // Totals row
+  var totalsRow = ['TOTAL DAYS OFF'];
   allNames.forEach(function(n){ totalsRow.push(requests[n] ? requests[n].length : ''); });
-  rows.push(totalsRow.join(COMMA));
+  rows.push(totalsRow.join(CM));
 
-  var csv = rows.join(NEWLINE);
+  var csv = rows.join(NL);
   var blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
@@ -2045,6 +2078,159 @@ function downloadExcel(){
   URL.revokeObjectURL(url);
 }
 
+
+function uploadExcel(input){
+  var month = document.getElementById('req-view-month').value;
+  if(!month){ alert('Please select a month first.'); input.value=''; return; }
+
+  var statusEl = document.getElementById('upload-status');
+  statusEl.style.display = 'block';
+  statusEl.textContent = 'Reading file...';
+
+  var file = input.files[0];
+  if(!file){ return; }
+
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var text = e.target.result;
+    // Remove BOM if present
+    if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+
+    var lines = text.split(String.fromCharCode(10));
+    var entries = [];
+    var headerRowIdx = -1;
+    var headers = [];
+
+    // Find the data header row (starts with "Day")
+    for(var i=0;i<lines.length;i++){
+      var cells = lines[i].split(',');
+      if(cells[0] && cells[0].trim() === 'Day'){
+        headerRowIdx = i;
+        headers = cells.map(function(c){ return c.trim(); });
+        break;
+      }
+    }
+
+    if(headerRowIdx < 0){
+      statusEl.textContent = 'Error: Could not find data header row. Make sure the file has a "Day" column.';
+      statusEl.style.background = '#fff3f3';
+      statusEl.style.borderColor = '#8b1a1a';
+      statusEl.style.color = '#8b1a1a';
+      input.value = '';
+      return;
+    }
+
+    // Parse data rows
+    var courseMap = {'L':'Links','H':'Harbor'};
+    var slotMap = {'E':'Early','L':'Late'};
+    var errors = [];
+
+    for(var i=headerRowIdx+1;i<lines.length;i++){
+      var line = lines[i].trim();
+      if(!line || line.indexOf('TOTAL') === 0 || line.indexOf('---') === 0) continue;
+
+      var cells = line.split(',');
+      var dayCell = cells[0] ? cells[0].trim() : '';
+      if(!dayCell) continue;
+
+      // Extract day number from "1 Wed" or "1"
+      var dayNum = parseInt(dayCell.split(' ')[0]);
+      if(isNaN(dayNum) || dayNum < 1 || dayNum > 31) continue;
+
+      var dateStr = month.substring(0,3)+' '+dayNum;
+
+      // Process each starter column
+      for(var col=1;col<headers.length;col++){
+        var starterName = headers[col];
+        if(!starterName) continue;
+        var cellVal = cells[col] ? cells[col].trim() : '';
+
+        // Skip R (requested off), blank, ?
+        if(!cellVal || cellVal === 'R' || cellVal === '?') continue;
+
+        // Parse assignment: "L:E 7-3" or "H:L 9-6pm"
+        var parts = cellVal.split(' ');
+        var codePart = parts[0]; // e.g. "L:E"
+        var shiftPart = parts.slice(1).join(' '); // e.g. "7-3"
+
+        var codeParts = codePart.split(':');
+        if(codeParts.length !== 2){
+          errors.push('Row '+dayNum+', '+starterName+': Invalid format "'+cellVal+'" - use L:E 7-3 format');
+          continue;
+        }
+
+        var courseCode = codeParts[0].toUpperCase();
+        var slotCode = codeParts[1].toUpperCase();
+        var course = courseMap[courseCode];
+        var slot = slotMap[slotCode];
+
+        if(!course || !slot){
+          errors.push('Row '+dayNum+', '+starterName+': Unknown code "'+codePart+'" - use L:E, L:L, H:E, or H:L');
+          continue;
+        }
+
+        entries.push({
+          date: dateStr,
+          course: course,
+          slot: slot,
+          name: starterName,
+          shift: shiftPart || ''
+        });
+      }
+    }
+
+    if(errors.length > 0){
+      statusEl.textContent = 'Errors found: '+errors.join(' | ');
+      statusEl.style.background = '#fff3f3';
+      statusEl.style.borderColor = '#8b1a1a';
+      statusEl.style.color = '#8b1a1a';
+      input.value = '';
+      return;
+    }
+
+    statusEl.textContent = 'Parsed '+entries.length+' assignments. Saving to server... (THIS WILL REPLACE ALL EXISTING DATA FOR '+month.toUpperCase()+')';
+
+    // Save to Google Sheets via API
+    apiCall({action:'saveSchedule', month:month, entries:JSON.stringify(entries)}).then(function(data){
+      if(data.status === 'success'){
+        // Update local schedAssignments
+        for(var key in schedAssignments){
+          if(key.indexOf(month+'|') === 0) delete schedAssignments[key];
+        }
+        entries.forEach(function(e){
+          schedAssignments[month+'|'+e.date+'|'+e.course+'|'+e.slot] = {name:e.name, shift:e.shift};
+        });
+
+        statusEl.style.background = '#e8f5ed';
+        statusEl.style.borderColor = '#1a6b3a';
+        statusEl.style.color = '#1a3a1a';
+        statusEl.textContent = 'SUCCESS: '+entries.length+' assignments saved for '+month+'. Existing data has been replaced.';
+
+        // Refresh matrix view
+        renderMatrixContent(month, currentReqData);
+      } else {
+        statusEl.style.background = '#fff3f3';
+        statusEl.style.borderColor = '#8b1a1a';
+        statusEl.style.color = '#8b1a1a';
+        statusEl.textContent = 'Error saving: '+(data.message||'Unknown error');
+      }
+      input.value = '';
+    }).catch(function(err){
+      statusEl.style.background = '#fff3f3';
+      statusEl.style.borderColor = '#8b1a1a';
+      statusEl.style.color = '#8b1a1a';
+      statusEl.textContent = 'Connection error. Please try again.';
+      input.value = '';
+    });
+  };
+
+  reader.onerror = function(){
+    statusEl.textContent = 'Error reading file. Please try again.';
+    input.value = '';
+  };
+
+  reader.readAsText(file);
+}
 
 function printRequestsView(){
   var month = document.getElementById('req-view-month').value;
