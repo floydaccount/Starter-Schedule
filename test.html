@@ -1499,6 +1499,10 @@ function aSlot(month,dateStr,course,slot,name){
   if(!schedAssignments[key])schedAssignments[key]={name:'',shift:''};
   schedAssignments[key].name=name;
   updateProgress(month);
+  if(name){
+    var dayNum=parseInt(dateStr.split(' ')[1]);
+    if(!isNaN(dayNum)) checkConsecutiveWarning(month,dayNum,name);
+  }
 }
 
 function aShift(month,dateStr,course,slot,shift){
@@ -1549,20 +1553,42 @@ function checkConsecutiveWarning(month, day, name){
   if(prev1 && next1) warningDays.push((day-1)+', '+day+', '+(day+1));
   if(next1 && next2) warningDays.push(day+', '+(day+1)+', '+(day+2));
 
+  // Remove any existing warnings
+  var existing = document.getElementById('consec-warning');
+  if(existing) existing.parentNode.removeChild(existing);
+  var existingM = document.getElementById('consec-warning-matrix');
+  if(existingM) existingM.parentNode.removeChild(existingM);
+
   if(warningDays.length > 0){
-    // Show warning banner in the day panel
-    var existing = document.getElementById('consec-warning');
-    if(existing) existing.parentNode.removeChild(existing);
-    var panel = document.getElementById('day-detail-content');
-    var warning = document.createElement('div');
-    warning.id = 'consec-warning';
-    warning.style.cssText = 'background:#fff3cd;border:1px solid #c8a000;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#856404;';
-    warning.innerHTML = '&#9888; <strong>Consecutive days warning:</strong> '+name+' would work 3+ days in a row (days '+warningDays[0]+'). Scheduler can override.';
-    panel.insertBefore(warning, panel.firstChild);
-  } else {
-    // Remove warning if it exists
-    var existing = document.getElementById('consec-warning');
-    if(existing) existing.parentNode.removeChild(existing);
+    var warnHtml = '&#9888; <strong>Consecutive days warning:</strong> '+name+' would work 3+ days in a row (days '+warningDays[0]+'). Scheduler can override.';
+    var warnStyle = 'background:#fff3cd;border:2px solid #c8a000;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#856404;';
+
+    // Show in day panel (scheduler view)
+    var dayPanel = document.getElementById('day-detail-content');
+    if(dayPanel && dayPanel.style.display !== 'none'){
+      var warning = document.createElement('div');
+      warning.id = 'consec-warning';
+      warning.style.cssText = warnStyle;
+      warning.innerHTML = warnHtml;
+      dayPanel.insertBefore(warning, dayPanel.firstChild);
+    }
+
+    // Show in matrix mini panel
+    var matrixPanel = document.getElementById('matrix-mini-content');
+    if(matrixPanel && document.getElementById('matrix-mini-panel').style.display !== 'none'){
+      var warningM = document.createElement('div');
+      warningM.id = 'consec-warning-matrix';
+      warningM.style.cssText = warnStyle;
+      warningM.innerHTML = warnHtml;
+      matrixPanel.insertBefore(warningM, matrixPanel.firstChild);
+    }
+
+    // Also highlight the day cell in the matrix if visible
+    var cells = document.querySelectorAll('.req-grid-assigned');
+    // Just show as alert if neither panel is visible
+    if(!dayPanel && !matrixPanel){
+      alert('Warning: '+name+' would work 3+ days in a row (days '+warningDays[0]+')');
+    }
   }
 }
 
