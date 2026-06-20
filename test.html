@@ -104,8 +104,8 @@ tr{border-bottom:1px solid #f0ece0;}
 .month-cal-cell{border-radius:8px;padding:6px;min-height:95px;cursor:pointer;border:2px solid transparent;transition:all 0.15s;position:relative;}
 .month-cal-cell:hover{border-color:#c8b87a;transform:scale(1.02);}
 .month-cal-cell.empty-cell{background:transparent;cursor:default;border:none;}
-.month-cal-cell.status-empty{background:#fff;border-color:#e0d8c8;}
-.month-cal-cell.status-partial{background:#fff8e8;border-color:#c8b87a;}
+.month-cal-cell.status-empty{background:#f0f9f0;border-color:#c8dfc8;}
+.month-cal-cell.status-partial{background:#e8f5e8;border-color:#8bc88b;}
 .month-cal-cell.status-full{background:#e8f5ed;border-color:#1a6b3a;}
 .month-cal-cell.status-urgent{background:#fff0f0;border-color:#8b1a1a;}
 .month-cal-cell .cal-date{font-size:15px;font-weight:bold;color:#1a1a1a;margin-bottom:4px;}
@@ -184,7 +184,7 @@ tr{border-bottom:1px solid #f0ece0;}
   </div>
   <div id="view-scheduler" class="view">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
-      <div><h2 style="font-size:18px;color:#1a3a1a;margin-bottom:4px;">Adam's Scheduler</h2><p style="font-size:13px;color:#666;">View requests and assign starters to shifts.</p></div>
+      <div><h2 style="font-size:18px;color:#1a3a1a;margin-bottom:4px;">Master Scheduler</h2><p style="font-size:13px;color:#666;">View and assign starters to shifts.</p></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
         <select id="sched-month" class="filter-select" style="font-size:14px;"><option value="">-- Select month --</option><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select>
         <button onclick="loadScheduler()" style="padding:9px 18px;background:#1a4a8a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:14px;">Load Month</button>
@@ -1018,7 +1018,7 @@ function renderSearch(){
         document.getElementById('totals-bar').innerHTML=buildTotals(rows);
       } else {
         document.getElementById('result-count').innerHTML='0 assignments found';
-        document.getElementById('search-results').innerHTML='<div class="empty">No schedule built yet for '+m+'. Adam needs to complete and save the '+m+' schedule in the Scheduler tab first.</div>';
+        document.getElementById('search-results').innerHTML='<div class="empty">No schedule built yet for '+m+'. The '+m+' schedule in the Scheduler tab first.</div>';
         document.getElementById('totals-bar').innerHTML='';
       }
     }).catch(function(){
@@ -1547,7 +1547,7 @@ function checkConsecutiveWarning(month, day, name){
     var warning = document.createElement('div');
     warning.id = 'consec-warning';
     warning.style.cssText = 'background:#fff3cd;border:1px solid #c8a000;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#856404;';
-    warning.innerHTML = '&#9888; <strong>Consecutive days warning:</strong> '+name+' would work 3+ days in a row (days '+warningDays[0]+'). Adam can override.';
+    warning.innerHTML = '&#9888; <strong>Consecutive days warning:</strong> '+name+' would work 3+ days in a row (days '+warningDays[0]+'). Scheduler can override.';
     panel.insertBefore(warning, panel.firstChild);
   } else {
     // Remove warning if it exists
@@ -1774,7 +1774,7 @@ function renderMatrixContent(month, requests){
     var dateStr = month.substring(0,3)+' '+d;
 
     var tr = document.createElement('tr');
-    if(isWeekend) tr.style.background = '#f0ece0';
+    if(isWeekend) tr.style.background = '#dff0d8';
 
     // Day label cell
     var dayTd = document.createElement('td');
@@ -1987,7 +1987,48 @@ function closeMatrixPanel(){
 function printRequestsView(){
   var month = document.getElementById('req-view-month').value;
   if(!month){ alert('Select a month first.'); return; }
-  window.print();
+  
+  // Get the current view content
+  var viewType = currentReqView;
+  var content = document.getElementById('requests-view-content');
+  if(!content){ return; }
+  
+  var win = window.open('', '_blank');
+  win.document.write('<!DOCTYPE html><html><head><title>'+month+' 2026 - Day Off Requests</title>'
+    +'<style>'
+    +'body{font-family:Georgia,serif;padding:20px;color:#1a1a1a;}'
+    +'h1{font-size:20px;color:#1a3a1a;margin-bottom:4px;}'
+    +'h2{font-size:14px;color:#666;font-weight:normal;margin-bottom:20px;}'
+    +'.req-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:20px;}'
+    +'.req-cal-header{text-align:center;font-size:11px;font-weight:bold;color:#888;padding:4px;text-transform:uppercase;background:#f4f1ea;border-radius:4px;}'
+    +'.req-cal-cell{border-radius:6px;padding:5px;min-height:55px;border:1px solid #e0d8c8;background:#fff;font-size:10px;}'
+    +'.req-cal-cell.empty-cell{background:transparent;border-color:transparent;}'
+    +'.req-cal-cell.has-requests{background:#fff8f0;border-color:#c8b87a;}'
+    +'.req-day-num{font-size:13px;font-weight:bold;color:#1a1a1a;margin-bottom:2px;}'
+    +'.req-day-name{font-size:9px;color:#888;margin-bottom:3px;}'
+    +'.req-name-tag{display:inline-block;background:#8b1a1a;color:#fff;border-radius:8px;padding:1px 5px;margin:1px;font-size:9px;}'
+    +'.req-grid-table{border-collapse:collapse;width:100%;font-size:9px;}'
+    +'.req-grid-table th{background:#1a3a1a;color:#e8d8a0;padding:5px 3px;text-align:center;border:1px solid #145a30;}'
+    +'.req-grid-day-col{text-align:left !important;padding-left:6px !important;}'
+    +'.req-grid-day-cell{padding:3px 6px;border:1px solid #e0d8c8;white-space:nowrap;}'
+    +'.req-grid-cell{padding:3px;text-align:center;border:1px solid #e0d8c8;font-weight:bold;}'
+    +'.req-grid-off{background:#8b1a1a;color:#fff;}'
+    +'.req-grid-unknown{background:#fff3cd;}'
+    +'.req-grid-assigned{background:#d4edda;color:#1a3a1a;font-size:8px;}'
+    +'tfoot td{background:#1a3a1a;color:#e8d8a0;font-weight:bold;padding:4px 3px;border:1px solid #145a30;}'
+    +'.req-summary-table{width:100%;border-collapse:collapse;margin-top:16px;}'
+    +'.req-summary-table th{background:#1a3a1a;color:#e8d8a0;padding:8px 12px;text-align:left;font-size:12px;}'
+    +'.req-summary-table td{padding:6px 12px;font-size:12px;border-bottom:1px solid #eee;}'
+    +'.footer{margin-top:20px;font-size:10px;color:#999;}'
+    +'@media print{body{padding:10px;}}'
+    +'</style></head><body>'
+    +'<h1>&#9971; Wild Dunes Starter Schedule</h1>'
+    +'<h2>Day-Off Requests &mdash; '+month+' 2026 ('+viewType.charAt(0).toUpperCase()+viewType.slice(1)+' View)</h2>'
+    +content.innerHTML
+    +'<div class="footer">Printed '+new Date().toLocaleDateString()+' &middot; Wild Dunes Resort</div>'
+    +'</body></html>');
+  win.document.close();
+  setTimeout(function(){ win.print(); }, 600);
 }
 
 function printSummary(){ showRequestsView(); }
