@@ -1241,6 +1241,14 @@ function renderCalendarView(month){
       if(schedAssignments[month+'|'+ds+'|'+courses[ci]+'|'+slots[si]]&&schedAssignments[month+'|'+ds+'|'+courses[ci]+'|'+slots[si]].name)filled++;
     }
   }
+  // Add persistent consecutive warning bar if not already there
+  if(!document.getElementById('consec-banner')){
+    var banner = document.createElement('div');
+    banner.id = 'consec-banner';
+    banner.style.cssText = 'display:none;background:#fff3cd;border:2px solid #c8a000;border-radius:8px;padding:10px 16px;margin-bottom:10px;font-size:13px;color:#856404;font-weight:bold;';
+    container.parentNode.insertBefore(banner, container);
+  }
+
   var prog = document.createElement('div');
   prog.id = 'cal-progress';
   prog.style.cssText = 'background:#e8f5ed;border-radius:10px;padding:10px 18px;margin-bottom:12px;font-size:14px;color:#1a6b3a;';
@@ -1547,50 +1555,52 @@ function checkConsecutiveWarning(month, day, name){
   var next1 = isAssignedOnDay(month, day+1, name);
   var next2 = isAssignedOnDay(month, day+2, name);
 
-  // Warn if working 3+ consecutive days
   var warningDays = [];
   if(prev2 && prev1) warningDays.push((day-2)+', '+(day-1)+', '+day);
   if(prev1 && next1) warningDays.push((day-1)+', '+day+', '+(day+1));
   if(next1 && next2) warningDays.push(day+', '+(day+1)+', '+(day+2));
 
-  // Remove any existing warnings
+  var warnMsg = warningDays.length > 0
+    ? '&#9888; CONSECUTIVE DAYS WARNING: '+name+' would work 3+ days in a row (days '+warningDays[0]+'). Scheduler can override.'
+    : '';
+
+  // Show in persistent top banner (always visible)
+  var banner = document.getElementById('consec-banner');
+  if(banner){
+    if(warnMsg){ banner.innerHTML = warnMsg; banner.style.display='block'; }
+    else { banner.style.display='none'; }
+  }
+
+  // Also show in day panel if open
   var existing = document.getElementById('consec-warning');
   if(existing) existing.parentNode.removeChild(existing);
+  if(warnMsg){
+    var dayPanel = document.getElementById('day-detail-content');
+    if(dayPanel){
+      var w = document.createElement('div');
+      w.id = 'consec-warning';
+      w.style.cssText = 'background:#fff3cd;border:2px solid #c8a000;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#856404;font-weight:bold;';
+      w.innerHTML = warnMsg;
+      dayPanel.insertBefore(w, dayPanel.firstChild);
+    }
+  }
+
+  // Also show in matrix mini panel if open
   var existingM = document.getElementById('consec-warning-matrix');
   if(existingM) existingM.parentNode.removeChild(existingM);
-
-  if(warningDays.length > 0){
-    var warnHtml = '&#9888; <strong>Consecutive days warning:</strong> '+name+' would work 3+ days in a row (days '+warningDays[0]+'). Scheduler can override.';
-    var warnStyle = 'background:#fff3cd;border:2px solid #c8a000;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#856404;';
-
-    // Show in day panel (scheduler view)
-    var dayPanel = document.getElementById('day-detail-content');
-    if(dayPanel && dayPanel.style.display !== 'none'){
-      var warning = document.createElement('div');
-      warning.id = 'consec-warning';
-      warning.style.cssText = warnStyle;
-      warning.innerHTML = warnHtml;
-      dayPanel.insertBefore(warning, dayPanel.firstChild);
-    }
-
-    // Show in matrix mini panel
+  if(warnMsg){
     var matrixPanel = document.getElementById('matrix-mini-content');
-    if(matrixPanel && document.getElementById('matrix-mini-panel').style.display !== 'none'){
-      var warningM = document.createElement('div');
-      warningM.id = 'consec-warning-matrix';
-      warningM.style.cssText = warnStyle;
-      warningM.innerHTML = warnHtml;
-      matrixPanel.insertBefore(warningM, matrixPanel.firstChild);
-    }
-
-    // Also highlight the day cell in the matrix if visible
-    var cells = document.querySelectorAll('.req-grid-assigned');
-    // Just show as alert if neither panel is visible
-    if(!dayPanel && !matrixPanel){
-      alert('Warning: '+name+' would work 3+ days in a row (days '+warningDays[0]+')');
+    var matrixVisible = document.getElementById('matrix-mini-panel');
+    if(matrixPanel && matrixVisible && matrixVisible.style.display !== 'none'){
+      var wM = document.createElement('div');
+      wM.id = 'consec-warning-matrix';
+      wM.style.cssText = 'background:#fff3cd;border:2px solid #c8a000;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#856404;font-weight:bold;';
+      wM.innerHTML = warnMsg;
+      matrixPanel.insertBefore(wM, matrixPanel.firstChild);
     }
   }
 }
+
 
 function saveSchedule(){
   var month=document.getElementById('sched-month').value;
