@@ -899,6 +899,9 @@ function doLogin(){
 function initApp(){
   var seen={},names=[];
   for(var i=0;i<RAW_DATA.length;i++){if(!seen[RAW_DATA[i].name]){seen[RAW_DATA[i].name]=true;names.push(RAW_DATA[i].name);}}
+  // Add starters not in RAW_DATA (new starters or July+ only starters)
+  var extraNames=['Geno','Greg'];
+  extraNames.forEach(function(n){ if(!seen[n]){seen[n]=true;names.push(n);} });
   allNames=names.sort();
   var ss=document.getElementById('search-input'),ps=document.getElementById('person-select'),rs=document.getElementById('req-name');
   for(var i=0;i<allNames.length;i++){
@@ -1509,6 +1512,7 @@ function aSlot(month,dateStr,course,slot,name){
   updateProgress(month);
   if(name){
     var dayNum=parseInt(dateStr.split(' ')[1]);
+    console.log('aSlot: assigning '+name+' to day '+dayNum+' ('+dateStr+')');
     if(!isNaN(dayNum)) checkConsecutiveWarning(month,dayNum,name);
   }
 }
@@ -1550,10 +1554,12 @@ function isAssignedOnDay(month, dayNum, name){
 }
 
 function checkConsecutiveWarning(month, day, name){
+  console.log('checkConsecutive: checking '+name+' on day '+day);
   var prev1 = isAssignedOnDay(month, day-1, name);
   var prev2 = isAssignedOnDay(month, day-2, name);
   var next1 = isAssignedOnDay(month, day+1, name);
   var next2 = isAssignedOnDay(month, day+2, name);
+  console.log('prev2:'+prev2+' prev1:'+prev1+' next1:'+next1+' next2:'+next2);
 
   var warningDays = [];
   if(prev2 && prev1) warningDays.push((day-2)+', '+(day-1)+', '+day);
