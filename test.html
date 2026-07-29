@@ -1339,11 +1339,56 @@ function renderSearch(){
   }
 
   // Jan-Jun static data
-  var f=RAW_DATA.filter(function(e){return(q===''||e.name===q)&&(m==='All'||e.month===m)&&(c==='All'||e.course===c);});
-  document.getElementById('result-count').innerHTML=f.length+' assignment'+(f.length!==1?'s':'')+' found'+(q?' <span class="search-badge">'+q+'</span>':'');
-  if(f.length===0){document.getElementById('search-results').innerHTML='<div class="empty">No assignments found</div>';document.getElementById('totals-bar').innerHTML='';return;}
-  document.getElementById('search-results').innerHTML=buildTable(f,true);
-  document.getElementById('totals-bar').innerHTML=buildTotals(f);
+  var staticRows=RAW_DATA.filter(function(e){return(q===''||e.name===q)&&(m==='All'||e.month===m)&&(c==='All'||e.course===c);});
+
+  if(m !== 'All'){
+    // Single static month
+    document.getElementById('result-count').innerHTML=staticRows.length+' assignment'+(staticRows.length!==1?'s':'')+' found'+(q?' <span class="search-badge">'+q+'</span>':'');
+    if(staticRows.length===0){document.getElementById('search-results').innerHTML='<div class="empty">No assignments found</div>';document.getElementById('totals-bar').innerHTML='';return;}
+    document.getElementById('search-results').innerHTML=buildTable(staticRows,true);
+    document.getElementById('totals-bar').innerHTML=buildTotals(staticRows);
+    return;
+  }
+
+  // All Months - combine static data with Google Sheets months
+  document.getElementById('result-count').innerHTML='Loading...';
+  var sheetMonths = ['July','August','September','October','November','December'];
+  var allRows = staticRows.slice();
+  var loaded = 0;
+  var monthIdx = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var dh = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  function finishAllMonths(){
+    var filtered = allRows.filter(function(e){return(q===''||e.name===q)&&(c==='All'||e.course===c);});
+    filtered.sort(function(a,b){
+      var mi = monthIdx.indexOf(a.month) - monthIdx.indexOf(b.month);
+      if(mi!==0) return mi;
+      return parseInt(a.date.split(' ')[1]) - parseInt(b.date.split(' ')[1]);
+    });
+    document.getElementById('result-count').innerHTML=filtered.length+' assignment'+(filtered.length!==1?'s':'')+' found'+(q?' <span class="search-badge">'+q+'</span>':'');
+    if(filtered.length===0){document.getElementById('search-results').innerHTML='<div class="empty">No assignments found</div>';document.getElementById('totals-bar').innerHTML='';return;}
+    document.getElementById('search-results').innerHTML=buildTable(filtered,true);
+    document.getElementById('totals-bar').innerHTML=buildTotals(filtered);
+  }
+
+  function loadSheetMonth(idx){
+    if(idx >= sheetMonths.length){ finishAllMonths(); return; }
+    var mon = sheetMonths[idx];
+    apiRead({action:'getSchedule', month:mon}).then(function(data){
+      if(data.status==='success' && data.entries.length>0){
+        var mIdx = monthIdx.indexOf(mon);
+        data.entries.forEach(function(e){
+          var dayNum = parseInt(e.date.split(' ')[1]);
+          var dt = new Date(2026, mIdx, dayNum);
+          var shift = String(e.shift||'');
+          if(shift.indexOf('S:')===0) shift = shift.substring(2);
+          allRows.push({date:e.date, day:dh[dt.getDay()], month:mon, course:e.course, name:e.name, shift:shift});
+        });
+      }
+      loadSheetMonth(idx+1);
+    }).catch(function(){ loadSheetMonth(idx+1); });
+  }
+  loadSheetMonth(0);
 }
 
 function selectPerson(name){
