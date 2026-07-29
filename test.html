@@ -997,15 +997,18 @@ function renderHours(){
   var loaded = 0;
   var allRows = [];
 
-  monthsToLoad.forEach(function(m){
-    getScheduleForMonth(m, function(rows){
+  // Load months sequentially to avoid race conditions
+  function loadNext(idx){
+    if(idx >= monthsToLoad.length){
+      buildHoursTable(allRows, month, starter, monthsToLoad);
+      return;
+    }
+    getScheduleForMonth(monthsToLoad[idx], function(rows){
       allRows = allRows.concat(rows);
-      loaded++;
-      if(loaded === monthsToLoad.length){
-        buildHoursTable(allRows, month, starter, monthsToLoad);
-      }
+      loadNext(idx + 1);
     });
-  });
+  }
+  loadNext(0);
 }
 
 function buildHoursTable(allRows, selectedMonth, selectedStarter, monthsToLoad){
@@ -1196,7 +1199,8 @@ function initApp(){
     }
   }
 
-  // Hours section always visible, renderHours checks role internally
+  // Auto-trigger hours load
+  renderHours();
 
   // Auto-trigger course notes load
   renderCourseNotes();
