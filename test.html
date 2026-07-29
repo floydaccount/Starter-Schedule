@@ -916,6 +916,7 @@ function doLogin(){
   if(pw===APW){
     role='admin';
     document.getElementById('login-screen').style.display='none';
+    setTimeout(function(){ renderHours(); }, 100);
     document.getElementById('tab-requests').style.display='inline-block';
     document.getElementById('tab-scheduler').style.display='inline-block';
     initApp();
@@ -1198,9 +1199,6 @@ function initApp(){
       hoursStarter.appendChild(opt);
     }
   }
-
-  // Auto-trigger hours load
-  renderHours();
 
   // Auto-trigger course notes load
   renderCourseNotes();
