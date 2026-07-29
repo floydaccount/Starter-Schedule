@@ -160,7 +160,7 @@ tr{border-bottom:1px solid #f0ece0;}
     </div>
 
     <!-- Hours by Starter section (schedule password only) -->
-    <div id="hours-section" style="display:none;margin-top:20px;padding-top:16px;border-top:1px solid #e0d8c8;">
+    <div id="hours-section" style="margin-top:20px;padding-top:16px;border-top:1px solid #e0d8c8;">
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
         <h3 style="font-size:16px;color:#1a3a1a;margin:0;">Hours by Starter</h3>
         <select id="hours-month" class="filter-select" onchange="renderHours()">
@@ -983,6 +983,10 @@ function getScheduleForMonth(month, callback){
 }
 
 function renderHours(){
+  if(role !== 'admin'){
+    document.getElementById('hours-content').innerHTML = '<div class="empty">Hours by Starter is available with the schedule password only.</div>';
+    return;
+  }
   var month = document.getElementById('hours-month').value;
   var starter = document.getElementById('hours-starter').value;
   var container = document.getElementById('hours-content');
@@ -1078,47 +1082,78 @@ function buildHoursTable(allRows, selectedMonth, selectedStarter, monthsToLoad){
 function renderCourseNotes(){
   var month = document.getElementById('notes-month').value;
   var container = document.getElementById('notes-content');
-  if(month === 'All'){
-    container.innerHTML = '<div class="empty">Select a month to view course notes.</div>';
-    return;
-  }
   container.innerHTML = '<div class="empty">Loading...</div>';
-  apiRead({action:'getCourseNotes', month:month}).then(function(data){
-    if(data.status === 'success'){
-      buildNotesTable(month, data.notes);
-    } else {
-      container.innerHTML = '<div class="empty">Error loading notes.</div>';
-    }
-  }).catch(function(){
-    container.innerHTML = '<div class="empty">Error loading notes. Please try again.</div>';
-  });
+
+  if(month === 'All'){
+    // Load all months - getCourseNotes with no month returns all
+    apiRead({action:'getCourseNotes'}).then(function(data){
+      if(data.status === 'success'){
+        buildNotesTable('All', data.notes);
+      } else {
+        container.innerHTML = '<div class="empty">Error loading notes.</div>';
+      }
+    }).catch(function(){
+      container.innerHTML = '<div class="empty">Error loading notes. Please try again.</div>';
+    });
+  } else {
+    apiRead({action:'getCourseNotes', month:month}).then(function(data){
+      if(data.status === 'success'){
+        buildNotesTable(month, data.notes);
+      } else {
+        container.innerHTML = '<div class="empty">Error loading notes.</div>';
+      }
+    }).catch(function(){
+      container.innerHTML = '<div class="empty">Error loading notes. Please try again.</div>';
+    });
+  }
 }
 
 function buildNotesTable(month, notes){
   var container = document.getElementById('notes-content');
-  var monthIdx = ['January','February','March','April','May','June','July','August','September','October','November','December'].indexOf(month);
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   var dh = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
   if(notes.length === 0){
-    container.innerHTML = '<div class="empty">No course notes for '+month+'. Notes can be added directly in the Google Sheet → Course Notes tab.</div>';
+    container.innerHTML = '<div class="empty">No course notes'+(month!=='All'?' for '+month:'')+'. Notes can be added directly in the Google Sheet &rarr; Course Notes tab.</div>';
     return;
   }
 
-  notes.sort(function(a,b){ return a.day - b.day; });
+  // Sort by month then day
+  notes.sort(function(a,b){
+    var mi = MONTHS.indexOf(String(a.month)) - MONTHS.indexOf(String(b.month));
+    if(mi !== 0) return mi;
+    return Number(a.day) - Number(b.day);
+  });
 
   var html = '<table style="border-collapse:collapse;width:100%;font-size:14px;">';
   html += '<thead><tr>';
+  if(month === 'All'){
+    html += '<th style="background:#1a3a1a;color:#e8d8a0;padding:9px 14px;text-align:left;border:1px solid #145a30;">Month</th>';
+  }
   html += '<th style="background:#1a3a1a;color:#e8d8a0;padding:9px 14px;text-align:left;border:1px solid #145a30;">Date</th>';
   html += '<th style="background:#1a3a1a;color:#e8d8a0;padding:9px 14px;text-align:left;border:1px solid #145a30;">Course</th>';
   html += '<th style="background:#1a3a1a;color:#e8d8a0;padding:9px 14px;text-align:left;border:1px solid #145a30;">Note</th>';
   html += '</tr></thead><tbody>';
 
+  var lastMonth = '';
   notes.forEach(function(n, i){
-    var dt = new Date(2026, monthIdx, n.day);
+    var m = String(n.month);
+    var monthIdx = MONTHS.indexOf(m);
+    var dt = new Date(2026, monthIdx >= 0 ? monthIdx : 0, Number(n.day));
     var dayName = dh[dt.getDay()];
     var bg = i%2===0?'#fff':'#faf8f3';
+
+    // Month group header row for All Months view
+    if(month === 'All' && m !== lastMonth){
+      html += '<tr><td colspan="4" style="background:#e8f5ed;color:#1a3a1a;font-weight:bold;padding:8px 14px;border:1px solid #c8dfc8;font-size:14px;">'+m+' 2026</td></tr>';
+      lastMonth = m;
+    }
+
     html += '<tr style="background:'+bg+';">';
-    html += '<td style="padding:8px 14px;border:1px solid #e0d8c8;font-weight:bold;">'+dayName+' '+month.substring(0,3)+' '+n.day+'</td>';
+    if(month === 'All'){
+      html += '<td style="padding:8px 14px;border:1px solid #e0d8c8;color:#888;font-size:12px;">'+m.substring(0,3)+'</td>';
+    }
+    html += '<td style="padding:8px 14px;border:1px solid #e0d8c8;font-weight:bold;">'+dayName+' '+m.substring(0,3)+' '+n.day+'</td>';
     html += '<td style="padding:8px 14px;border:1px solid #e0d8c8;">';
     if(n.course === 'Links') html += '<span style="background:#e8f5e8;color:#1a6b3a;border-radius:10px;padding:2px 10px;font-size:12px;font-weight:bold;">Links</span>';
     else if(n.course === 'Harbor') html += '<span style="background:#e8f0ff;color:#1a4a8a;border-radius:10px;padding:2px 10px;font-size:12px;font-weight:bold;">Harbor</span>';
@@ -1129,6 +1164,7 @@ function buildNotesTable(month, notes){
   });
 
   html += '</tbody></table>';
+  html += '<div style="font-size:12px;color:#999;margin-top:8px;">'+notes.length+' note'+(notes.length!==1?'s':'')+' found</div>';
   container.innerHTML = html;
 }
 
@@ -1160,14 +1196,10 @@ function initApp(){
     }
   }
 
-  // Show hours section only for schedule password
-  if(role === 'schedule'){
-    var hs = document.getElementById('hours-section');
-    if(hs) hs.style.display = 'block';
-  }
+  // Hours section always visible, renderHours checks role internally
 
-  // Load course notes
-  renderCourseNotes();
+  // Set initial course notes state
+  document.getElementById('notes-content').innerHTML = '<div class="empty">Select a month above to view course notes, or choose All Months to see everything.</div>';
   document.getElementById('person-select').onchange=function(){selectPerson(this.value);};
   renderSearch();
 }
