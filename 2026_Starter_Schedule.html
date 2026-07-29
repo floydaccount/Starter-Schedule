@@ -1,0 +1,2723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 Starter Schedule</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Georgia,serif;background:#f4f1ea;color:#1a1a1a;min-height:100vh;}
+#login-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#1a3a1a;display:flex;align-items:center;justify-content:center;z-index:9999;}
+#login-box{background:#fff;border-radius:14px;padding:40px 36px;width:320px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+#login-box h2{font-size:20px;color:#1a3a1a;margin-bottom:4px;}
+#login-box p{font-size:13px;color:#888;margin-bottom:24px;}
+#login-box input{width:100%;padding:11px 14px;border-radius:8px;border:1.5px solid #c8b87a;font-size:15px;font-family:Georgia,serif;outline:none;text-align:center;letter-spacing:3px;margin-bottom:14px;}
+#login-box button{width:100%;padding:11px;border-radius:8px;border:none;cursor:pointer;background:#1a3a1a;color:#e8d8a0;font-size:15px;font-family:Georgia,serif;font-weight:bold;}
+#login-error{color:#c0392b;font-size:13px;margin-top:10px;min-height:18px;}
+#header{background:#1a3a1a;color:#e8d8a0;padding:16px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+#header-titles h1{font-size:20px;letter-spacing:1px;}
+#header-titles p{font-size:12px;opacity:0.7;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+#coverage-badge{font-size:12px;margin-top:6px;background:rgba(232,216,160,0.2);border:1px solid rgba(232,216,160,0.4);border-radius:4px;padding:2px 8px;display:inline-block;color:#e8d8a0;}
+#tab-bar{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;}
+.tab-btn{padding:6px 16px;border-radius:20px;border:none;cursor:pointer;font-size:13px;font-family:Georgia,serif;}
+.tab-btn.active{background:#e8d8a0;color:#1a3a1a;}
+.tab-btn.inactive{background:rgba(255,255,255,0.15);color:#e8d8a0;}
+#main{padding:20px 24px;max-width:960px;margin:0 auto;}
+#filters{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.filter-select{padding:9px 12px;border-radius:8px;border:1.5px solid #c8b87a;font-size:14px;background:#fff;font-family:Georgia,serif;cursor:pointer;}
+#result-count{font-size:13px;color:#666;margin-bottom:12px;}
+.search-badge{margin-left:8px;background:#1a3a1a;color:#e8d8a0;border-radius:10px;padding:2px 10px;font-size:12px;}
+.table-wrap{background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-family:Georgia,serif;}
+thead tr{border-bottom:2px solid #1a3a1a;}
+th{text-align:left;padding:12px 18px;font-size:14px;font-weight:bold;color:#1a1a1a;white-space:nowrap;}
+td{padding:11px 18px;font-size:14px;white-space:nowrap;}
+tr.even{background:#fff;}tr.odd{background:#faf8f3;}
+tr{border-bottom:1px solid #f0ece0;}
+.badge{border-radius:10px;padding:2px 10px;font-size:13px;font-weight:bold;display:inline-block;}
+.badge-links{background:#e8f5ed;color:#1a6b3a;}
+.badge-harbor{background:#e8f0fb;color:#1a4a8a;}
+#totals-bar,.totals-bar{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.month-total{background:#1a3a1a;color:#e8d8a0;border-radius:8px;padding:8px 18px;font-size:14px;}
+.grand-total{background:#c8b87a;color:#1a1a1a;border-radius:8px;padding:8px 18px;font-size:14px;font-weight:bold;}
+#person-name{font-size:18px;font-weight:bold;margin-bottom:4px;}
+.empty{text-align:center;padding:60px;color:#888;font-size:16px;}
+.view{display:none;}
+.view.active{display:block;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;}
+.cal-header{text-align:center;font-size:12px;font-weight:bold;color:#888;padding:4px;text-transform:uppercase;}
+.cal-day{border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer;border:1.5px solid #e0d8c8;background:#fff;font-size:14px;min-height:48px;}
+.cal-day:hover{border-color:#c8b87a;background:#faf5e8;}
+.cal-day.unavailable{background:#8b1a1a;color:#fff;border-color:#8b1a1a;font-weight:bold;}
+.cal-day.empty-day{background:transparent;border-color:transparent;cursor:default;}
+.cal-day .day-num{font-size:15px;font-weight:bold;}
+.cal-day .day-name{font-size:10px;opacity:0.75;}
+.sched-day{background:#fff;border-radius:10px;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.sched-day-header{background:#1a3a1a;color:#e8d8a0;padding:8px 16px;display:flex;justify-content:space-between;align-items:center;}
+.sched-day-header.has-requests{background:#8b4a00;}
+.sched-day-header.all-filled{background:#1a6b3a;}
+.sched-day-body{padding:12px 16px;display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.sched-course h4{font-size:13px;font-weight:bold;margin-bottom:6px;}
+.sched-course h4.links{color:#1a6b3a;}
+.sched-course h4.harbor{color:#1a4a8a;}
+.unavail-list{font-size:12px;color:#8b1a1a;margin-bottom:6px;}
+
+/* Requests calendar grid */
+.req-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:20px;}
+.req-cal-header{text-align:center;font-size:11px;font-weight:bold;color:#888;padding:5px;text-transform:uppercase;background:#f4f1ea;border-radius:4px;}
+.req-cal-cell{border-radius:8px;padding:6px;min-height:70px;border:1px solid #e0d8c8;background:#fff;font-size:11px;}
+.req-cal-cell.empty-cell{background:transparent;border-color:transparent;}
+.req-cal-cell.has-requests{background:#fff8f0;border-color:#c8b87a;}
+.req-cal-cell .req-day-num{font-size:14px;font-weight:bold;color:#1a1a1a;margin-bottom:4px;}
+.req-cal-cell .req-day-name{font-size:10px;color:#888;margin-bottom:4px;}
+.req-cal-cell .req-name-tag{display:inline-block;background:#8b1a1a;color:#fff;border-radius:10px;padding:1px 7px;margin:1px;font-size:10px;font-weight:bold;}
+.req-summary-table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
+.req-summary-table th{background:#1a3a1a;color:#e8d8a0;padding:12px 18px;text-align:left;font-size:14px;}
+.req-summary-table td{padding:10px 18px;font-size:14px;border-bottom:1px solid #f0ece0;}
+.req-summary-table tr:last-child td{border-bottom:none;}
+.req-summary-table tr.even{background:#fff;}
+.req-summary-table tr.odd{background:#faf8f3;}
+
+/* Request grid matrix */
+.req-grid-table{border-collapse:collapse;font-family:Georgia,serif;font-size:12px;white-space:nowrap;}
+.req-grid-table thead th{background:#1a3a1a;color:#e8d8a0;padding:8px 6px;text-align:center;font-size:11px;border:1px solid #145a30;position:sticky;top:0;}
+.req-grid-day-col{text-align:left !important;padding-left:10px !important;min-width:80px;}
+.req-grid-day-cell{padding:4px 10px;border:1px solid #e0d8c8;font-size:12px;white-space:nowrap;}
+.req-grid-daynum{font-weight:bold;color:#1a1a1a;}
+.req-grid-dayname{color:#888;font-size:11px;}
+.req-grid-cell{padding:4px 6px;text-align:center;border:1px solid #e0d8c8;font-weight:bold;font-size:12px;}
+.req-grid-off{background:#8b1a1a;color:#fff;}
+.req-grid-open{background:#fff;color:transparent;}
+.req-grid-unknown{background:#fff3cd;border-color:#c8a000 !important;}
+.req-grid-assigned{background:#d4edda;color:#1a3a1a;font-size:9px;border-color:#1a6b3a !important;}
+
+/* Off list popup */
+#off-popup{position:fixed;background:#1a1a1a;color:#fff;border-radius:8px;padding:10px 14px;font-size:13px;font-family:Georgia,serif;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:200px;display:none;}
+#off-popup ul{margin:4px 0 0 0;padding:0 0 0 16px;}
+#off-popup ul li{margin:2px 0;}
+.unavail-badge{cursor:pointer;text-decoration:underline dotted;}
+.unavail-badge:hover{color:#c0392b;}
+
+/* Monthly calendar view */
+.month-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px;}
+.month-cal-header{text-align:center;font-size:12px;font-weight:bold;color:#888;padding:6px;text-transform:uppercase;background:#f4f1ea;border-radius:4px;}
+.month-cal-cell{border-radius:8px;padding:6px;min-height:95px;cursor:pointer;border:2px solid transparent;transition:all 0.15s;position:relative;}
+.month-cal-cell:hover{border-color:#c8b87a;transform:scale(1.02);}
+.month-cal-cell.empty-cell{background:transparent;cursor:default;border:none;}
+.month-cal-cell.status-empty{background:#f0f9f0;border-color:#c8dfc8;}
+.month-cal-cell.status-partial{background:#e8f5e8;border-color:#8bc88b;}
+.month-cal-cell.status-full{background:#e8f5ed;border-color:#1a6b3a;}
+.month-cal-cell.status-urgent{background:#fff0f0;border-color:#8b1a1a;}
+.month-cal-cell .cal-date{font-size:15px;font-weight:bold;color:#1a1a1a;margin-bottom:4px;}
+.month-cal-cell .cal-day-name{font-size:10px;color:#888;margin-bottom:6px;}
+.month-cal-cell .cal-status-dots{display:flex;flex-wrap:wrap;gap:3px;}
+.month-cal-cell .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+.dot-filled{background:#1a6b3a;}
+.dot-empty{background:#ddd;}
+.dot-unavail{background:#8b1a1a;}
+.month-cal-cell .unavail-badge{font-size:9px;color:#8b1a1a;font-weight:bold;margin-top:4px;line-height:1.4;word-break:break-word;white-space:normal;}
+.cal-course-label{font-size:9px;color:#1a3a1a;line-height:1.4;margin-top:2px;word-break:break-word;white-space:normal;}
+.cal-empty-label{font-size:9px;color:#bbb;margin-top:2px;font-style:italic;}
+
+/* Day detail panel */
+#day-detail-panel{background:#fff;border-radius:10px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.12);border-left:4px solid #1a3a1a;display:none;}
+#day-detail-panel h3{font-size:16px;color:#1a3a1a;margin-bottom:4px;}
+#day-detail-panel .close-btn{float:right;background:none;border:none;font-size:18px;cursor:pointer;color:#888;}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<div id="login-screen">
+  <div id="login-box">
+    <div style="font-size:42px;margin-bottom:12px;">&#9971;</div>
+    <h2>Starter Schedule</h2>
+    <p>Wild Dunes Resort</p>
+    <input type="password" id="pw" placeholder="Enter password">
+    <button id="login-btn">Enter</button>
+    <div id="login-error"></div>
+  </div>
+</div>
+<div id="header">
+  <span style="font-size:28px;">&#9971;</span>
+  <div id="header-titles">
+    <h1>2026 Starter Schedule</h1>
+    <p>Links &amp; Harbor Courses</p>
+    <div id="coverage-badge">Jan-Jun static · Jul+ from scheduler</div>
+  </div>
+  <div id="tab-bar">
+    <button class="tab-btn active" id="tab-search" onclick="switchView('search')">Schedule</button>
+    <button class="tab-btn inactive" id="tab-person" onclick="switchView('person')">By Person</button>
+    <button class="tab-btn inactive" id="tab-requests" style="display:none" onclick="switchView('requests')">Request Days Off</button>
+    <button class="tab-btn inactive" id="tab-scheduler" style="display:none" onclick="switchView('scheduler')">Scheduler</button>
+  </div>
+</div>
+<div id="main">
+  <div id="view-search" class="view active">
+    <div id="filters">
+      <select class="filter-select" id="search-input" style="font-size:15px;padding:10px 16px;min-width:200px;"><option value="">All Starters</option></select>
+      <select class="filter-select" id="month-filter"><option value="All">All Months</option><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select>
+      <select class="filter-select" id="course-filter"><option value="All">All Courses</option><option>Links</option><option>Harbor</option></select>
+    </div>
+
+    <!-- Hours by Starter section (schedule password only) -->
+    <div id="hours-section" style="display:none;margin-top:20px;padding-top:16px;border-top:1px solid #e0d8c8;">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+        <h3 style="font-size:16px;color:#1a3a1a;margin:0;">Hours by Starter</h3>
+        <select id="hours-month" class="filter-select" onchange="renderHours()">
+          <option value="All">All Months</option>
+          <option>January</option><option>February</option><option>March</option>
+          <option>April</option><option>May</option><option>June</option>
+          <option>July</option><option>August</option><option>September</option>
+          <option>October</option><option>November</option><option>December</option>
+        </select>
+        <select id="hours-starter" class="filter-select" onchange="renderHours()">
+          <option value="All">All Starters</option>
+        </select>
+      </div>
+      <div id="hours-content"></div>
+    </div>
+
+    <!-- Course Notes section (both passwords) -->
+    <div id="notes-section" style="margin-top:20px;padding-top:16px;border-top:1px solid #e0d8c8;">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+        <h3 style="font-size:16px;color:#1a3a1a;margin:0;">Course Notes</h3>
+        <select id="notes-month" class="filter-select" onchange="renderCourseNotes()">
+          <option value="All">All Months</option>
+          <option>January</option><option>February</option><option>March</option>
+          <option>April</option><option>May</option><option>June</option>
+          <option>July</option><option>August</option><option>September</option>
+          <option>October</option><option>November</option><option>December</option>
+        </select>
+      </div>
+      <div id="notes-content"><div class="empty">Select a month to view course notes</div></div>
+    </div>
+
+    <div id="result-count"></div>
+    <div id="search-results"></div>
+    <div id="totals-bar"></div>
+  </div>
+  <div id="view-person" class="view">
+    <div style="font-size:13px;color:#666;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">Select a Starter</div>
+    <div style="margin-bottom:20px;">
+      <select id="person-select" class="filter-select" style="font-size:15px;padding:10px 16px;min-width:220px;"><option value="">-- Choose a name --</option></select>
+      <span id="person-shift-count" style="margin-left:12px;font-size:13px;color:#666;"></span>
+    </div>
+    <div id="person-detail"><div class="empty">Select a name above to see their full schedule</div></div>
+  </div>
+  <div id="view-requests" class="view">
+    <div style="max-width:700px;">
+      <h2 style="font-size:18px;margin-bottom:4px;color:#1a3a1a;">Request Days Off</h2>
+      <p style="font-size:13px;color:#666;margin-bottom:20px;">Select your name and month, click days you cannot work, then Submit.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
+        <select id="req-name" class="filter-select" style="font-size:14px;"><option value="">-- Select your name --</option></select>
+        <select id="req-month" class="filter-select" style="font-size:14px;"><option value="">-- Select month --</option><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select>
+        <button onclick="loadAndRenderCalendar()" style="padding:9px 18px;background:#1a3a1a;color:#e8d8a0;border:none;border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:14px;">Load Calendar</button>
+      </div>
+      <div id="req-calendar"></div>
+      <div id="req-status" style="margin-top:12px;font-size:13px;color:#1a6b3a;font-style:italic;"></div>
+    </div>
+  </div>
+  <div id="view-scheduler" class="view">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+      <div><h2 style="font-size:18px;color:#1a3a1a;margin-bottom:4px;">Master Scheduler</h2><p style="font-size:13px;color:#666;">View and assign starters to shifts.</p></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <select id="sched-month" class="filter-select" style="font-size:14px;"><option value="">-- Select month --</option><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select>
+        <button onclick="loadScheduler()" style="padding:9px 18px;background:#1a4a8a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:14px;">Load Month</button>
+        <button onclick="saveSchedule()" style="padding:9px 18px;background:#1a3a1a;color:#e8d8a0;border:none;border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:14px;">Save Schedule</button>
+        <button onclick="showRequestsView()" style="padding:9px 18px;background:#8b4a00;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:14px;">View All Requests</button>
+      </div>
+    </div>
+    <div id="save-status" style="font-size:13px;color:#1a6b3a;margin-bottom:12px;"></div>
+    <!-- Sub-tabs -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:2px solid #1a3a1a;padding-bottom:8px;">
+      <button id="subtab-cal" onclick="switchSchedView('calendar')" style="padding:7px 20px;border-radius:8px 8px 0 0;border:none;cursor:pointer;font-family:Georgia,serif;font-size:14px;background:#1a3a1a;color:#e8d8a0;font-weight:bold;">📅 Month View</button>
+      <button id="subtab-list" onclick="switchSchedView('list')" style="padding:7px 20px;border-radius:8px 8px 0 0;border:none;cursor:pointer;font-family:Georgia,serif;font-size:14px;background:#e0d8c8;color:#1a1a1a;">📋 Day List</button>
+    </div>
+    <div id="sched-cal-view" style="display:block;"></div>
+    <div id="sched-list-view" style="display:none;"></div>
+    <div id="sched-content" style="display:none;"><div class="empty">Select a month and click Load Month</div></div>
+  </div>
+</div>
+
+<!-- REQUESTS VIEW OVERLAY -->
+<div id="requests-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#f4f1ea; z-index:1000; overflow-y:auto;">
+  <div style="max-width:1100px; margin:0 auto; padding:24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+      <div>
+        <h1 id="req-view-title" style="font-size:22px; color:#1a3a1a; margin-bottom:4px;">Day-Off Requests</h1>
+        <div id="req-view-subtitle" style="font-size:13px; color:#666;"></div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <select id="req-view-month" onchange="renderRequestsView()" style="padding:9px 12px; border-radius:8px; border:1.5px solid #c8b87a; font-size:14px; background:#fff; font-family:Georgia,serif; cursor:pointer;">
+          <option value="">-- Select month --</option>
+          <option>January</option><option>February</option><option>March</option>
+          <option>April</option><option>May</option><option>June</option>
+          <option>July</option><option>August</option><option>September</option>
+          <option>October</option><option>November</option><option>December</option>
+        </select>
+        <button onclick="printRequestsView()" style="padding:9px 18px; background:#1a3a1a; color:#e8d8a0; border:none; border-radius:8px; cursor:pointer; font-family:Georgia,serif; font-size:14px;">🖨️ Print</button>
+        <button id="excel-btn" onclick="downloadExcel()" style="padding:9px 18px; background:#1d6f42; color:#fff; border:none; border-radius:8px; cursor:pointer; font-family:Georgia,serif; font-size:14px; display:none;">📥 Download Excel</button>
+        <label id="upload-btn" style="padding:9px 18px; background:#1a4a8a; color:#fff; border:none; border-radius:8px; cursor:pointer; font-family:Georgia,serif; font-size:14px; display:none;">
+          📤 Upload Excel
+          <input type="file" id="upload-input" accept=".csv" style="display:none;" onchange="uploadExcel(this)">
+        </label>
+        <button onclick="hideRequestsView()" style="padding:9px 18px; background:#c8b87a; color:#1a1a1a; border:none; border-radius:8px; cursor:pointer; font-family:Georgia,serif; font-size:14px; font-weight:bold;">← Back to Scheduler</button>
+      </div>
+    </div>
+    <!-- Sub-tabs for Calendar vs Matrix -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:2px solid #1a3a1a;padding-bottom:8px;">
+      <button id="req-subtab-cal" onclick="switchReqView('calendar')" style="padding:7px 20px;border-radius:8px 8px 0 0;border:none;cursor:pointer;font-family:Georgia,serif;font-size:14px;background:#1a3a1a;color:#e8d8a0;font-weight:bold;">📅 Calendar View</button>
+      <button id="req-subtab-matrix" onclick="switchReqView('matrix')" style="padding:7px 20px;border-radius:8px 8px 0 0;border:none;cursor:pointer;font-family:Georgia,serif;font-size:14px;background:#e0d8c8;color:#1a1a1a;">📊 Matrix View</button>
+    </div>
+    <div id="upload-warning" style="display:none; background:#fff3cd; border:2px solid #c8a000; border-radius:8px; padding:12px 18px; margin-bottom:12px; font-size:13px; color:#856404;">
+      ⚠ <strong>WARNING:</strong> UPLOADING A FILE WILL COMPLETELY REPLACE ALL EXISTING SCHEDULE DATA FOR THE SELECTED MONTH. THIS ACTION CANNOT BE UNDONE. MAKE SURE YOUR FILE IS CORRECT BEFORE UPLOADING.
+    </div>
+    <div id="upload-status" style="display:none; background:#e8f5ed; border:1px solid #1a6b3a; border-radius:8px; padding:10px 16px; margin-bottom:12px; font-size:13px; color:#1a3a1a;"></div>
+    <div id="requests-view-content"></div>
+  </div>
+</div>
+
+<script>
+var SPW='wilddunes',APW='schedule',AURL='https://schedule-proxy.fsmattern.workers.dev',role='',allNames=[],requestsCache={},schedAssignments={},schedRequests={};
+var MONTHS=['January','February','March','April','May','June'];
+var MDAYS={January:31,February:28,March:31,April:30,May:31,June:30,July:31,August:31,September:30,October:31,November:30,December:31};
+var DNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+var MSTART={January:4,February:0,March:0,April:3,May:5,June:1,July:3,August:6,September:2,October:4,November:0,December:2};
+const RAW_DATA = [
+  // January 2026
+  { day: "Thursday", date: "Jan 1", month: "January", course: "Links", name: "Adam", shift: "7-4" },
+  { day: "Thursday", date: "Jan 1", month: "January", course: "Harbor", name: "Coach Bob", shift: "7-4" },
+  { day: "Friday", date: "Jan 2", month: "January", course: "Links", name: "Bob B", shift: "7-2" },
+  { day: "Friday", date: "Jan 2", month: "January", course: "Links", name: "Cary", shift: "10-5" },
+  { day: "Friday", date: "Jan 2", month: "January", course: "Harbor", name: "Greg S", shift: "7-2" },
+  { day: "Friday", date: "Jan 2", month: "January", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Saturday", date: "Jan 3", month: "January", course: "Links", name: "Bill I", shift: "7-4" },
+  { day: "Saturday", date: "Jan 3", month: "January", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Jan 3", month: "January", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Sunday", date: "Jan 4", month: "January", course: "Links", name: "Coach Bob", shift: "7-4" },
+  { day: "Sunday", date: "Jan 4", month: "January", course: "Harbor", name: "Dick E", shift: "7-2" },
+  { day: "Sunday", date: "Jan 4", month: "January", course: "Harbor", name: "Mark L", shift: "10-5" },
+  { day: "Monday", date: "Jan 5", month: "January", course: "Links", name: "Greg S", shift: "7-4" },
+  { day: "Monday", date: "Jan 5", month: "January", course: "Harbor", name: "Bob B", shift: "7-4" },
+  { day: "Tuesday", date: "Jan 6", month: "January", course: "Links", name: "Seamus", shift: "7-4" },
+  { day: "Tuesday", date: "Jan 6", month: "January", course: "Harbor", name: "Bud D", shift: "7-4" },
+  { day: "Wednesday", date: "Jan 7", month: "January", course: "Links", name: "Gary", shift: "7-4" },
+  { day: "Wednesday", date: "Jan 7", month: "January", course: "Harbor", name: "Coach Bob", shift: "7-4" },
+  { day: "Thursday", date: "Jan 8", month: "January", course: "Links", name: "Greg S", shift: "7-4" },
+  { day: "Thursday", date: "Jan 8", month: "January", course: "Harbor", name: "Cary", shift: "7-2" },
+  { day: "Thursday", date: "Jan 8", month: "January", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Friday", date: "Jan 9", month: "January", course: "Links", name: "Bobby M", shift: "7-4" },
+  { day: "Friday", date: "Jan 9", month: "January", course: "Harbor", name: "Coach Bob", shift: "7-2" },
+  { day: "Friday", date: "Jan 9", month: "January", course: "Harbor", name: "Bill", shift: "10-5" },
+  { day: "Saturday", date: "Jan 10", month: "January", course: "Links", name: "Rick V", shift: "7-4" },
+  { day: "Saturday", date: "Jan 10", month: "January", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Jan 10", month: "January", course: "Harbor", name: "Gary", shift: "10-5" },
+  { day: "Sunday", date: "Jan 11", month: "January", course: "Links", name: "Dick E", shift: "7-4" },
+  { day: "Sunday", date: "Jan 11", month: "January", course: "Harbor", name: "Bud D", shift: "7-2" },
+  { day: "Sunday", date: "Jan 11", month: "January", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Monday", date: "Jan 12", month: "January", course: "Links", name: "Coach Bob", shift: "7-4" },
+  { day: "Monday", date: "Jan 12", month: "January", course: "Harbor", name: "Seamus", shift: "7-2" },
+  { day: "Monday", date: "Jan 12", month: "January", course: "Harbor", name: "Bill I", shift: "10-5" },
+  { day: "Thursday", date: "Jan 15", month: "January", course: "Links", name: "Kevin", shift: "7-4" },
+  { day: "Thursday", date: "Jan 15", month: "January", course: "Harbor", name: "Coach Bob", shift: "7-2" },
+  { day: "Thursday", date: "Jan 15", month: "January", course: "Harbor", name: "Cary", shift: "10-5" },
+  { day: "Friday", date: "Jan 16", month: "January", course: "Links", name: "Bobby M", shift: "7-4" },
+  { day: "Friday", date: "Jan 16", month: "January", course: "Harbor", name: "Bill I", shift: "7-2" },
+  { day: "Friday", date: "Jan 16", month: "January", course: "Harbor", name: "Greg S", shift: "10-5" },
+  { day: "Saturday", date: "Jan 17", month: "January", course: "Links", name: "Rick V", shift: "7-2" },
+  { day: "Saturday", date: "Jan 17", month: "January", course: "Links", name: "Coach Bob", shift: "10-5" },
+  { day: "Saturday", date: "Jan 17", month: "January", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Jan 17", month: "January", course: "Harbor", name: "Kevin", shift: "10-5" },
+  { day: "Sunday", date: "Jan 18", month: "January", course: "Links", name: "Dick E", shift: "7-4" },
+  { day: "Sunday", date: "Jan 18", month: "January", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Sunday", date: "Jan 18", month: "January", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Monday", date: "Jan 19", month: "January", course: "Links", name: "Kevin", shift: "7-4" },
+  { day: "Tuesday", date: "Jan 20", month: "January", course: "Links", name: "Bud D", shift: "7-4" },
+  { day: "Tuesday", date: "Jan 20", month: "January", course: "Harbor", name: "Coach Bob", shift: "7-12" },
+  { day: "Wednesday", date: "Jan 21", month: "January", course: "Links", name: "Seamus", shift: "7-4" },
+  { day: "Wednesday", date: "Jan 21", month: "January", course: "Harbor", name: "Gary", shift: "7-2" },
+  { day: "Wednesday", date: "Jan 21", month: "January", course: "Harbor", name: "Bill I", shift: "10-5" },
+  { day: "Thursday", date: "Jan 22", month: "January", course: "Links", name: "Kevin", shift: "7-4" },
+  { day: "Thursday", date: "Jan 22", month: "January", course: "Harbor", name: "Greg S", shift: "7-2" },
+  { day: "Thursday", date: "Jan 22", month: "January", course: "Harbor", name: "Cary", shift: "10-5" },
+  { day: "Friday", date: "Jan 23", month: "January", course: "Links", name: "Bobby M", shift: "7-2" },
+  { day: "Friday", date: "Jan 23", month: "January", course: "Links", name: "Bill I", shift: "10-5" },
+  { day: "Friday", date: "Jan 23", month: "January", course: "Harbor", name: "Bob B", shift: "7-2" },
+  { day: "Friday", date: "Jan 23", month: "January", course: "Harbor", name: "Coach Bob", shift: "10-5" },
+  { day: "Saturday", date: "Jan 24", month: "January", course: "Links", name: "Rick V", shift: "7-2" },
+  { day: "Saturday", date: "Jan 24", month: "January", course: "Links", name: "Kevin", shift: "10-5" },
+  { day: "Saturday", date: "Jan 24", month: "January", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Jan 24", month: "January", course: "Harbor", name: "Gary", shift: "10-5" },
+  { day: "Sunday", date: "Jan 25", month: "January", course: "Links", name: "Dick E", shift: "7-4" },
+  { day: "Sunday", date: "Jan 25", month: "January", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Sunday", date: "Jan 25", month: "January", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Monday", date: "Jan 26", month: "January", course: "Links", name: "Coach Bob", shift: "7-4" },
+  { day: "Monday", date: "Jan 26", month: "January", course: "Harbor", name: "Mike K", shift: "7-4" },
+  { day: "Tuesday", date: "Jan 27", month: "January", course: "Links", name: "Gary", shift: "7-4" },
+  { day: "Tuesday", date: "Jan 27", month: "January", course: "Harbor", name: "John S", shift: "7-2" },
+  { day: "Tuesday", date: "Jan 27", month: "January", course: "Harbor", name: "Bud D", shift: "10-5" },
+  { day: "Wednesday", date: "Jan 28", month: "January", course: "Links", name: "Kevin", shift: "7-4" },
+  { day: "Wednesday", date: "Jan 28", month: "January", course: "Harbor", name: "Bill I", shift: "7-4" },
+  { day: "Thursday", date: "Jan 29", month: "January", course: "Links", name: "Greg S", shift: "7-2" },
+  { day: "Thursday", date: "Jan 29", month: "January", course: "Links", name: "John S", shift: "10-5" },
+  { day: "Thursday", date: "Jan 29", month: "January", course: "Harbor", name: "Cary", shift: "7-2" },
+  { day: "Thursday", date: "Jan 29", month: "January", course: "Harbor", name: "Coach Bob", shift: "10-5" },
+  { day: "Friday", date: "Jan 30", month: "January", course: "Links", name: "Gary", shift: "7-4" },
+  { day: "Friday", date: "Jan 30", month: "January", course: "Harbor", name: "Bobby M", shift: "7-2" },
+  { day: "Friday", date: "Jan 30", month: "January", course: "Harbor", name: "Kevin", shift: "10-5" },
+  { day: "Saturday", date: "Jan 31", month: "January", course: "Links", name: "Rick V", shift: "7-2" },
+  { day: "Saturday", date: "Jan 31", month: "January", course: "Links", name: "Bill I", shift: "10-5" },
+  { day: "Saturday", date: "Jan 31", month: "January", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Jan 31", month: "January", course: "Harbor", name: "Coach Bob", shift: "10-5" },
+
+  // February 2026
+  { day: "Sunday", date: "Feb 1", month: "February", course: "Links", name: "Dick E", shift: "7-4" },
+  { day: "Sunday", date: "Feb 1", month: "February", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Sunday", date: "Feb 1", month: "February", course: "Harbor", name: "Bill I", shift: "10-5" },
+  { day: "Monday", date: "Feb 2", month: "February", course: "Links", name: "Greg S", shift: "7-4" },
+  { day: "Monday", date: "Feb 2", month: "February", course: "Harbor", name: "Dick E", shift: "7-2" },
+  { day: "Monday", date: "Feb 2", month: "February", course: "Harbor", name: "Mike K", shift: "10-5" },
+  { day: "Tuesday", date: "Feb 3", month: "February", course: "Links", name: "Joe N", shift: "7-2" },
+  { day: "Tuesday", date: "Feb 3", month: "February", course: "Links", name: "Bobby M", shift: "10-5" },
+  { day: "Tuesday", date: "Feb 3", month: "February", course: "Harbor", name: "Bud D", shift: "7-2" },
+  { day: "Tuesday", date: "Feb 3", month: "February", course: "Harbor", name: "Seamus", shift: "10-5" },
+  { day: "Wednesday", date: "Feb 4", month: "February", course: "Links", name: "Gary", shift: "7-4" },
+  { day: "Wednesday", date: "Feb 4", month: "February", course: "Harbor", name: "Coach Bob", shift: "7-2" },
+  { day: "Wednesday", date: "Feb 4", month: "February", course: "Harbor", name: "Bill I", shift: "10-5" },
+  { day: "Thursday", date: "Feb 5", month: "February", course: "Links", name: "Kevin", shift: "7-2" },
+  { day: "Thursday", date: "Feb 5", month: "February", course: "Links", name: "John S", shift: "10-5" },
+  { day: "Thursday", date: "Feb 5", month: "February", course: "Harbor", name: "Greg S", shift: "7-2" },
+  { day: "Thursday", date: "Feb 5", month: "February", course: "Harbor", name: "Mike K", shift: "10-5" },
+  { day: "Friday", date: "Feb 6", month: "February", course: "Links", name: "Bobby M", shift: "7-2" },
+  { day: "Friday", date: "Feb 6", month: "February", course: "Links", name: "Bob J", shift: "10-5" },
+  { day: "Friday", date: "Feb 6", month: "February", course: "Harbor", name: "Bill I", shift: "7-2" },
+  { day: "Friday", date: "Feb 6", month: "February", course: "Harbor", name: "Coach Bob", shift: "10-5" },
+  { day: "Saturday", date: "Feb 7", month: "February", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Feb 7", month: "February", course: "Harbor", name: "Bud D", shift: "10-5" },
+  { day: "Sunday", date: "Feb 8", month: "February", course: "Links", name: "Bob B", shift: "7-4" },
+  { day: "Sunday", date: "Feb 8", month: "February", course: "Harbor", name: "Coach Bob", shift: "7-4" },
+  { day: "Monday", date: "Feb 9", month: "February", course: "Links", name: "Bob B", shift: "7-2" },
+  { day: "Monday", date: "Feb 9", month: "February", course: "Links", name: "Gary", shift: "9-5" },
+  { day: "Tuesday", date: "Feb 10", month: "February", course: "Links", name: "Bobby M", shift: "7-4" },
+  { day: "Tuesday", date: "Feb 10", month: "February", course: "Harbor", name: "Greg S", shift: "7-2" },
+  { day: "Tuesday", date: "Feb 10", month: "February", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Wednesday", date: "Feb 11", month: "February", course: "Links", name: "Bob J", shift: "7-4" },
+  { day: "Wednesday", date: "Feb 11", month: "February", course: "Harbor", name: "Joe N", shift: "7-2" },
+  { day: "Wednesday", date: "Feb 11", month: "February", course: "Harbor", name: "Seamus", shift: "10-5" },
+  { day: "Thursday", date: "Feb 12", month: "February", course: "Links", name: "Kevin", shift: "10-4" },
+  { day: "Thursday", date: "Feb 12", month: "February", course: "Harbor", name: "Mike K", shift: "7-2" },
+  { day: "Thursday", date: "Feb 12", month: "February", course: "Harbor", name: "Cary", shift: "10-5" },
+  { day: "Friday", date: "Feb 13", month: "February", course: "Links", name: "Bobby M", shift: "7-2" },
+  { day: "Friday", date: "Feb 13", month: "February", course: "Links", name: "Greg S", shift: "10-5" },
+  { day: "Friday", date: "Feb 13", month: "February", course: "Harbor", name: "Bob B", shift: "7-2" },
+  { day: "Friday", date: "Feb 13", month: "February", course: "Harbor", name: "Bob J", shift: "10-5" },
+  { day: "Saturday", date: "Feb 14", month: "February", course: "Links", name: "Rick V", shift: "7-4" },
+  { day: "Saturday", date: "Feb 14", month: "February", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Feb 14", month: "February", course: "Harbor", name: "Coach Bob", shift: "10-5" },
+  { day: "Sunday", date: "Feb 15", month: "February", course: "Links", name: "Dick E", shift: "7-4" },
+  { day: "Sunday", date: "Feb 15", month: "February", course: "Harbor", name: "Joe N", shift: "7-2" },
+  { day: "Sunday", date: "Feb 15", month: "February", course: "Harbor", name: "Mark L", shift: "10-5" },
+  { day: "Monday", date: "Feb 16", month: "February", course: "Links", name: "Greg S", shift: "7-4" },
+  { day: "Monday", date: "Feb 16", month: "February", course: "Harbor", name: "Coach Bob", shift: "7-2" },
+  { day: "Monday", date: "Feb 16", month: "February", course: "Harbor", name: "Bill I", shift: "10-5" },
+  { day: "Tuesday", date: "Feb 17", month: "February", course: "Links", name: "Bobby M", shift: "7-2" },
+  { day: "Tuesday", date: "Feb 17", month: "February", course: "Links", name: "Cary", shift: "9-5" },
+  { day: "Wednesday", date: "Feb 18", month: "February", course: "Links", name: "Seamus", shift: "7-4" },
+  { day: "Wednesday", date: "Feb 18", month: "February", course: "Harbor", name: "Bob J", shift: "7-2" },
+  { day: "Wednesday", date: "Feb 18", month: "February", course: "Harbor", name: "Mike K", shift: "10-5" },
+  { day: "Thursday", date: "Feb 19", month: "February", course: "Links", name: "Greg S", shift: "7-4" },
+  { day: "Thursday", date: "Feb 19", month: "February", course: "Harbor", name: "Bill I", shift: "7-2" },
+  { day: "Thursday", date: "Feb 19", month: "February", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Friday", date: "Feb 20", month: "February", course: "Links", name: "Kevin", shift: "7-2" },
+  { day: "Friday", date: "Feb 20", month: "February", course: "Links", name: "Bobby M", shift: "10-5" },
+  { day: "Friday", date: "Feb 20", month: "February", course: "Harbor", name: "Bob B", shift: "7-2" },
+  { day: "Friday", date: "Feb 20", month: "February", course: "Harbor", name: "Cary", shift: "10-5" },
+  { day: "Saturday", date: "Feb 21", month: "February", course: "Links", name: "Rick V", shift: "7-4" },
+  { day: "Saturday", date: "Feb 21", month: "February", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Feb 21", month: "February", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Sunday", date: "Feb 22", month: "February", course: "Links", name: "Bill I", shift: "7-4" },
+  { day: "Sunday", date: "Feb 22", month: "February", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Sunday", date: "Feb 22", month: "February", course: "Harbor", name: "John S", shift: "10-5" },
+  { day: "Monday", date: "Feb 23", month: "February", course: "Links", name: "Greg S", shift: "7-4" },
+  { day: "Monday", date: "Feb 23", month: "February", course: "Harbor", name: "Bob B", shift: "7-2" },
+  { day: "Monday", date: "Feb 23", month: "February", course: "Harbor", name: "Cary", shift: "10-5" },
+  { day: "Tuesday", date: "Feb 24", month: "February", course: "Links", name: "Gary", shift: "7-4" },
+  { day: "Tuesday", date: "Feb 24", month: "February", course: "Harbor", name: "Dick E", shift: "7-2" },
+  { day: "Tuesday", date: "Feb 24", month: "February", course: "Harbor", name: "Seamus", shift: "10-5" },
+  { day: "Wednesday", date: "Feb 25", month: "February", course: "Links", name: "Coach Bob", shift: "7-4" },
+  { day: "Wednesday", date: "Feb 25", month: "February", course: "Harbor", name: "Mike K", shift: "7-2" },
+  { day: "Wednesday", date: "Feb 25", month: "February", course: "Harbor", name: "Bill I", shift: "10-5" },
+  { day: "Thursday", date: "Feb 26", month: "February", course: "Links", name: "Kevin I", shift: "7-4" },
+  { day: "Thursday", date: "Feb 26", month: "February", course: "Harbor", name: "Bud D", shift: "7-2" },
+  { day: "Thursday", date: "Feb 26", month: "February", course: "Harbor", name: "Cary", shift: "10-5" },
+  { day: "Friday", date: "Feb 27", month: "February", course: "Links", name: "Gary", shift: "7-4" },
+  { day: "Friday", date: "Feb 27", month: "February", course: "Harbor", name: "Greg S", shift: "7-2" },
+  { day: "Friday", date: "Feb 27", month: "February", course: "Harbor", name: "Bill I", shift: "10-5" },
+  { day: "Saturday", date: "Feb 28", month: "February", course: "Links", name: "Rick V", shift: "7-2" },
+  { day: "Saturday", date: "Feb 28", month: "February", course: "Links", name: "John S", shift: "10-5" },
+  { day: "Saturday", date: "Feb 28", month: "February", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Saturday", date: "Feb 28", month: "February", course: "Harbor", name: "Coach Bob", shift: "10-5" },
+
+  // March 2026
+  { day: "Sunday", date: "Mar 1", month: "March", course: "Links", name: "Bill I", shift: "7-4" },
+  { day: "Sunday", date: "Mar 1", month: "March", course: "Harbor", name: "Mark L", shift: "7-2" },
+  { day: "Sunday", date: "Mar 1", month: "March", course: "Harbor", name: "Coach Bob", shift: "10-6" },
+  { day: "Monday", date: "Mar 2", month: "March", course: "Links", name: "Greg S", shift: "7-4" },
+  { day: "Monday", date: "Mar 2", month: "March", course: "Harbor", name: "Cary", shift: "7-2" },
+  { day: "Monday", date: "Mar 2", month: "March", course: "Harbor", name: "Dick E", shift: "8:30-6" },
+  { day: "Tuesday", date: "Mar 3", month: "March", course: "Links", name: "Bobby M", shift: "7-2" },
+  { day: "Tuesday", date: "Mar 3", month: "March", course: "Links", name: "John S", shift: "10-6" },
+  { day: "Tuesday", date: "Mar 3", month: "March", course: "Harbor", name: "Joe N", shift: "7-2" },
+  { day: "Tuesday", date: "Mar 3", month: "March", course: "Harbor", name: "Coach Bob", shift: "10-6" },
+  { day: "Wednesday", date: "Mar 4", month: "March", course: "Links", name: "Seamus", shift: "7-2" },
+  { day: "Wednesday", date: "Mar 4", month: "March", course: "Links", name: "Greg S", shift: "10-6" },
+  { day: "Wednesday", date: "Mar 4", month: "March", course: "Harbor", name: "Cary", shift: "7-2" },
+  { day: "Wednesday", date: "Mar 4", month: "March", course: "Harbor", name: "Bob J", shift: "8:30-5" },
+  { day: "Thursday", date: "Mar 5", month: "March", course: "Links", name: "John S", shift: "7-3" },
+  { day: "Thursday", date: "Mar 5", month: "March", course: "Links", name: "Gary", shift: "10-6" },
+  { day: "Thursday", date: "Mar 5", month: "March", course: "Harbor", name: "Bud D", shift: "7-2" },
+  { day: "Thursday", date: "Mar 5", month: "March", course: "Harbor", name: "Mike K", shift: "10-6" },
+  { day: "Friday", date: "Mar 6", month: "March", course: "Links", name: "Bill I", shift: "7-3" },
+  { day: "Friday", date: "Mar 6", month: "March", course: "Links", name: "John J", shift: "10-6" },
+  { day: "Friday", date: "Mar 6", month: "March", course: "Harbor", name: "Greg S", shift: "7-3" },
+  { day: "Friday", date: "Mar 6", month: "March", course: "Harbor", name: "Kevin", shift: "8:30-6" },
+  { day: "Saturday", date: "Mar 7", month: "March", course: "Links", name: "Bob J", shift: "12-6" },
+  { day: "Saturday", date: "Mar 7", month: "March", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Mar 7", month: "March", course: "Harbor", name: "Bud D", shift: "10-6" },
+  { day: "Sunday", date: "Mar 8", month: "March", course: "Links", name: "Joe N", shift: "7-2" },
+  { day: "Sunday", date: "Mar 8", month: "March", course: "Links", name: "Dick E", shift: "10-6" },
+  { day: "Sunday", date: "Mar 8", month: "March", course: "Harbor", name: "John S", shift: "11:30-5" },
+  { day: "Monday", date: "Mar 9", month: "March", course: "Links", name: "Greg S", shift: "7-2" },
+  { day: "Monday", date: "Mar 9", month: "March", course: "Links", name: "Bill I", shift: "10-6" },
+  { day: "Monday", date: "Mar 9", month: "March", course: "Harbor", name: "Coach Bob", shift: "7-2" },
+  { day: "Monday", date: "Mar 9", month: "March", course: "Harbor", name: "Cary", shift: "10-6" },
+  { day: "Tuesday", date: "Mar 10", month: "March", course: "Links", name: "Gary", shift: "7-4" },
+  { day: "Tuesday", date: "Mar 10", month: "March", course: "Harbor", name: "Bobby M", shift: "7-2" },
+  { day: "Tuesday", date: "Mar 10", month: "March", course: "Harbor", name: "Seamus", shift: "8:30-6" },
+  { day: "Wednesday", date: "Mar 11", month: "March", course: "Links", name: "Kevin I", shift: "7-2" },
+  { day: "Wednesday", date: "Mar 11", month: "March", course: "Links", name: "John S", shift: "10-6" },
+  { day: "Wednesday", date: "Mar 11", month: "March", course: "Harbor", name: "Joe N", shift: "7-2" },
+  { day: "Wednesday", date: "Mar 11", month: "March", course: "Harbor", name: "Coach Bob", shift: "10-6" },
+  { day: "Thursday", date: "Mar 12", month: "March", course: "Links", name: "Gary", shift: "7-2" },
+  { day: "Thursday", date: "Mar 12", month: "March", course: "Links", name: "Bill I", shift: "10-6" },
+  { day: "Thursday", date: "Mar 12", month: "March", course: "Harbor", name: "Mike K", shift: "7-2" },
+  { day: "Thursday", date: "Mar 12", month: "March", course: "Harbor", name: "Cary", shift: "8:30-6" },
+  { day: "Friday", date: "Mar 13", month: "March", course: "Links", name: "Kevin I", shift: "7-4" },
+  { day: "Friday", date: "Mar 13", month: "March", course: "Harbor", name: "Coach Bob", shift: "7-2" },
+  { day: "Friday", date: "Mar 13", month: "March", course: "Harbor", name: "Greg S", shift: "10-6" },
+  { day: "Saturday", date: "Mar 14", month: "March", course: "Links", name: "Rick V", shift: "7-2" },
+  { day: "Saturday", date: "Mar 14", month: "March", course: "Links", name: "John S", shift: "10-6" },
+  { day: "Saturday", date: "Mar 14", month: "March", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Mar 14", month: "March", course: "Harbor", name: "Bill I", shift: "8:30-6" },
+  { day: "Sunday", date: "Mar 15", month: "March", course: "Links", name: "Joe N", shift: "7-2" },
+  { day: "Sunday", date: "Mar 15", month: "March", course: "Links", name: "Coach Bob", shift: "10-6" },
+  { day: "Sunday", date: "Mar 15", month: "March", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "Mar 15", month: "March", course: "Harbor", name: "Bud D", shift: "10-6" },
+  { day: "Monday", date: "Mar 16", month: "March", course: "Links", name: "Dick E", shift: "7-2" },
+  { day: "Monday", date: "Mar 16", month: "March", course: "Links", name: "Gary", shift: "10-6" },
+  { day: "Monday", date: "Mar 16", month: "March", course: "Harbor", name: "Bill I", shift: "7-2" },
+  { day: "Monday", date: "Mar 16", month: "March", course: "Harbor", name: "Mike K", shift: "8:30-6" },
+  { day: "Tuesday", date: "Mar 17", month: "March", course: "Links", name: "Kevin I", shift: "7-2" },
+  { day: "Tuesday", date: "Mar 17", month: "March", course: "Links", name: "Greg S", shift: "10-6" },
+  { day: "Tuesday", date: "Mar 17", month: "March", course: "Harbor", name: "Bobby M", shift: "7-2" },
+  { day: "Tuesday", date: "Mar 17", month: "March", course: "Harbor", name: "Cary", shift: "10-6" },
+  { day: "Wednesday", date: "Mar 18", month: "March", course: "Links", name: "Coach Bob", shift: "7-4" },
+  { day: "Wednesday", date: "Mar 18", month: "March", course: "Harbor", name: "Mike K", shift: "7-2" },
+  { day: "Wednesday", date: "Mar 18", month: "March", course: "Harbor", name: "Bob J", shift: "8:30-6" },
+  { day: "Thursday", date: "Mar 19", month: "March", course: "Links", name: "Kevin I", shift: "7-2" },
+  { day: "Thursday", date: "Mar 19", month: "March", course: "Links", name: "Gary", shift: "10-6" },
+  { day: "Thursday", date: "Mar 19", month: "March", course: "Harbor", name: "John S", shift: "7-1:30" },
+  { day: "Friday", date: "Mar 20", month: "March", course: "Links", name: "Bob B", shift: "7-3" },
+  { day: "Friday", date: "Mar 20", month: "March", course: "Links", name: "Carl", shift: "10-6" },
+  { day: "Friday", date: "Mar 20", month: "March", course: "Harbor", name: "Greg S", shift: "7-2" },
+  { day: "Friday", date: "Mar 20", month: "March", course: "Harbor", name: "Bill I", shift: "8:30-6" },
+  { day: "Saturday", date: "Mar 21", month: "March", course: "Links", name: "Rick V", shift: "7-3" },
+  { day: "Saturday", date: "Mar 21", month: "March", course: "Links", name: "Kevin I", shift: "10-6" },
+  { day: "Saturday", date: "Mar 21", month: "March", course: "Harbor", name: "Bob J", shift: "7-2" },
+  { day: "Saturday", date: "Mar 21", month: "March", course: "Harbor", name: "John S", shift: "10-6" },
+  { day: "Sunday", date: "Mar 22", month: "March", course: "Links", name: "Dick E", shift: "7-3" },
+  { day: "Sunday", date: "Mar 22", month: "March", course: "Links", name: "Carl", shift: "10-6" },
+  { day: "Sunday", date: "Mar 22", month: "March", course: "Harbor", name: "Bill I", shift: "7-2" },
+  { day: "Sunday", date: "Mar 22", month: "March", course: "Harbor", name: "Bud D", shift: "8:30-6" },
+  { day: "Monday", date: "Mar 23", month: "March", course: "Links", name: "Greg S", shift: "7-4" },
+  { day: "Monday", date: "Mar 23", month: "March", course: "Harbor", name: "Cary", shift: "7-2" },
+  { day: "Monday", date: "Mar 23", month: "March", course: "Harbor", name: "Mike K", shift: "10-6" },
+  { day: "Tuesday", date: "Mar 24", month: "March", course: "Links", name: "Bobby M", shift: "7-2" },
+  { day: "Tuesday", date: "Mar 24", month: "March", course: "Links", name: "Gary", shift: "10-6" },
+  { day: "Tuesday", date: "Mar 24", month: "March", course: "Harbor", name: "Seamus", shift: "8:00-2" },
+  { day: "Tuesday", date: "Mar 24", month: "March", course: "Harbor", name: "Bud D", shift: "11-6" },
+  { day: "Wednesday", date: "Mar 25", month: "March", course: "Links", name: "Kevin I", shift: "7-4" },
+  { day: "Wednesday", date: "Mar 25", month: "March", course: "Harbor", name: "Mike K", shift: "7-2" },
+  { day: "Wednesday", date: "Mar 25", month: "March", course: "Harbor", name: "Cary", shift: "10-6" },
+  { day: "Thursday", date: "Mar 26", month: "March", course: "Links", name: "Carl", shift: "7-2" },
+  { day: "Thursday", date: "Mar 26", month: "March", course: "Links", name: "Coach Bob", shift: "10-6" },
+  { day: "Thursday", date: "Mar 26", month: "March", course: "Harbor", name: "Greg S", shift: "7-2" },
+  { day: "Thursday", date: "Mar 26", month: "March", course: "Harbor", name: "Bill I", shift: "8:30-6" },
+  { day: "Friday", date: "Mar 27", month: "March", course: "Links", name: "Bob B", shift: "7-3" },
+  { day: "Friday", date: "Mar 27", month: "March", course: "Links", name: "Carl", shift: "10-6" },
+  { day: "Friday", date: "Mar 27", month: "March", course: "Harbor", name: "Cary", shift: "7-2" },
+  { day: "Friday", date: "Mar 27", month: "March", course: "Harbor", name: "Greg S", shift: "10-5" },
+  { day: "Saturday", date: "Mar 28", month: "March", course: "Links", name: "Rick V", shift: "7-3" },
+  { day: "Saturday", date: "Mar 28", month: "March", course: "Links", name: "Bill I", shift: "10-6" },
+  { day: "Saturday", date: "Mar 28", month: "March", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Mar 28", month: "March", course: "Harbor", name: "Bud D", shift: "8:30-6" },
+  { day: "Sunday", date: "Mar 29", month: "March", course: "Links", name: "Bob B", shift: "7-2" },
+  { day: "Sunday", date: "Mar 29", month: "March", course: "Links", name: "John S", shift: "10-6" },
+  { day: "Sunday", date: "Mar 29", month: "March", course: "Harbor", name: "Bob J", shift: "7-2" },
+  { day: "Sunday", date: "Mar 29", month: "March", course: "Harbor", name: "Coach Bob", shift: "10-6" },
+  { day: "Monday", date: "Mar 30", month: "March", course: "Harbor", name: "Cary", shift: "7-2" },
+  { day: "Monday", date: "Mar 30", month: "March", course: "Harbor", name: "Bob B", shift: "8:30-6" },
+  { day: "Tuesday", date: "Mar 31", month: "March", course: "Links", name: "Seamus", shift: "7-2" },
+  { day: "Tuesday", date: "Mar 31", month: "March", course: "Links", name: "Gary", shift: "10-6" },
+
+  // April 2026
+  { day: "Wednesday", date: "Apr 1", month: "April", course: "Links", name: "Gary M", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 1", month: "April", course: "Links", name: "Seamus", shift: "9-6" },
+  { day: "Wednesday", date: "Apr 1", month: "April", course: "Harbor", name: "Bob B", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 1", month: "April", course: "Harbor", name: "Bob J", shift: "9-6" },
+  { day: "Thursday", date: "Apr 2", month: "April", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Thursday", date: "Apr 2", month: "April", course: "Links", name: "John S", shift: "9-6" },
+  { day: "Thursday", date: "Apr 2", month: "April", course: "Harbor", name: "Coach Bob", shift: "7-3" },
+  { day: "Thursday", date: "Apr 2", month: "April", course: "Harbor", name: "Bill I", shift: "8:30-6" },
+  { day: "Friday", date: "Apr 3", month: "April", course: "Links", name: "Cary", shift: "7-3" },
+  { day: "Friday", date: "Apr 3", month: "April", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Friday", date: "Apr 3", month: "April", course: "Harbor", name: "Joe N", shift: "7-3" },
+  { day: "Friday", date: "Apr 3", month: "April", course: "Harbor", name: "Jeff C", shift: "9-6" },
+  { day: "Saturday", date: "Apr 4", month: "April", course: "Links", name: "Carl", shift: "7-3" },
+  { day: "Saturday", date: "Apr 4", month: "April", course: "Links", name: "Bill I", shift: "9-6" },
+  { day: "Saturday", date: "Apr 4", month: "April", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Apr 4", month: "April", course: "Harbor", name: "Coach Bob", shift: "8:30-6" },
+  { day: "Sunday", date: "Apr 5", month: "April", course: "Links", name: "Jeff C", shift: "7-4" },
+  { day: "Sunday", date: "Apr 5", month: "April", course: "Harbor", name: "Coach Bob", shift: "7-4" },
+  { day: "Monday", date: "Apr 6", month: "April", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Monday", date: "Apr 6", month: "April", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Monday", date: "Apr 6", month: "April", course: "Harbor", name: "Carl", shift: "7-3" },
+  { day: "Monday", date: "Apr 6", month: "April", course: "Harbor", name: "Bob B", shift: "8:30-6" },
+  { day: "Tuesday", date: "Apr 7", month: "April", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Tuesday", date: "Apr 7", month: "April", course: "Links", name: "Bob J", shift: "9-6" },
+  { day: "Tuesday", date: "Apr 7", month: "April", course: "Harbor", name: "Joe N", shift: "7-3" },
+  { day: "Tuesday", date: "Apr 7", month: "April", course: "Harbor", name: "George", shift: "9-6" },
+  { day: "Wednesday", date: "Apr 8", month: "April", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 8", month: "April", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Wednesday", date: "Apr 8", month: "April", course: "Harbor", name: "Bill I", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 8", month: "April", course: "Harbor", name: "Jeff C", shift: "8:30-6" },
+  { day: "Thursday", date: "Apr 9", month: "April", course: "Links", name: "Cary", shift: "7-3" },
+  { day: "Thursday", date: "Apr 9", month: "April", course: "Links", name: "John S", shift: "9-6" },
+  { day: "Thursday", date: "Apr 9", month: "April", course: "Harbor", name: "Dick E", shift: "7-3" },
+  { day: "Thursday", date: "Apr 9", month: "April", course: "Harbor", name: "Coach Bob", shift: "9-6" },
+  { day: "Friday", date: "Apr 10", month: "April", course: "Links", name: "Kevin", shift: "7-3" },
+  { day: "Friday", date: "Apr 10", month: "April", course: "Links", name: "Bob B", shift: "9-6" },
+  { day: "Friday", date: "Apr 10", month: "April", course: "Harbor", name: "Jeff C", shift: "7-3" },
+  { day: "Friday", date: "Apr 10", month: "April", course: "Harbor", name: "Bill I", shift: "8:30-6" },
+  { day: "Saturday", date: "Apr 11", month: "April", course: "Links", name: "Rick", shift: "7-2" },
+  { day: "Saturday", date: "Apr 11", month: "April", course: "Links", name: "Bob J", shift: "9-6" },
+  { day: "Saturday", date: "Apr 11", month: "April", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Apr 11", month: "April", course: "Harbor", name: "Coach Bob", shift: "9-6" },
+  { day: "Sunday", date: "Apr 12", month: "April", course: "Links", name: "John S", shift: "7-3" },
+  { day: "Sunday", date: "Apr 12", month: "April", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Sunday", date: "Apr 12", month: "April", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "Apr 12", month: "April", course: "Harbor", name: "Jeff C", shift: "8:30-6" },
+  { day: "Monday", date: "Apr 13", month: "April", course: "Harbor", name: "Seamus", shift: "7-3" },
+  { day: "Monday", date: "Apr 13", month: "April", course: "Harbor", name: "Bud D", shift: "9-6" },
+  { day: "Tuesday", date: "Apr 14", month: "April", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Tuesday", date: "Apr 14", month: "April", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Wednesday", date: "Apr 15", month: "April", course: "Links", name: "Bob B", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 15", month: "April", course: "Links", name: "Cary", shift: "9-6" },
+  { day: "Wednesday", date: "Apr 15", month: "April", course: "Harbor", name: "Mike K", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 15", month: "April", course: "Harbor", name: "Seamus", shift: "9-6" },
+  { day: "Thursday", date: "Apr 16", month: "April", course: "Links", name: "Dick E", shift: "7-3" },
+  { day: "Thursday", date: "Apr 16", month: "April", course: "Links", name: "Greg S", shift: "9-6" },
+  { day: "Thursday", date: "Apr 16", month: "April", course: "Harbor", name: "John S", shift: "7-3" },
+  { day: "Thursday", date: "Apr 16", month: "April", course: "Harbor", name: "Coach Bob", shift: "8:30-6" },
+  { day: "Friday", date: "Apr 17", month: "April", course: "Links", name: "Joe N", shift: "7-3" },
+  { day: "Friday", date: "Apr 17", month: "April", course: "Links", name: "Carl", shift: "9-6" },
+  { day: "Friday", date: "Apr 17", month: "April", course: "Harbor", name: "Bob J", shift: "7-3" },
+  { day: "Friday", date: "Apr 17", month: "April", course: "Harbor", name: "Cary", shift: "9-6" },
+  { day: "Saturday", date: "Apr 18", month: "April", course: "Links", name: "Bill I", shift: "7-3" },
+  { day: "Saturday", date: "Apr 18", month: "April", course: "Links", name: "Coach Bob", shift: "9-6" },
+  { day: "Saturday", date: "Apr 18", month: "April", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Apr 18", month: "April", course: "Harbor", name: "John S", shift: "10-6" },
+  { day: "Sunday", date: "Apr 19", month: "April", course: "Links", name: "Dick E", shift: "7-3" },
+  { day: "Sunday", date: "Apr 19", month: "April", course: "Links", name: "Kevin I", shift: "9-6" },
+  { day: "Sunday", date: "Apr 19", month: "April", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "Apr 19", month: "April", course: "Harbor", name: "Bud D", shift: "9-6" },
+  { day: "Monday", date: "Apr 20", month: "April", course: "Links", name: "Cary", shift: "7-3" },
+  { day: "Monday", date: "Apr 20", month: "April", course: "Links", name: "Bill I", shift: "9-6" },
+  { day: "Monday", date: "Apr 20", month: "April", course: "Harbor", name: "Greg S", shift: "7-3" },
+  { day: "Monday", date: "Apr 20", month: "April", course: "Harbor", name: "Mike K", shift: "8:30-6" },
+  { day: "Tuesday", date: "Apr 21", month: "April", course: "Links", name: "Gary", shift: "7-3" },
+  { day: "Tuesday", date: "Apr 21", month: "April", course: "Links", name: "Bobby M", shift: "9-6" },
+  { day: "Tuesday", date: "Apr 21", month: "April", course: "Harbor", name: "Seamus", shift: "7-3" },
+  { day: "Tuesday", date: "Apr 21", month: "April", course: "Harbor", name: "George", shift: "9-6" },
+  { day: "Wednesday", date: "Apr 22", month: "April", course: "Links", name: "Kevin", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 22", month: "April", course: "Links", name: "Bill I", shift: "9-6" },
+  { day: "Wednesday", date: "Apr 22", month: "April", course: "Harbor", name: "Mike K", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 22", month: "April", course: "Harbor", name: "Cary", shift: "8:30-6" },
+  { day: "Thursday", date: "Apr 23", month: "April", course: "Links", name: "Bob J", shift: "7-3" },
+  { day: "Thursday", date: "Apr 23", month: "April", course: "Links", name: "Dick E", shift: "9-6" },
+  { day: "Thursday", date: "Apr 23", month: "April", course: "Harbor", name: "John S", shift: "7-3" },
+  { day: "Thursday", date: "Apr 23", month: "April", course: "Harbor", name: "Jeff C", shift: "9-6" },
+  { day: "Friday", date: "Apr 24", month: "April", course: "Links", name: "Kevin", shift: "7-3" },
+  { day: "Friday", date: "Apr 24", month: "April", course: "Links", name: "Greg S", shift: "9-6" },
+  { day: "Friday", date: "Apr 24", month: "April", course: "Harbor", name: "Bill I", shift: "7-3" },
+  { day: "Friday", date: "Apr 24", month: "April", course: "Harbor", name: "Coach Bob", shift: "8:30-6" },
+  { day: "Saturday", date: "Apr 25", month: "April", course: "Links", name: "Rick", shift: "7-3" },
+  { day: "Saturday", date: "Apr 25", month: "April", course: "Links", name: "Gary", shift: "9-3" },
+  { day: "Saturday", date: "Apr 25", month: "April", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Apr 25", month: "April", course: "Harbor", name: "Jeff C", shift: "9-6" },
+  { day: "Sunday", date: "Apr 26", month: "April", course: "Links", name: "Dick E", shift: "7-3" },
+  { day: "Sunday", date: "Apr 26", month: "April", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Sunday", date: "Apr 26", month: "April", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "Apr 26", month: "April", course: "Harbor", name: "Coach Bob", shift: "8:30-6" },
+  { day: "Monday", date: "Apr 27", month: "April", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Monday", date: "Apr 27", month: "April", course: "Links", name: "Bob B", shift: "9-6" },
+  { day: "Monday", date: "Apr 27", month: "April", course: "Harbor", name: "Cary", shift: "7-3" },
+  { day: "Monday", date: "Apr 27", month: "April", course: "Harbor", name: "Bud D", shift: "9-6" },
+  { day: "Tuesday", date: "Apr 28", month: "April", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Tuesday", date: "Apr 28", month: "April", course: "Links", name: "John S", shift: "9-6" },
+  { day: "Tuesday", date: "Apr 28", month: "April", course: "Harbor", name: "Mike K", shift: "7-3" },
+  { day: "Tuesday", date: "Apr 28", month: "April", course: "Harbor", name: "George", shift: "8:30-6" },
+  { day: "Wednesday", date: "Apr 29", month: "April", course: "Links", name: "Coach Bob", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 29", month: "April", course: "Links", name: "Cary", shift: "9-6" },
+  { day: "Wednesday", date: "Apr 29", month: "April", course: "Harbor", name: "Bill I", shift: "7-3" },
+  { day: "Wednesday", date: "Apr 29", month: "April", course: "Harbor", name: "Seamus", shift: "9-6" },
+  { day: "Thursday", date: "Apr 30", month: "April", course: "Links", name: "Jeff C", shift: "7-3" },
+  { day: "Thursday", date: "Apr 30", month: "April", course: "Links", name: "Bob J", shift: "9-6" },
+  { day: "Thursday", date: "Apr 30", month: "April", course: "Harbor", name: "Greg S", shift: "7-3" },
+  { day: "Thursday", date: "Apr 30", month: "April", course: "Harbor", name: "Bud D", shift: "8:30-6" },
+
+  // May 2026
+  { day: "Friday", date: "May 1", month: "May", course: "Links", name: "Joe N", shift: "7-3" },
+  { day: "Friday", date: "May 1", month: "May", course: "Links", name: "Bill", shift: "9-6" },
+  { day: "Friday", date: "May 1", month: "May", course: "Harbor", name: "John S", shift: "7-3" },
+  { day: "Friday", date: "May 1", month: "May", course: "Harbor", name: "Bob B", shift: "9-6" },
+  { day: "Saturday", date: "May 2", month: "May", course: "Links", name: "Rick", shift: "7-3" },
+  { day: "Saturday", date: "May 2", month: "May", course: "Links", name: "John S", shift: "9-6" },
+  { day: "Saturday", date: "May 2", month: "May", course: "Harbor", name: "Bob J", shift: "7-3" },
+  { day: "Saturday", date: "May 2", month: "May", course: "Harbor", name: "Mark L", shift: "8:30-6" },
+  { day: "Sunday", date: "May 3", month: "May", course: "Links", name: "John J", shift: "7-12" },
+  { day: "Sunday", date: "May 3", month: "May", course: "Links", name: "Cary", shift: "9-6" },
+  { day: "Sunday", date: "May 3", month: "May", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "May 3", month: "May", course: "Harbor", name: "Jeff C", shift: "9-6" },
+  { day: "Monday", date: "May 4", month: "May", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Monday", date: "May 4", month: "May", course: "Links", name: "Bill I", shift: "9-6" },
+  { day: "Tuesday", date: "May 5", month: "May", course: "Links", name: "Joe N", shift: "7-3" },
+  { day: "Tuesday", date: "May 5", month: "May", course: "Links", name: "Seamus", shift: "9-6" },
+  { day: "Tuesday", date: "May 5", month: "May", course: "Harbor", name: "Bud D", shift: "7-3" },
+  { day: "Tuesday", date: "May 5", month: "May", course: "Harbor", name: "George", shift: "9-6" },
+  { day: "Wednesday", date: "May 6", month: "May", course: "Links", name: "Bob B", shift: "7-3" },
+  { day: "Wednesday", date: "May 6", month: "May", course: "Links", name: "Bob J", shift: "9-6" },
+  { day: "Wednesday", date: "May 6", month: "May", course: "Harbor", name: "John S", shift: "7-3" },
+  { day: "Wednesday", date: "May 6", month: "May", course: "Harbor", name: "Mike K", shift: "8:30-6" },
+  { day: "Thursday", date: "May 7", month: "May", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Thursday", date: "May 7", month: "May", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Thursday", date: "May 7", month: "May", course: "Harbor", name: "Coach Bob", shift: "7-3" },
+  { day: "Thursday", date: "May 7", month: "May", course: "Harbor", name: "Jeff C", shift: "9-6" },
+  { day: "Friday", date: "May 8", month: "May", course: "Links", name: "Jeff C", shift: "7-3" },
+  { day: "Friday", date: "May 8", month: "May", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Friday", date: "May 8", month: "May", course: "Harbor", name: "Seamus", shift: "7-3" },
+  { day: "Friday", date: "May 8", month: "May", course: "Harbor", name: "Coach Bob", shift: "8:30-6" },
+  { day: "Saturday", date: "May 9", month: "May", course: "Links", name: "Rick", shift: "7-5" },
+  { day: "Saturday", date: "May 9", month: "May", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "May 9", month: "May", course: "Harbor", name: "Bud D", shift: "9-6" },
+  { day: "Sunday", date: "May 10", month: "May", course: "Links", name: "Dick E", shift: "7-5" },
+  { day: "Sunday", date: "May 10", month: "May", course: "Harbor", name: "Carl", shift: "7-2" },
+  { day: "Sunday", date: "May 10", month: "May", course: "Harbor", name: "Coach Bob", shift: "8:30-6" },
+  { day: "Monday", date: "May 11", month: "May", course: "Harbor", name: "Joe N", shift: "7-3" },
+  { day: "Monday", date: "May 11", month: "May", course: "Harbor", name: "Mike K", shift: "9-6" },
+  { day: "Tuesday", date: "May 12", month: "May", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Tuesday", date: "May 12", month: "May", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Tuesday", date: "May 12", month: "May", course: "Harbor", name: "Seamus", shift: "7-3" },
+  { day: "Tuesday", date: "May 12", month: "May", course: "Harbor", name: "George", shift: "8:30-6" },
+  { day: "Wednesday", date: "May 13", month: "May", course: "Links", name: "Bill I", shift: "7-3" },
+  { day: "Wednesday", date: "May 13", month: "May", course: "Links", name: "Bob J", shift: "9-6" },
+  { day: "Wednesday", date: "May 13", month: "May", course: "Harbor", name: "Coach Bob", shift: "7-3" },
+  { day: "Wednesday", date: "May 13", month: "May", course: "Harbor", name: "Cary", shift: "9-6" },
+  { day: "Thursday", date: "May 14", month: "May", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Thursday", date: "May 14", month: "May", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Thursday", date: "May 14", month: "May", course: "Harbor", name: "Mike K", shift: "7-3" },
+  { day: "Thursday", date: "May 14", month: "May", course: "Harbor", name: "Kevin", shift: "9-6" },
+  { day: "Friday", date: "May 15", month: "May", course: "Links", name: "Coach Bob", shift: "7-3" },
+  { day: "Friday", date: "May 15", month: "May", course: "Links", name: "Bob B", shift: "9-6" },
+  { day: "Friday", date: "May 15", month: "May", course: "Harbor", name: "Joe N", shift: "7-3" },
+  { day: "Friday", date: "May 15", month: "May", course: "Harbor", name: "Bill I", shift: "9-6" },
+  { day: "Saturday", date: "May 16", month: "May", course: "Links", name: "Rick V", shift: "7-3" },
+  { day: "Saturday", date: "May 16", month: "May", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Saturday", date: "May 16", month: "May", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "May 16", month: "May", course: "Harbor", name: "Jeff C", shift: "9-6" },
+  { day: "Sunday", date: "May 17", month: "May", course: "Links", name: "Dick E", shift: "8:30-6" },
+  { day: "Sunday", date: "May 17", month: "May", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "May 17", month: "May", course: "Harbor", name: "Cary", shift: "9-6" },
+  { day: "Monday", date: "May 18", month: "May", course: "Links", name: "Gary", shift: "7-3" },
+  { day: "Monday", date: "May 18", month: "May", course: "Links", name: "Bob B", shift: "9-6" },
+  { day: "Monday", date: "May 18", month: "May", course: "Harbor", name: "Greg S", shift: "9-6" },
+  { day: "Tuesday", date: "May 19", month: "May", course: "Links", name: "Bobby M", shift: "9-6" },
+  { day: "Tuesday", date: "May 19", month: "May", course: "Harbor", name: "John S", shift: "7-3" },
+  { day: "Tuesday", date: "May 19", month: "May", course: "Harbor", name: "Bud D", shift: "9-6" },
+  { day: "Wednesday", date: "May 20", month: "May", course: "Links", name: "Bob J", shift: "9-6" },
+  { day: "Wednesday", date: "May 20", month: "May", course: "Harbor", name: "Seamus", shift: "7-3" },
+  { day: "Wednesday", date: "May 20", month: "May", course: "Harbor", name: "Mike K", shift: "9-6" },
+  { day: "Thursday", date: "May 21", month: "May", course: "Links", name: "Coach Bob", shift: "7-3" },
+  { day: "Thursday", date: "May 21", month: "May", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Thursday", date: "May 21", month: "May", course: "Harbor", name: "John S", shift: "7-3" },
+  { day: "Thursday", date: "May 21", month: "May", course: "Harbor", name: "Jeff C", shift: "9-6" },
+  { day: "Friday", date: "May 22", month: "May", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Friday", date: "May 22", month: "May", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Friday", date: "May 22", month: "May", course: "Harbor", name: "Bill I", shift: "7-3" },
+  { day: "Friday", date: "May 22", month: "May", course: "Harbor", name: "Bob B", shift: "8:30-6" },
+  { day: "Saturday", date: "May 23", month: "May", course: "Links", name: "Rick", shift: "7-3" },
+  { day: "Saturday", date: "May 23", month: "May", course: "Links", name: "Coach Bob", shift: "9-6" },
+  { day: "Saturday", date: "May 23", month: "May", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "May 23", month: "May", course: "Harbor", name: "George", shift: "9-6" },
+  { day: "Sunday", date: "May 24", month: "May", course: "Links", name: "Coach Bob", shift: "7-4" },
+  { day: "Sunday", date: "May 24", month: "May", course: "Harbor", name: "Jeff C", shift: "7-3" },
+  { day: "Sunday", date: "May 24", month: "May", course: "Harbor", name: "John S", shift: "8:30-6" },
+  { day: "Monday", date: "May 25", month: "May", course: "Links", name: "Jeff C", shift: "7-3" },
+  { day: "Monday", date: "May 25", month: "May", course: "Links", name: "Cary", shift: "9-6" },
+  { day: "Monday", date: "May 25", month: "May", course: "Harbor", name: "Mike K", shift: "7-3" },
+  { day: "Monday", date: "May 25", month: "May", course: "Harbor", name: "Bob J", shift: "9-6" },
+  { day: "Tuesday", date: "May 26", month: "May", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Tuesday", date: "May 26", month: "May", course: "Links", name: "Bobby M", shift: "9-6" },
+  { day: "Tuesday", date: "May 26", month: "May", course: "Harbor", name: "Gary", shift: "7-3" },
+  { day: "Tuesday", date: "May 26", month: "May", course: "Harbor", name: "Seamus", shift: "8:30-6" },
+  { day: "Wednesday", date: "May 27", month: "May", course: "Links", name: "Bob B", shift: "7-3" },
+  { day: "Wednesday", date: "May 27", month: "May", course: "Links", name: "Bill I", shift: "9-6" },
+  { day: "Wednesday", date: "May 27", month: "May", course: "Harbor", name: "Bob J", shift: "7-3" },
+  { day: "Wednesday", date: "May 27", month: "May", course: "Harbor", name: "Cary", shift: "9-6" },
+  { day: "Thursday", date: "May 28", month: "May", course: "Links", name: "Kevin", shift: "7-3" },
+  { day: "Thursday", date: "May 28", month: "May", course: "Links", name: "Greg S", shift: "9-6" },
+  { day: "Thursday", date: "May 28", month: "May", course: "Harbor", name: "John S", shift: "7-3" },
+  { day: "Thursday", date: "May 28", month: "May", course: "Harbor", name: "Bud D", shift: "8:30-6" },
+  { day: "Friday", date: "May 29", month: "May", course: "Links", name: "Gary", shift: "7-3" },
+  { day: "Friday", date: "May 29", month: "May", course: "Links", name: "Coach Bob", shift: "9-6" },
+  { day: "Friday", date: "May 29", month: "May", course: "Harbor", name: "Jeff C", shift: "7-3" },
+  { day: "Friday", date: "May 29", month: "May", course: "Harbor", name: "George", shift: "9-6" },
+  { day: "Saturday", date: "May 30", month: "May", course: "Links", name: "Bill I", shift: "7-3" },
+  { day: "Saturday", date: "May 30", month: "May", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Saturday", date: "May 30", month: "May", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "May 30", month: "May", course: "Harbor", name: "Coach Bob", shift: "9-6" },
+  { day: "Sunday", date: "May 31", month: "May", course: "Links", name: "Dick E", shift: "7-3" },
+  { day: "Sunday", date: "May 31", month: "May", course: "Links", name: "Jeff C", shift: "9-6" },
+  { day: "Sunday", date: "May 31", month: "May", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "May 31", month: "May", course: "Harbor", name: "Bill", shift: "9-6" },
+
+  // June 2026
+  { day: "Tuesday", date: "Jun 2", month: "June", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 2", month: "June", course: "Links", name: "Seamus", shift: "9-6" },
+  { day: "Wednesday", date: "Jun 3", month: "June", course: "Links", name: "Joe N", shift: "7-3" },
+  { day: "Wednesday", date: "Jun 3", month: "June", course: "Links", name: "Bill", shift: "9-6" },
+  { day: "Wednesday", date: "Jun 3", month: "June", course: "Harbor", name: "Bob J", shift: "7-3" },
+  { day: "Wednesday", date: "Jun 3", month: "June", course: "Harbor", name: "Floyd", shift: "9-6" },
+  { day: "Thursday", date: "Jun 4", month: "June", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Thursday", date: "Jun 4", month: "June", course: "Links", name: "John S", shift: "9-6" },
+  { day: "Thursday", date: "Jun 4", month: "June", course: "Harbor", name: "George", shift: "7-3" },
+  { day: "Thursday", date: "Jun 4", month: "June", course: "Harbor", name: "Cary", shift: "8:30-6" },
+  { day: "Friday", date: "Jun 5", month: "June", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Friday", date: "Jun 5", month: "June", course: "Links", name: "Coach Bob", shift: "9-6" },
+  { day: "Friday", date: "Jun 5", month: "June", course: "Harbor", name: "Floyd", shift: "7-3" },
+  { day: "Friday", date: "Jun 5", month: "June", course: "Harbor", name: "Seamus", shift: "9-6" },
+  { day: "Saturday", date: "Jun 6", month: "June", course: "Links", name: "Kevin", shift: "7-3" },
+  { day: "Saturday", date: "Jun 6", month: "June", course: "Links", name: "Bill", shift: "9-6" },
+  { day: "Saturday", date: "Jun 6", month: "June", course: "Harbor", name: "Bob J", shift: "7-3" },
+  { day: "Saturday", date: "Jun 6", month: "June", course: "Harbor", name: "George", shift: "8:30-6" },
+  { day: "Sunday", date: "Jun 7", month: "June", course: "Links", name: "Bill", shift: "7-3" },
+  { day: "Sunday", date: "Jun 7", month: "June", course: "Links", name: "Floyd", shift: "9-6" },
+  { day: "Sunday", date: "Jun 7", month: "June", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "Jun 7", month: "June", course: "Harbor", name: "Coach Bob", shift: "9-6" },
+  { day: "Monday", date: "Jun 8", month: "June", course: "Links", name: "Cary", shift: "7-3" },
+  { day: "Monday", date: "Jun 8", month: "June", course: "Links", name: "Greg S", shift: "9-6" },
+  { day: "Monday", date: "Jun 8", month: "June", course: "Harbor", name: "Coach Bob", shift: "8-1" },
+  { day: "Tuesday", date: "Jun 9", month: "June", course: "Links", name: "Gary", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 9", month: "June", course: "Links", name: "Seamus", shift: "9-6" },
+  { day: "Tuesday", date: "Jun 9", month: "June", course: "Harbor", name: "Joe N", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 9", month: "June", course: "Harbor", name: "Bud D", shift: "9-6" },
+  { day: "Wednesday", date: "Jun 10", month: "June", course: "Links", name: "Kevin", shift: "7-3" },
+  { day: "Wednesday", date: "Jun 10", month: "June", course: "Links", name: "Bill", shift: "9-6" },
+  { day: "Wednesday", date: "Jun 10", month: "June", course: "Harbor", name: "Jeff C", shift: "7-3" },
+  { day: "Wednesday", date: "Jun 10", month: "June", course: "Harbor", name: "Floyd", shift: "8:30-6" },
+  { day: "Thursday", date: "Jun 11", month: "June", course: "Links", name: "Gary", shift: "7-3" },
+  { day: "Thursday", date: "Jun 11", month: "June", course: "Links", name: "Coach Bob", shift: "9-6" },
+  { day: "Thursday", date: "Jun 11", month: "June", course: "Harbor", name: "John S", shift: "7-3" },
+  { day: "Thursday", date: "Jun 11", month: "June", course: "Harbor", name: "Mike", shift: "9-6" },
+  { day: "Friday", date: "Jun 12", month: "June", course: "Links", name: "Greg S", shift: "7-3" },
+  { day: "Friday", date: "Jun 12", month: "June", course: "Links", name: "Cary", shift: "9-6" },
+  { day: "Friday", date: "Jun 12", month: "June", course: "Harbor", name: "George", shift: "7-3" },
+  { day: "Friday", date: "Jun 12", month: "June", course: "Harbor", name: "Jeff C", shift: "8:30-6" },
+  { day: "Saturday", date: "Jun 13", month: "June", course: "Links", name: "Rick", shift: "7-3" },
+  { day: "Saturday", date: "Jun 13", month: "June", course: "Links", name: "Bob J", shift: "9-6" },
+  { day: "Saturday", date: "Jun 13", month: "June", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Jun 13", month: "June", course: "Harbor", name: "Bill", shift: "9-6" },
+  { day: "Sunday", date: "Jun 14", month: "June", course: "Links", name: "John S", shift: "7-3" },
+  { day: "Sunday", date: "Jun 14", month: "June", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Sunday", date: "Jun 14", month: "June", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "Jun 14", month: "June", course: "Harbor", name: "Bud D", shift: "8:30-6" },
+  { day: "Tuesday", date: "Jun 16", month: "June", course: "Links", name: "Coach Bob", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 16", month: "June", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Tuesday", date: "Jun 16", month: "June", course: "Harbor", name: "Mike", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 16", month: "June", course: "Harbor", name: "Seamus", shift: "8:30-6" },
+  { day: "Wednesday", date: "Jun 17", month: "June", course: "Links", name: "Joe N", shift: "7-3" },
+  { day: "Wednesday", date: "Jun 17", month: "June", course: "Links", name: "Bill", shift: "9-6" },
+  { day: "Wednesday", date: "Jun 17", month: "June", course: "Harbor", name: "Cary", shift: "7-3" },
+  { day: "Wednesday", date: "Jun 17", month: "June", course: "Harbor", name: "Jeff C", shift: "9-6" },
+  { day: "Thursday", date: "Jun 18", month: "June", course: "Links", name: "Kevin", shift: "7-5" },
+  { day: "Thursday", date: "Jun 18", month: "June", course: "Harbor", name: "Floyd", shift: "7-3" },
+  { day: "Thursday", date: "Jun 18", month: "June", course: "Harbor", name: "Mike K", shift: "8:30-6" },
+  { day: "Friday", date: "Jun 19", month: "June", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Friday", date: "Jun 19", month: "June", course: "Links", name: "Cary", shift: "9-6" },
+  { day: "Friday", date: "Jun 19", month: "June", course: "Harbor", name: "Jeff C", shift: "7-3" },
+  { day: "Friday", date: "Jun 19", month: "June", course: "Harbor", name: "Floyd", shift: "10-6" },
+  { day: "Saturday", date: "Jun 20", month: "June", course: "Links", name: "Bobby M", shift: "7-1" },
+  { day: "Saturday", date: "Jun 20", month: "June", course: "Links", name: "Kevin", shift: "11-6" },
+  { day: "Saturday", date: "Jun 20", month: "June", course: "Harbor", name: "Carl", shift: "7-2" },
+  { day: "Saturday", date: "Jun 20", month: "June", course: "Harbor", name: "Jeff C", shift: "8:30-6" },
+  { day: "Sunday", date: "Jun 21", month: "June", course: "Links", name: "Bill", shift: "7-3" },
+  { day: "Sunday", date: "Jun 21", month: "June", course: "Links", name: "Dick E", shift: "9-6" },
+  { day: "Sunday", date: "Jun 21", month: "June", course: "Harbor", name: "Carl", shift: "7-2" },
+  { day: "Sunday", date: "Jun 21", month: "June", course: "Harbor", name: "Floyd", shift: "9-6" },
+  { day: "Monday", date: "Jun 22", month: "June", course: "Links", name: "Gary", shift: "7-3" },
+  { day: "Monday", date: "Jun 22", month: "June", course: "Links", name: "Cary", shift: "9-6" },
+  { day: "Tuesday", date: "Jun 23", month: "June", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 23", month: "June", course: "Links", name: "Bob J", shift: "9-6" },
+  { day: "Tuesday", date: "Jun 23", month: "June", course: "Harbor", name: "Joe N", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 23", month: "June", course: "Harbor", name: "Bud D", shift: "9-6" },
+  { day: "Wednesday", date: "Jun 24", month: "June", course: "Links", name: "Kevin", shift: "7-3" },
+  { day: "Wednesday", date: "Jun 24", month: "June", course: "Links", name: "Cary", shift: "9-6" },
+  { day: "Wednesday", date: "Jun 24", month: "June", course: "Harbor", name: "Jeff C", shift: "7-3" },
+  { day: "Wednesday", date: "Jun 24", month: "June", course: "Harbor", name: "Floyd", shift: "8:30-6" },
+  { day: "Thursday", date: "Jun 25", month: "June", course: "Links", name: "Jeff C", shift: "7-3" },
+  { day: "Thursday", date: "Jun 25", month: "June", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Thursday", date: "Jun 25", month: "June", course: "Harbor", name: "Mike K", shift: "7-3" },
+  { day: "Thursday", date: "Jun 25", month: "June", course: "Harbor", name: "Greg S", shift: "9-6" },
+  { day: "Friday", date: "Jun 26", month: "June", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Friday", date: "Jun 26", month: "June", course: "Links", name: "Bill", shift: "9-6" },
+  { day: "Friday", date: "Jun 26", month: "June", course: "Harbor", name: "Greg S", shift: "7-3" },
+  { day: "Friday", date: "Jun 26", month: "June", course: "Harbor", name: "Floyd", shift: "8:30-6" },
+  { day: "Saturday", date: "Jun 27", month: "June", course: "Links", name: "Rick", shift: "7-3" },
+  { day: "Saturday", date: "Jun 27", month: "June", course: "Links", name: "Kevin", shift: "9-6" },
+  { day: "Saturday", date: "Jun 27", month: "June", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Saturday", date: "Jun 27", month: "June", course: "Harbor", name: "John S", shift: "9-6" },
+  { day: "Sunday", date: "Jun 28", month: "June", course: "Links", name: "Bill I", shift: "7-3" },
+  { day: "Sunday", date: "Jun 28", month: "June", course: "Links", name: "Jeff C", shift: "9-6" },
+  { day: "Sunday", date: "Jun 28", month: "June", course: "Harbor", name: "Mark L", shift: "7-3" },
+  { day: "Sunday", date: "Jun 28", month: "June", course: "Harbor", name: "John S", shift: "9-6" },
+  { day: "Monday", date: "Jun 29", month: "June", course: "Harbor", name: "Bob J", shift: "7-3" },
+  { day: "Monday", date: "Jun 29", month: "June", course: "Harbor", name: "Bud D", shift: "9-6" },
+  { day: "Tuesday", date: "Jun 30", month: "June", course: "Links", name: "Bobby M", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 30", month: "June", course: "Links", name: "Gary", shift: "9-6" },
+  { day: "Tuesday", date: "Jun 30", month: "June", course: "Harbor", name: "Greg S", shift: "7-3" },
+  { day: "Tuesday", date: "Jun 30", month: "June", course: "Harbor", name: "Mike K", shift: "8:30-6" },
+];
+
+document.getElementById('login-btn').onclick = function(){ doLogin(); };
+document.getElementById('pw').onkeydown = function(e){ if(e.key==='Enter') doLogin(); };
+
+function doLogin(){
+  var pw=document.getElementById('pw').value;
+  if(pw===APW){
+    role='admin';
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('tab-requests').style.display='inline-block';
+    document.getElementById('tab-scheduler').style.display='inline-block';
+    initApp();
+  } else if(pw===SPW){
+    role='starter';
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('tab-requests').style.display='inline-block';
+    initApp();
+  } else {
+    document.getElementById('login-error').textContent='Incorrect password. Try again.';
+    document.getElementById('pw').value='';
+  }
+}
+
+function shiftHours(shift){
+  if(!shift) return 0;
+  shift = shift.replace(/[^0-9:\-]/g,'').trim();
+  var parts = shift.split('-');
+  if(parts.length < 2) return 0;
+  function toMins(t){
+    t = t.replace(':','.');
+    var h = parseFloat(t);
+    if(isNaN(h)) return 0;
+    var hr = Math.floor(h);
+    var mn = Math.round((h - hr) * 100);
+    return hr * 60 + mn;
+  }
+  var start = toMins(parts[0]);
+  var end = toMins(parts[1]);
+  if(end < start) end += 12 * 60;
+  var hrs = (end - start) / 60;
+  return hrs > 0 && hrs < 16 ? Math.round(hrs) : 0;
+}
+
+// Cache for Google Sheets schedule data
+var sheetsScheduleCache = {};
+
+function getScheduleForMonth(month, callback){
+  var STATIC = ['January','February','March','April','May','June'];
+  if(STATIC.indexOf(month) >= 0){
+    // Use RAW_DATA
+    var rows = RAW_DATA.filter(function(e){ return e.month === month; });
+    callback(rows);
+  } else {
+    // Check cache first
+    if(sheetsScheduleCache[month]){
+      callback(sheetsScheduleCache[month]);
+      return;
+    }
+    apiRead({action:'getSchedule', month:month}).then(function(data){
+      var rows = [];
+      if(data.status === 'success' && data.entries.length > 0){
+        var monthIdx = ['January','February','March','April','May','June','July','August','September','October','November','December'].indexOf(month);
+        var dh = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        rows = data.entries.map(function(e){
+          var dayNum = parseInt(e.date.split(' ')[1]);
+          var dt = new Date(2026, monthIdx, dayNum);
+          return {date:e.date, day:dh[dt.getDay()], month:month, course:e.course, name:e.name, shift:e.shift||''};
+        });
+      }
+      sheetsScheduleCache[month] = rows;
+      callback(rows);
+    }).catch(function(){ callback([]); });
+  }
+}
+
+function renderHours(){
+  var month = document.getElementById('hours-month').value;
+  var starter = document.getElementById('hours-starter').value;
+  var container = document.getElementById('hours-content');
+  container.innerHTML = '<div class="empty">Loading...</div>';
+
+  var allMonths = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var monthsToLoad = (month === 'All') ? allMonths : [month];
+  var loaded = 0;
+  var allRows = [];
+
+  monthsToLoad.forEach(function(m){
+    getScheduleForMonth(m, function(rows){
+      allRows = allRows.concat(rows);
+      loaded++;
+      if(loaded === monthsToLoad.length){
+        buildHoursTable(allRows, month, starter, monthsToLoad);
+      }
+    });
+  });
+}
+
+function buildHoursTable(allRows, selectedMonth, selectedStarter, monthsToLoad){
+  var container = document.getElementById('hours-content');
+
+  // Filter by starter
+  var rows = allRows;
+  if(selectedStarter !== 'All') rows = rows.filter(function(r){ return r.name === selectedStarter; });
+
+  if(rows.length === 0){
+    container.innerHTML = '<div class="empty">No data found.</div>';
+    return;
+  }
+
+  // Build hours matrix: starter -> month -> hours
+  var starters = selectedStarter === 'All' ? allNames : [selectedStarter];
+  var hoursMap = {}; // name -> month -> hours
+  starters.forEach(function(n){ hoursMap[n] = {}; });
+
+  rows.forEach(function(r){
+    if(!hoursMap[r.name]) return;
+    if(!hoursMap[r.name][r.month]) hoursMap[r.name][r.month] = 0;
+    hoursMap[r.name][r.month] += shiftHours(r.shift);
+  });
+
+  // Build table
+  var html = '<div style="overflow-x:auto;"><table style="border-collapse:collapse;width:100%;font-size:13px;">';
+
+  // Header
+  html += '<thead><tr><th style="background:#1a3a1a;color:#e8d8a0;padding:8px 12px;text-align:left;border:1px solid #145a30;">Starter</th>';
+  monthsToLoad.forEach(function(m){
+    html += '<th style="background:#1a3a1a;color:#e8d8a0;padding:8px 8px;text-align:center;border:1px solid #145a30;">'+m.substring(0,3)+'</th>';
+  });
+  html += '<th style="background:#1a6b3a;color:#e8d8a0;padding:8px 8px;text-align:center;border:1px solid #145a30;">Total</th>';
+  html += '</tr></thead><tbody>';
+
+  // Rows
+  var rowNum = 0;
+  starters.forEach(function(n){
+    if(!hoursMap[n]) return;
+    var hasHours = monthsToLoad.some(function(m){ return hoursMap[n][m] > 0; });
+    if(!hasHours) return;
+    rowNum++;
+    var bg = rowNum%2===0?'#faf8f3':'#fff';
+    var total = 0;
+    html += '<tr style="background:'+bg+';">';
+    html += '<td style="padding:7px 12px;border:1px solid #e0d8c8;font-weight:bold;">'+n+'</td>';
+    monthsToLoad.forEach(function(m){
+      var hrs = hoursMap[n][m] || 0;
+      total += hrs;
+      html += '<td style="padding:7px 8px;border:1px solid #e0d8c8;text-align:center;color:'+(hrs>0?'#1a3a1a':'#ccc')+';">'+(hrs>0?hrs+'h':'')+'</td>';
+    });
+    html += '<td style="padding:7px 8px;border:1px solid #e0d8c8;text-align:center;font-weight:bold;background:#e8f5ed;color:#1a3a1a;">'+total+'h</td>';
+    html += '</tr>';
+  });
+
+  // Totals row
+  html += '<tr style="background:#e8f5ed;">';
+  html += '<td style="padding:7px 12px;border:1px solid #c8dfc8;font-weight:bold;color:#1a3a1a;">TOTAL</td>';
+  var grandTotal = 0;
+  monthsToLoad.forEach(function(m){
+    var mTotal = 0;
+    starters.forEach(function(n){ mTotal += (hoursMap[n] && hoursMap[n][m]) || 0; });
+    grandTotal += mTotal;
+    html += '<td style="padding:7px 8px;border:1px solid #c8dfc8;text-align:center;font-weight:bold;color:#1a3a1a;">'+(mTotal>0?mTotal+'h':'')+'</td>';
+  });
+  html += '<td style="padding:7px 8px;border:1px solid #c8dfc8;text-align:center;font-weight:bold;background:#1a3a1a;color:#e8d8a0;">'+grandTotal+'h</td>';
+  html += '</tr>';
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+function renderCourseNotes(){
+  var month = document.getElementById('notes-month').value;
+  var container = document.getElementById('notes-content');
+  container.innerHTML = '<div class="empty">Loading...</div>';
+
+  if(month === 'All'){
+    // Load all months - getCourseNotes with no month returns all
+    apiRead({action:'getCourseNotes'}).then(function(data){
+      if(data.status === 'success'){
+        buildNotesTable('All', data.notes);
+      } else {
+        container.innerHTML = '<div class="empty">Error loading notes.</div>';
+      }
+    }).catch(function(){
+      container.innerHTML = '<div class="empty">Error loading notes. Please try again.</div>';
+    });
+  } else {
+    apiRead({action:'getCourseNotes', month:month}).then(function(data){
+      if(data.status === 'success'){
+        buildNotesTable(month, data.notes);
+      } else {
+        container.innerHTML = '<div class="empty">Error loading notes.</div>';
+      }
+    }).catch(function(){
+      container.innerHTML = '<div class="empty">Error loading notes. Please try again.</div>';
+    });
+  }
+}
+
+function buildNotesTable(month, notes){
+  var container = document.getElementById('notes-content');
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var dh = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  if(notes.length === 0){
+    container.innerHTML = '<div class="empty">No course notes'+(month!=='All'?' for '+month:'')+'. Notes can be added directly in the Google Sheet &rarr; Course Notes tab.</div>';
+    return;
+  }
+
+  // Sort by month then day
+  notes.sort(function(a,b){
+    var mi = MONTHS.indexOf(String(a.month)) - MONTHS.indexOf(String(b.month));
+    if(mi !== 0) return mi;
+    return Number(a.day) - Number(b.day);
+  });
+
+  var html = '<table style="border-collapse:collapse;width:100%;font-size:14px;">';
+  html += '<thead><tr>';
+  if(month === 'All'){
+    html += '<th style="background:#1a3a1a;color:#e8d8a0;padding:9px 14px;text-align:left;border:1px solid #145a30;">Month</th>';
+  }
+  html += '<th style="background:#1a3a1a;color:#e8d8a0;padding:9px 14px;text-align:left;border:1px solid #145a30;">Date</th>';
+  html += '<th style="background:#1a3a1a;color:#e8d8a0;padding:9px 14px;text-align:left;border:1px solid #145a30;">Course</th>';
+  html += '<th style="background:#1a3a1a;color:#e8d8a0;padding:9px 14px;text-align:left;border:1px solid #145a30;">Note</th>';
+  html += '</tr></thead><tbody>';
+
+  var lastMonth = '';
+  notes.forEach(function(n, i){
+    var m = String(n.month);
+    var monthIdx = MONTHS.indexOf(m);
+    var dt = new Date(2026, monthIdx >= 0 ? monthIdx : 0, Number(n.day));
+    var dayName = dh[dt.getDay()];
+    var bg = i%2===0?'#fff':'#faf8f3';
+
+    // Month group header row for All Months view
+    if(month === 'All' && m !== lastMonth){
+      html += '<tr><td colspan="4" style="background:#e8f5ed;color:#1a3a1a;font-weight:bold;padding:8px 14px;border:1px solid #c8dfc8;font-size:14px;">'+m+' 2026</td></tr>';
+      lastMonth = m;
+    }
+
+    html += '<tr style="background:'+bg+';">';
+    if(month === 'All'){
+      html += '<td style="padding:8px 14px;border:1px solid #e0d8c8;color:#888;font-size:12px;">'+m.substring(0,3)+'</td>';
+    }
+    html += '<td style="padding:8px 14px;border:1px solid #e0d8c8;font-weight:bold;">'+dayName+' '+m.substring(0,3)+' '+n.day+'</td>';
+    html += '<td style="padding:8px 14px;border:1px solid #e0d8c8;">';
+    if(n.course === 'Links') html += '<span style="background:#e8f5e8;color:#1a6b3a;border-radius:10px;padding:2px 10px;font-size:12px;font-weight:bold;">Links</span>';
+    else if(n.course === 'Harbor') html += '<span style="background:#e8f0ff;color:#1a4a8a;border-radius:10px;padding:2px 10px;font-size:12px;font-weight:bold;">Harbor</span>';
+    else html += '<span style="background:#f0f0f0;border-radius:10px;padding:2px 10px;font-size:12px;">'+n.course+'</span>';
+    html += '</td>';
+    html += '<td style="padding:8px 14px;border:1px solid #e0d8c8;color:#444;">'+n.note+'</td>';
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  html += '<div style="font-size:12px;color:#999;margin-top:8px;">'+notes.length+' note'+(notes.length!==1?'s':'')+' found</div>';
+  container.innerHTML = html;
+}
+
+function initApp(){
+  var seen={},names=[];
+  for(var i=0;i<RAW_DATA.length;i++){if(!seen[RAW_DATA[i].name]){seen[RAW_DATA[i].name]=true;names.push(RAW_DATA[i].name);}}
+  // Add starters not in RAW_DATA (new starters or July+ only starters)
+  var extraNames=['Geno','Greg'];
+  extraNames.forEach(function(n){ if(!seen[n]){seen[n]=true;names.push(n);} });
+  allNames=names.sort();
+  var ss=document.getElementById('search-input'),ps=document.getElementById('person-select'),rs=document.getElementById('req-name');
+  for(var i=0;i<allNames.length;i++){
+    var n=allNames[i];
+    ss.innerHTML+='<option value="'+n+'">'+n+'</option>';
+    ps.innerHTML+='<option value="'+n+'">'+n+'</option>';
+    rs.innerHTML+='<option value="'+n+'">'+n+'</option>';
+  }
+  document.getElementById('search-input').onchange=renderSearch;
+  document.getElementById('month-filter').onchange=renderSearch;
+  document.getElementById('course-filter').onchange=renderSearch;
+
+  // Populate hours-starter dropdown
+  var hoursStarter = document.getElementById('hours-starter');
+  if(hoursStarter){
+    for(var i=0;i<allNames.length;i++){
+      var opt = document.createElement('option');
+      opt.value = allNames[i]; opt.textContent = allNames[i];
+      hoursStarter.appendChild(opt);
+    }
+  }
+
+  // Show hours section only for schedule password
+  if(role === 'schedule'){
+    var hs = document.getElementById('hours-section');
+    if(hs) hs.style.display = 'block';
+  }
+
+  // Load course notes
+  renderCourseNotes();
+  document.getElementById('person-select').onchange=function(){selectPerson(this.value);};
+  renderSearch();
+}
+
+function shiftHours(s){
+  var p=s.trim().split('-');if(p.length!==2)return 0;
+  function toH(t){if(t.indexOf(':')>=0){var x=t.split(':');return parseInt(x[0])+parseInt(x[1])/60;}return parseFloat(t);}
+  try{var a=toH(p[0]),b=toH(p[1]);if(b<=a)b+=12;return Math.round((b-a)*10)/10;}catch(e){return 0;}
+}
+
+function badge(c){return '<span class="badge badge-'+c.toLowerCase()+'">'+c+'</span>';}
+
+function buildTable(rows,showName){
+  var cols=showName?['Date','Day','Name','Course','Shift','Hours']:['Date','Day','Course','Shift','Hours'];
+  var h='<div class="table-wrap"><table><thead><tr>';
+  for(var i=0;i<cols.length;i++)h+='<th>'+cols[i]+'</th>';
+  h+='</tr></thead><tbody>';
+  for(var i=0;i<rows.length;i++){
+    var e=rows[i],hrs=shiftHours(e.shift);
+    h+='<tr class="'+(i%2===0?'even':'odd')+'">';
+    h+='<td style="font-weight:bold">'+e.date+'</td><td style="color:#444">'+e.day+'</td>';
+    if(showName)h+='<td style="font-weight:bold">'+e.name+'</td>';
+    h+='<td>'+badge(e.course)+'</td><td style="color:#444">'+e.shift+'</td><td style="color:#444">'+hrs+'h</td></tr>';
+  }
+  return h+'</tbody></table></div>';
+}
+
+function buildTotals(rows){
+  var mt={},grand=0,cnt=0,h='';
+  for(var i=0;i<rows.length;i++){var m=rows[i].month;mt[m]=(mt[m]||0)+shiftHours(rows[i].shift);}
+  for(var m in mt){var hrs=Math.round(mt[m]*10)/10;grand+=hrs;cnt++;h+='<div class="month-total"><span style="opacity:0.8">'+m+': </span><strong>'+hrs+'h</strong></div>';}
+  if(cnt>1)h+='<div class="grand-total">Total: '+Math.round(grand*10)/10+'h</div>';
+  return h;
+}
+
+// READ: simple fetch GET through Cloudflare Worker (no CORS issues)
+function apiRead(params){
+  var url = AURL + '?';
+  var parts = [];
+  for(var k in params) parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
+  url += parts.join('&');
+  return fetch(url).then(function(r){ return r.json(); });
+}
+
+// WRITE: POST through Cloudflare Worker (no CORS issues)
+function apiWrite(params){
+  var formData = new FormData();
+  for(var k in params) formData.append(k, String(params[k]));
+  return fetch(AURL, {
+    method: 'POST',
+    body: formData
+  }).then(function(r){ return r.json(); });
+}
+
+// Route to correct method based on action
+function apiCall(params){
+  var writeActions = ['submitRequest','saveSchedule'];
+  if(writeActions.indexOf(params.action) >= 0){
+    return apiWrite(params);
+  }
+  return apiRead(params);
+}
+
+function switchView(v){
+  var vs=['search','person','requests','scheduler'];
+  for(var i=0;i<vs.length;i++){var el=document.getElementById('view-'+vs[i]);if(el)el.className='view'+(vs[i]===v?' active':'');}
+  var bs=document.querySelectorAll('.tab-btn');
+  for(var i=0;i<bs.length;i++){var oc=bs[i].getAttribute('onclick')||'';bs[i].className='tab-btn '+(oc.indexOf("'"+v+"'")>=0?'active':'inactive');}
+}
+
+var STATIC_MONTHS=['January','February','March','April','May','June'];
+
+function renderSearch(){
+  var q=document.getElementById('search-input').value;
+  var m=document.getElementById('month-filter').value;
+  var c=document.getElementById('course-filter').value;
+
+  // Future months - pull from Google Sheets via Cloudflare Worker
+  if(m!=='All' && STATIC_MONTHS.indexOf(m)<0){
+    document.getElementById('result-count').innerHTML='Loading...';
+    document.getElementById('search-results').innerHTML='';
+    document.getElementById('totals-bar').innerHTML='';
+    apiRead({action:'getSchedule',month:m}).then(function(data){
+      if(data.status==='success'&&data.entries.length>0){
+        var monthIdx=['January','February','March','April','May','June','July','August','September','October','November','December'].indexOf(m);
+        var rows=data.entries.map(function(e){
+          // Date may come back as ISO string from Google Sheets - convert to "Jul 1" format
+          var dateStr = e.date;
+          var shiftStr = e.shift || '';
+          // If date looks like ISO format, convert it
+          if(dateStr && dateStr.indexOf('T') > 0){
+            var d = new Date(dateStr);
+            var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            dateStr = monthNames[d.getUTCMonth()] + ' ' + d.getUTCDate();
+          }
+          // If shift looks like ISO format, it's wrong - use empty string
+          if(shiftStr && shiftStr.indexOf('T') > 0) shiftStr = '';
+          // Get day name from date
+          var dayNum = parseInt(dateStr.split(' ')[1]);
+          var dt = new Date(2026, monthIdx, dayNum);
+          var dayName = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][dt.getDay()];
+          return {date:dateStr, day:dayName, month:m, course:e.course, name:e.name, shift:shiftStr};
+        }).filter(function(e){return(q===''||e.name===q)&&(c==='All'||e.course===c);});
+        // Remove duplicates by date+course+slot
+        var seen = {};
+        rows = rows.filter(function(e){
+          var key = e.date+'|'+e.course+'|'+e.name;
+          if(seen[key]) return false;
+          seen[key] = true;
+          return true;
+        });
+        rows.sort(function(a,b){return parseInt(a.date.split(' ')[1])-parseInt(b.date.split(' ')[1]);});
+        document.getElementById('result-count').innerHTML=rows.length+' assignment'+(rows.length!==1?'s':'')+' found'+(q?' <span class="search-badge">'+q+'</span>':'');
+        if(rows.length===0){document.getElementById('search-results').innerHTML='<div class="empty">No assignments found</div>';document.getElementById('totals-bar').innerHTML='';return;}
+        document.getElementById('search-results').innerHTML=buildTable(rows,true);
+        document.getElementById('totals-bar').innerHTML=buildTotals(rows);
+      } else {
+        document.getElementById('result-count').innerHTML='0 assignments found';
+        document.getElementById('search-results').innerHTML='<div class="empty">No schedule built yet for '+m+'. The '+m+' schedule in the Scheduler tab first.</div>';
+        document.getElementById('totals-bar').innerHTML='';
+      }
+    }).catch(function(){
+      document.getElementById('result-count').innerHTML='';
+      document.getElementById('search-results').innerHTML='<div class="empty">Error loading '+m+' schedule. Please try again.</div>';
+    });
+    return;
+  }
+
+  // Jan-Jun static data
+  var f=RAW_DATA.filter(function(e){return(q===''||e.name===q)&&(m==='All'||e.month===m)&&(c==='All'||e.course===c);});
+  document.getElementById('result-count').innerHTML=f.length+' assignment'+(f.length!==1?'s':'')+' found'+(q?' <span class="search-badge">'+q+'</span>':'');
+  if(f.length===0){document.getElementById('search-results').innerHTML='<div class="empty">No assignments found</div>';document.getElementById('totals-bar').innerHTML='';return;}
+  document.getElementById('search-results').innerHTML=buildTable(f,true);
+  document.getElementById('totals-bar').innerHTML=buildTotals(f);
+}
+
+function selectPerson(name){
+  var d=document.getElementById('person-detail'),c=document.getElementById('person-shift-count');
+  if(!name){d.innerHTML='<div class="empty">Select a name above</div>';c.textContent='';return;}
+  var rows=RAW_DATA.filter(function(e){return e.name===name;});
+  rows.sort(function(a,b){var mi=MONTHS.indexOf(a.month)-MONTHS.indexOf(b.month);if(mi!==0)return mi;return parseInt(a.date.split(' ')[1])-parseInt(b.date.split(' ')[1]);});
+  c.textContent=rows.length+' shift'+(rows.length!==1?'s':'')+' scheduled';
+  d.innerHTML='<div id="person-name">'+name+'</div>'+buildTable(rows,false)+'<div class="totals-bar">'+buildTotals(rows)+'</div>';
+}
+
+function getKey(n,m){return n+'|'+m;}
+
+function loadAndRenderCalendar(){
+  var name=document.getElementById('req-name').value,month=document.getElementById('req-month').value;
+  if(!name||!month){alert('Please select your name and a month.');return;}
+  document.getElementById('req-status').textContent='Loading...';
+  
+  // Set a 5 second timeout - if API doesn't respond, show calendar anyway
+  var done = false;
+  var timeout = setTimeout(function(){
+    if(!done){ done=true; renderCalUI(name,month); }
+  }, 5000);
+  
+  apiCall({action:'getRequests',month:month}).then(function(data){
+    if(!done){
+      done=true;
+      clearTimeout(timeout);
+      if(data.status==='success'){for(var n in data.requests)requestsCache[getKey(n,month)]=data.requests[n];}
+      renderCalUI(name,month);
+    }
+  }).catch(function(){
+    if(!done){ done=true; clearTimeout(timeout); renderCalUI(name,month); }
+  });
+}
+
+function renderCalUI(name, month) {
+  var key = getKey(name, month);
+  if (!requestsCache[key]) requestsCache[key] = [];
+  var offDays = requestsCache[key];
+  var totalDays = MDAYS[month] || 30;
+  var startDay = MSTART[month] || 0;
+  var monthIdx = Object.keys(MDAYS).indexOf(month);
+  var container = document.getElementById('req-calendar');
+  container.innerHTML = '';
+
+  // Build calendar grid using DOM
+  var grid = document.createElement('div');
+  grid.className = 'cal-grid';
+
+  // Day headers
+  for (var i = 0; i < 7; i++) {
+    var hdr = document.createElement('div');
+    hdr.className = 'cal-header';
+    hdr.textContent = DNAMES[i];
+    grid.appendChild(hdr);
+  }
+
+  // Empty cells
+  for (var i = 0; i < startDay; i++) {
+    var empty = document.createElement('div');
+    empty.className = 'cal-day empty-day';
+    grid.appendChild(empty);
+  }
+
+  // Day cells
+  for (var d = 1; d <= totalDays; d++) {
+    var isOff = offDays.indexOf(d) >= 0;
+    var dt = new Date(2026, monthIdx, d);
+    var cell = document.createElement('div');
+    cell.className = 'cal-day' + (isOff ? ' unavailable' : '');
+    cell.innerHTML = '<div class="day-num">' + d + '</div><div class="day-name">' + DNAMES[dt.getDay()] + '</div>';
+    (function(day, n, m) {
+      cell.onclick = function() { toggleDay(n, m, day); };
+    })(d, name, month);
+    grid.appendChild(cell);
+  }
+  container.appendChild(grid);
+
+  // Summary
+  if (offDays.length > 0) {
+    var sorted = offDays.slice().sort(function(a,b){return a-b;});
+    var list = sorted.map(function(d){
+      var dt = new Date(2026, monthIdx, d);
+      return DNAMES[dt.getDay()] + ' ' + month.substring(0,3) + ' ' + d;
+    }).join(', ');
+    var summary = document.createElement('div');
+    summary.style.cssText = 'background:#fff3f3;border:1px solid #e0c0c0;border-radius:8px;padding:12px 16px;margin-top:8px;';
+    summary.innerHTML = '<strong style="color:#8b1a1a;">Requested off in ' + month + ':</strong><div style="margin-top:4px;font-size:14px;color:#444;">' + list + '</div>';
+    container.appendChild(summary);
+  }
+
+  // Submit button
+  var btnDiv = document.createElement('div');
+  btnDiv.style.marginTop = '16px';
+  var btn = document.createElement('button');
+  btn.textContent = 'Submit Request';
+  btn.style.cssText = 'padding:10px 28px;background:#1a3a1a;color:#e8d8a0;border:none;border-radius:8px;cursor:pointer;font-family:Georgia,serif;font-size:15px;font-weight:bold;';
+  btn.onclick = function() { submitReq(name, month); };
+  var statusSpan = document.createElement('span');
+  statusSpan.id = 'sub-status';
+  statusSpan.style.cssText = 'font-size:13px;color:#1a6b3a;margin-left:12px;';
+  btnDiv.appendChild(btn);
+  btnDiv.appendChild(statusSpan);
+  container.appendChild(btnDiv);
+
+  document.getElementById('req-status').textContent = offDays.length > 0
+    ? offDays.length + ' day' + (offDays.length !== 1 ? 's' : '') + ' marked. Click Submit to save.'
+    : 'Click any day to mark unavailable, then Submit.';
+}
+
+
+function toggleDay(name,month,day){
+  var key=getKey(name,month);if(!requestsCache[key])requestsCache[key]=[];
+  var idx=requestsCache[key].indexOf(day);if(idx>=0)requestsCache[key].splice(idx,1);else requestsCache[key].push(day);
+  renderCalUI(name,month);
+}
+
+function submitReq(name,month){
+  var days=requestsCache[getKey(name,month)]||[];
+  var el=document.getElementById('sub-status');
+  el.textContent='Saving...';
+  apiCall({action:'submitRequest',name:name,month:month,days:days.join(',')}).then(function(data){
+    el.textContent=data.status==='success'
+      ?'Saved! '+days.length+' day'+(days.length!==1?'s':'')+' submitted.'
+      :'Error: '+(data.message||'Unknown error');
+    setTimeout(function(){el.textContent='';},4000);
+  }).catch(function(){
+    el.textContent='Error. Please try again.';
+  });
+}
+
+function loadScheduler(){
+  var month=document.getElementById('sched-month').value;
+  if(!month){alert('Select a month first.');return;}
+  document.getElementById('sched-content').innerHTML='<div class="empty">Loading...</div>';
+  schedAssignments={};schedRequests={};
+  Promise.all([apiCall({action:'getRequests',month:month}),apiCall({action:'getSchedule',month:month})]).then(function(r){
+    if(r[0].status==='success')schedRequests=r[0].requests||{};
+    if(r[1].status==='success')r[1].entries.forEach(function(e){ var s=String(e.shift||''); schedAssignments[month+'|'+e.date+'|'+e.course+'|'+e.slot]={name:String(e.name||''),shift:s}; });
+    // Default to calendar view
+    switchSchedView('calendar');
+  }).catch(function(){document.getElementById('sched-cal-view').innerHTML='<div class="empty">Error loading. Try again.</div>';});
+}
+
+function switchSchedView(view){
+  var calBtn = document.getElementById('subtab-cal');
+  var listBtn = document.getElementById('subtab-list');
+  var calView = document.getElementById('sched-cal-view');
+  var listView = document.getElementById('sched-list-view');
+  if(view === 'calendar'){
+    calView.style.display = 'block';
+    listView.style.display = 'none';
+    calBtn.style.background = '#1a3a1a';
+    calBtn.style.color = '#e8d8a0';
+    listBtn.style.background = '#e0d8c8';
+    listBtn.style.color = '#1a1a1a';
+    var month = document.getElementById('sched-month').value;
+    if(month){ document.getElementById('sched-cal-view').innerHTML=''; renderCalendarView(month); }
+  } else {
+    calView.style.display = 'none';
+    listView.style.display = 'block';
+    calBtn.style.background = '#e0d8c8';
+    calBtn.style.color = '#1a1a1a';
+    listBtn.style.background = '#1a3a1a';
+    listBtn.style.color = '#e8d8a0';
+    var month = document.getElementById('sched-month').value;
+    if(month){ document.getElementById('sched-list-view').innerHTML=''; renderSchedUI(month); }
+  }
+}
+
+function renderCalendarView(month){
+  var container = document.getElementById('sched-cal-view');
+  container.innerHTML = '';
+
+  var totalDays = MDAYS[month] || 30;
+  var monthIdx = Object.keys(MDAYS).indexOf(month);
+  var startDay = MSTART[month] || 0;
+  var courses = ['Links','Harbor'];
+  var slots = ['Early','Late'];
+  var dayHeaders = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  // Detail panel
+  var panel = document.createElement('div');
+  panel.id = 'day-detail-panel';
+  panel.style.display = 'none';
+  panel.innerHTML = '<div id="day-detail-content"></div>';
+  container.appendChild(panel);
+
+  // Progress bar
+  var filled=0, total=totalDays*4;
+  for(var d=1;d<=totalDays;d++){
+    var ds=month.substring(0,3)+' '+d;
+    for(var ci=0;ci<2;ci++)for(var si=0;si<2;si++){
+      if(schedAssignments[month+'|'+ds+'|'+courses[ci]+'|'+slots[si]]&&schedAssignments[month+'|'+ds+'|'+courses[ci]+'|'+slots[si]].name)filled++;
+    }
+  }
+  // Add persistent consecutive warning bar if not already there
+  if(!document.getElementById('consec-banner')){
+    var banner = document.createElement('div');
+    banner.id = 'consec-banner';
+    banner.style.cssText = 'display:none;background:#fff3cd;border:2px solid #c8a000;border-radius:8px;padding:10px 16px;margin-bottom:10px;font-size:13px;color:#856404;font-weight:bold;';
+    container.parentNode.insertBefore(banner, container);
+  }
+
+  var prog = document.createElement('div');
+  prog.id = 'cal-progress';
+  prog.style.cssText = 'background:#e8f5ed;border-radius:10px;padding:10px 18px;margin-bottom:12px;font-size:14px;color:#1a6b3a;';
+  prog.innerHTML = '<strong>'+month+' Progress:</strong> '+filled+' of '+total+' slots filled'
+    +'<span style="font-size:12px;margin-left:16px;color:#444;">'
+    +'<span style="color:#1a6b3a;font-weight:bold;">&#9632;</span> Full &nbsp;'
+    +'<span style="color:#c8a000;font-weight:bold;">&#9632;</span> Partial &nbsp;'
+    +'<span style="color:#8b1a1a;font-weight:bold;">&#9632;</span> Needs attention &nbsp;'
+    +'<span style="color:#ccc;font-weight:bold;">&#9632;</span> Empty'
+    +'</span>';
+  container.appendChild(prog);
+
+  // Grid
+  var grid = document.createElement('div');
+  grid.className = 'month-cal-grid';
+
+  // Headers
+  for(var i=0;i<7;i++){
+    var hdr = document.createElement('div');
+    hdr.className = 'month-cal-header';
+    hdr.textContent = dayHeaders[i];
+    grid.appendChild(hdr);
+  }
+
+  // Empty leading cells
+  for(var i=0;i<startDay;i++){
+    var empty = document.createElement('div');
+    empty.className = 'month-cal-cell empty-cell';
+    grid.appendChild(empty);
+  }
+
+  // Day cells
+  for(var d=1;d<=totalDays;d++){
+    var dt = new Date(2026, monthIdx, d);
+    var dateStr = month.substring(0,3)+' '+d;
+    var dayName = dayHeaders[dt.getDay()];
+
+    var dayFilled=0;
+    for(var ci=0;ci<2;ci++)for(var si=0;si<2;si++){
+      if(schedAssignments[month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si]]&&schedAssignments[month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si]].name)dayFilled++;
+    }
+
+    var offToday=[];
+    for(var n in schedRequests){
+      if(schedRequests[n]&&schedRequests[n].indexOf(d)>=0)offToday.push(n);
+    }
+
+    var statusClass='status-empty';
+    if(dayFilled===4)statusClass='status-full';
+    else if(dayFilled>0)statusClass='status-partial';
+    else if(offToday.length>0)statusClass='status-urgent';
+
+    // Build assignment summary
+    var assignHtml='';
+    for(var ci=0;ci<courses.length;ci++){
+      var courseAssigns=[];
+      for(var si=0;si<slots.length;si++){
+        var k=month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si];
+        if(schedAssignments[k]&&schedAssignments[k].name){
+          courseAssigns.push(schedAssignments[k].name+(schedAssignments[k].shift?' '+schedAssignments[k].shift:''));
+        }
+      }
+      if(courseAssigns.length>0){
+        assignHtml+='<div class="cal-course-label">'+(courses[ci]==='Links'?'L':'H')+': '+courseAssigns.join(', ')+'</div>';
+      }
+    }
+
+    var cell=document.createElement('div');
+    cell.className='month-cal-cell '+statusClass;
+    cell.innerHTML='<div class="cal-date">'+d+'</div>'
+      +'<div class="cal-day-name">'+dayName+'</div>'
+      +(assignHtml||'<div class="cal-empty-label">No assignments</div>')
+      +(offToday.length>0?'<div class="unavail-badge">&#10005; '+offToday.join(', ')+'</div>':'');
+
+    (function(m,day,ds,dn){
+      cell.addEventListener('click', function(){
+        openDayPanel(m, day, ds, dn);
+      });
+    })(month, d, dateStr, dayName);
+
+    grid.appendChild(cell);
+  }
+
+  container.appendChild(grid);
+}
+
+
+function openDayPanel(month, d, dateStr, dayName){
+  var panel = document.getElementById('day-detail-panel');
+  var detailContent = document.getElementById('day-detail-content');
+  var courses = ['Links','Harbor'], slots = ['Early','Late'];
+
+  var offToday=[];
+  for(var n in schedRequests){if(schedRequests[n]&&schedRequests[n].indexOf(d)>=0)offToday.push(n);}
+  var avail = allNames.filter(function(n){return offToday.indexOf(n)<0;});
+
+  detailContent.innerHTML = '';
+
+  var closeBtn = document.createElement('button');
+  closeBtn.innerHTML = '&#10005; Close';
+  closeBtn.style.cssText = 'float:right;background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;cursor:pointer;font-size:12px;';
+  closeBtn.onclick = function(){ panel.style.display='none'; };
+  detailContent.appendChild(closeBtn);
+
+  var title = document.createElement('h3');
+  title.textContent = dayName+' '+dateStr;
+  title.style.cssText = 'font-size:16px;color:#1a3a1a;margin-bottom:8px;margin-top:4px;';
+  detailContent.appendChild(title);
+
+  if(offToday.length>0){
+    var unavDiv = document.createElement('div');
+    unavDiv.style.cssText = 'font-size:12px;color:#8b1a1a;margin-bottom:12px;font-weight:bold;';
+    unavDiv.textContent = 'Unavailable: '+offToday.join(', ');
+    detailContent.appendChild(unavDiv);
+  }
+
+  var grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:16px;clear:both;';
+
+  for(var ci=0;ci<courses.length;ci++){
+    var course = courses[ci];
+    var courseDiv = document.createElement('div');
+    var courseTitle = document.createElement('h4');
+    courseTitle.textContent = course+' Course';
+    courseTitle.style.cssText = 'font-size:13px;font-weight:bold;margin-bottom:8px;color:'+(course==='Links'?'#1a6b3a':'#1a4a8a')+';';
+    courseDiv.appendChild(courseTitle);
+
+    for(var si=0;si<slots.length;si++){
+      var slot = slots[si];
+      var key = month+'|'+dateStr+'|'+course+'|'+slot;
+      var asgn = schedAssignments[key]||{name:'',shift:''};
+
+      var assignedToday=[];
+      for(var ci2=0;ci2<courses.length;ci2++)for(var si2=0;si2<slots.length;si2++){
+        var k2=month+'|'+dateStr+'|'+courses[ci2]+'|'+slots[si2];
+        if(!(courses[ci2]===course&&slots[si2]===slot)&&schedAssignments[k2]&&schedAssignments[k2].name)
+          assignedToday.push(schedAssignments[k2].name);
+      }
+      var slotAvail=avail.filter(function(n){return assignedToday.indexOf(n)<0||n===asgn.name;});
+
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:8px;';
+
+      var label = document.createElement('span');
+      label.textContent = slot+':';
+      label.style.cssText = 'font-size:11px;color:#888;min-width:36px;';
+      row.appendChild(label);
+
+      var sel = document.createElement('select');
+      sel.style.cssText = 'flex:1;padding:5px;border-radius:6px;border:1px solid #c8b87a;font-size:13px;font-family:Georgia,serif;';
+      var defOpt = document.createElement('option');
+      defOpt.value=''; defOpt.textContent='-- Assign --';
+      sel.appendChild(defOpt);
+      for(var ni=0;ni<slotAvail.length;ni++){
+        var opt=document.createElement('option');
+        opt.value=slotAvail[ni]; opt.textContent=slotAvail[ni];
+        if(slotAvail[ni]===asgn.name) opt.selected=true;
+        sel.appendChild(opt);
+      }
+      (function(m,ds,c,s,day){
+        sel.addEventListener('change',function(){
+          var selectedName = this.value;
+          aSlot(m,ds,c,s,selectedName);
+          // Check consecutive days warning
+          if(selectedName) checkConsecutiveWarning(m,day,selectedName);
+          renderCalendarView(m);
+          var dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(2026,Object.keys(MDAYS).indexOf(m),day).getDay()];
+          openDayPanel(m,day,ds,dn);
+        });
+      })(month,dateStr,course,slot,d);
+      row.appendChild(sel);
+
+      var inp = document.createElement('input');
+      inp.type='text'; inp.placeholder='e.g. 7-3'; inp.value=asgn.shift||'';
+      inp.style.cssText='width:76px;padding:5px;border-radius:6px;border:1px solid #c8b87a;font-size:12px;font-family:Georgia,serif;';
+      (function(m,ds,c,s){ inp.addEventListener('change',function(){ aShift(m,ds,c,s,this.value); }); })(month,dateStr,course,slot);
+      row.appendChild(inp);
+      courseDiv.appendChild(row);
+    }
+    grid.appendChild(courseDiv);
+  }
+  detailContent.appendChild(grid);
+  panel.style.display = 'block';
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+
+function showOffList(e, el){
+  e.stopPropagation();
+  var names = el.getAttribute('data-names').split('|');
+  var popup = document.getElementById('off-popup');
+  var html = '<strong style="color:#e8d8a0;">Unavailable:</strong><ul>';
+  for(var i=0;i<names.length;i++) html += '<li>'+names[i]+'</li>';
+  html += '</ul><div style="font-size:11px;color:#aaa;margin-top:6px;">Click day to assign</div>';
+  popup.innerHTML = html;
+  popup.style.display = 'block';
+  // Position near click
+  var x = e.clientX + 10, y = e.clientY + 10;
+  if(x + 210 > window.innerWidth) x = e.clientX - 220;
+  if(y + 120 > window.innerHeight) y = e.clientY - 130;
+  popup.style.left = x + 'px';
+  popup.style.top = y + 'px';
+  // Auto close after 4 seconds or on click elsewhere
+  setTimeout(function(){ popup.style.display='none'; }, 4000);
+}
+
+
+
+function closeDayPanel(){
+  document.getElementById('day-detail-panel').style.display='none';
+}
+
+function renderSchedUI(month){
+  var container=document.getElementById('sched-list-view'),totalDays=MDAYS[month]||30,monthIdx=Object.keys(MDAYS).indexOf(month),html='',filled=0,total=0;
+  var courses=['Links','Harbor'],slots=['Early','Late'];
+  for(var d=1;d<=totalDays;d++){
+    var dt=new Date(2026,monthIdx,d),dayName=DNAMES[dt.getDay()],dateStr=month.substring(0,3)+' '+d;
+    var offToday=[];
+    for(var n in schedRequests){if(schedRequests[n]&&schedRequests[n].indexOf(d)>=0)offToday.push(n);}
+    var avail=allNames.filter(function(n){return offToday.indexOf(n)<0;});
+    var dayFilled=0;
+    for(var ci=0;ci<2;ci++)for(var si=0;si<2;si++){total++;var k=month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si];if(schedAssignments[k]&&schedAssignments[k].name)dayFilled++;}
+    filled+=dayFilled;var allF=dayFilled===4;
+    html+='<div class="sched-day"><div class="sched-day-header '+(allF?'all-filled':offToday.length>0?'has-requests':'')+'">'
+      +'<span style="font-weight:bold">'+dayName+' '+dateStr+'</span>'
+      +'<span style="font-size:12px;opacity:0.85">'+(allF?'All filled':dayFilled+'/4 filled')+(offToday.length>0?' - '+offToday.length+' unavailable':'')+' </span></div>'
+      +'<div class="sched-day-body">';
+    for(var ci=0;ci<2;ci++){
+      var course=courses[ci];
+      html+='<div class="sched-course"><h4 class="'+course.toLowerCase()+'">'+course+' Course</h4>';
+      if(offToday.length>0)html+='<div class="unavail-list">Unavailable: '+offToday.join(', ')+'</div>';
+      for(var si=0;si<2;si++){
+        var slot=slots[si],key=month+'|'+dateStr+'|'+course+'|'+slot,asgn=schedAssignments[key]||{name:'',shift:''};
+        var aToday=[];
+        for(var ci2=0;ci2<2;ci2++)for(var si2=0;si2<2;si2++){var k2=month+'|'+dateStr+'|'+courses[ci2]+'|'+slots[si2];if(!(courses[ci2]===course&&slots[si2]===slot)&&schedAssignments[k2]&&schedAssignments[k2].name)aToday.push(schedAssignments[k2].name);}
+        var sAvail=avail.filter(function(n){return aToday.indexOf(n)<0||n===asgn.name;});
+        html+='<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">'
+          +'<span style="font-size:11px;color:#888;min-width:32px">'+slot+':</span>'
+          +'<select onchange="aSlot('+JSON.stringify(month)+','+JSON.stringify(dateStr)+','+JSON.stringify(course)+','+JSON.stringify(slot)+',this.value)" style="flex:1;padding:4px 6px;border-radius:6px;border:1px solid #c8b87a;font-size:12px;font-family:Georgia,serif;">'
+          +'<option value="">-- Assign --</option>';
+        for(var ni=0;ni<sAvail.length;ni++)html+='<option value="'+sAvail[ni]+'"'+(sAvail[ni]===asgn.name?' selected':'')+'>'+sAvail[ni]+'</option>';
+        html+='</select>'
+          +'<input type="text" placeholder="e.g. 7-3" value="'+(asgn.shift||'')+'" '
+          +'onchange="aShift('+JSON.stringify(month)+','+JSON.stringify(dateStr)+','+JSON.stringify(course)+','+JSON.stringify(slot)+',this.value)" '
+          +'style="width:76px;padding:4px 6px;border-radius:6px;border:1px solid #c8b87a;font-size:12px;font-family:Georgia,serif;"></div>';
+      }
+      html+='</div>';
+    }
+    html+='</div></div>';
+  }
+  container.innerHTML='<div style="background:#e8f5ed;border-radius:10px;padding:12px 18px;margin-bottom:16px;font-size:14px;color:#1a6b3a;"><strong>'+month+' Progress:</strong> '+filled+' of '+total+' slots filled</div>'+html;
+}
+
+function aSlot(month,dateStr,course,slot,name){
+  var key=month+'|'+dateStr+'|'+course+'|'+slot;
+  if(!schedAssignments[key])schedAssignments[key]={name:'',shift:''};
+  schedAssignments[key].name=name;
+  updateProgress(month);
+  if(name){
+    var dayNum=parseInt(dateStr.split(' ')[1]);
+    console.log('aSlot: assigning '+name+' to day '+dayNum+' ('+dateStr+')');
+    if(!isNaN(dayNum)) checkConsecutiveWarning(month,dayNum,name);
+  }
+}
+
+function aShift(month,dateStr,course,slot,shift){
+  var key=month+'|'+dateStr+'|'+course+'|'+slot;
+  if(!schedAssignments[key])schedAssignments[key]={name:'',shift:''};
+  schedAssignments[key].shift=shift;
+}
+
+function updateProgress(month){
+  var filled=0,total=0;
+  var totalDays=MDAYS[month]||30;
+  var monthIdx=Object.keys(MDAYS).indexOf(month);
+  var courses=['Links','Harbor'],slots=['Early','Late'];
+  for(var d=1;d<=totalDays;d++){
+    var dateStr=month.substring(0,3)+' '+d;
+    for(var ci=0;ci<2;ci++)for(var si=0;si<2;si++){
+      total++;
+      var k=month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si];
+      if(schedAssignments[k]&&schedAssignments[k].name)filled++;
+    }
+  }
+  var prog=document.querySelector('#sched-content div');
+  if(prog)prog.innerHTML='<strong>'+month+' Progress:</strong> '+filled+' of '+total+' slots filled';
+}
+
+function isAssignedOnDay(month, dayNum, name){
+  if(dayNum < 1) return false;
+  var dateStr = month.substring(0,3)+' '+dayNum;
+  var courses = ['Links','Harbor'], slots = ['Early','Late'];
+  for(var ci=0;ci<courses.length;ci++){
+    for(var si=0;si<slots.length;si++){
+      var key = month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si];
+      if(schedAssignments[key] && schedAssignments[key].name === name) return true;
+    }
+  }
+  return false;
+}
+
+function checkConsecutiveWarning(month, day, name){
+  console.log('checkConsecutive: checking '+name+' on day '+day);
+  var prev1 = isAssignedOnDay(month, day-1, name);
+  var prev2 = isAssignedOnDay(month, day-2, name);
+  var next1 = isAssignedOnDay(month, day+1, name);
+  var next2 = isAssignedOnDay(month, day+2, name);
+  console.log('prev2:'+prev2+' prev1:'+prev1+' next1:'+next1+' next2:'+next2);
+
+  var warningDays = [];
+  if(prev2 && prev1) warningDays.push((day-2)+', '+(day-1)+', '+day);
+  if(prev1 && next1) warningDays.push((day-1)+', '+day+', '+(day+1));
+  if(next1 && next2) warningDays.push(day+', '+(day+1)+', '+(day+2));
+
+  var warnMsg = warningDays.length > 0
+    ? '&#9888; CONSECUTIVE DAYS WARNING: '+name+' would work 3+ days in a row (days '+warningDays[0]+'). Scheduler can override.'
+    : '';
+
+  // Show in persistent top banner (always visible)
+  var banner = document.getElementById('consec-banner');
+  if(banner){
+    if(warnMsg){ banner.innerHTML = warnMsg; banner.style.display='block'; }
+    else { banner.style.display='none'; }
+  }
+
+  // Also show in day panel if open
+  var existing = document.getElementById('consec-warning');
+  if(existing) existing.parentNode.removeChild(existing);
+  if(warnMsg){
+    var dayPanel = document.getElementById('day-detail-content');
+    if(dayPanel){
+      var w = document.createElement('div');
+      w.id = 'consec-warning';
+      w.style.cssText = 'background:#fff3cd;border:2px solid #c8a000;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#856404;font-weight:bold;';
+      w.innerHTML = warnMsg;
+      dayPanel.insertBefore(w, dayPanel.firstChild);
+    }
+  }
+
+  // Also show in matrix mini panel if open
+  var existingM = document.getElementById('consec-warning-matrix');
+  if(existingM) existingM.parentNode.removeChild(existingM);
+  if(warnMsg){
+    var matrixPanel = document.getElementById('matrix-mini-content');
+    var matrixVisible = document.getElementById('matrix-mini-panel');
+    if(matrixPanel && matrixVisible && matrixVisible.style.display !== 'none'){
+      var wM = document.createElement('div');
+      wM.id = 'consec-warning-matrix';
+      wM.style.cssText = 'background:#fff3cd;border:2px solid #c8a000;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#856404;font-weight:bold;';
+      wM.innerHTML = warnMsg;
+      matrixPanel.insertBefore(wM, matrixPanel.firstChild);
+    }
+  }
+}
+
+
+function saveSchedule(){
+  var month=document.getElementById('sched-month').value;
+  if(!month){alert('Select a month first.');return;}
+  var el=document.getElementById('save-status');
+  if(el) el.textContent='Saving...';
+  
+  var entries=[];
+  for(var key in schedAssignments){
+    if(key.indexOf(month+'|')===0&&schedAssignments[key]&&schedAssignments[key].name){
+      var p=key.split('|');
+      if(p.length>=4){
+        entries.push({date:p[1],course:p[2],slot:p[3],name:schedAssignments[key].name,shift:schedAssignments[key].shift||''});
+      }
+    }
+  }
+  console.log('Saving '+entries.length+' entries for '+month+': '+JSON.stringify(entries));
+  
+  var timeout = setTimeout(function(){
+    if(el) el.textContent='';
+    alert('Save timed out. Check your internet connection and try again.');
+  }, 10000);
+  
+  apiCall({action:'saveSchedule',month:month,entries:JSON.stringify(entries)}).then(function(data){
+    clearTimeout(timeout);
+    if(data.status==='success'){
+      if(el) el.textContent='Schedule saved!';
+      alert(entries.length > 0 ? 'Schedule saved! '+entries.length+' assignments saved.' : 'Schedule cleared successfully.');
+      // Clear schedAssignments for this month and reload from saved entries
+      for(var key in schedAssignments){
+        if(key.indexOf(month+'|')===0) delete schedAssignments[key];
+      }
+      entries.forEach(function(e){
+        schedAssignments[month+'|'+e.date+'|'+e.course+'|'+e.slot]={name:e.name,shift:e.shift};
+      });
+      renderCalendarView(month);
+      setTimeout(function(){if(el)el.textContent='';},3000);
+    } else {
+      if(el) el.textContent='Error saving.';
+      alert('Error saving: '+(data.message||'Unknown error'));
+    }
+  }).catch(function(err){
+    clearTimeout(timeout);
+    if(el) el.textContent='';
+    alert('Connection error saving schedule. Please try again.');
+    console.log('Save error:',err);
+  });
+}
+
+function showRequestsView(){
+  var month = document.getElementById('sched-month').value;
+  document.getElementById('requests-overlay').style.display = 'block';
+  if(month){
+    document.getElementById('req-view-month').value = month;
+    renderRequestsView();
+  }
+}
+
+function hideRequestsView(){
+  document.getElementById('requests-overlay').style.display = 'none';
+}
+
+function renderRequestsView(){
+  var month = document.getElementById('req-view-month').value;
+  var container = document.getElementById('requests-view-content');
+  var subtitle = document.getElementById('req-view-subtitle');
+  if(!month){ container.innerHTML = '<div class="empty">Select a month above</div>'; return; }
+  subtitle.textContent = month + ' 2026';
+  apiRead({action:'getRequests', month:month}).then(function(data){
+    var requests = (data.status === 'success') ? data.requests : schedRequests;
+    renderRequestsContent(month, requests);
+  }).catch(function(){ renderRequestsContent(month, schedRequests); });
+}
+
+var currentReqView = 'calendar';
+var currentReqData = {};
+
+function switchReqView(view){
+  currentReqView = view;
+  var calBtn = document.getElementById('req-subtab-cal');
+  var matBtn = document.getElementById('req-subtab-matrix');
+  var titleEl = document.getElementById('req-view-title');
+  var excelBtn = document.getElementById('excel-btn');
+  if(calBtn && matBtn){
+    if(view === 'calendar'){
+      calBtn.style.background = '#1a3a1a'; calBtn.style.color = '#e8d8a0';
+      matBtn.style.background = '#e0d8c8'; matBtn.style.color = '#1a1a1a';
+      if(titleEl) titleEl.textContent = 'Day-Off Requests';
+      if(excelBtn) excelBtn.style.display = 'none';
+      var uploadBtn = document.getElementById('upload-btn');
+      var uploadWarn = document.getElementById('upload-warning');
+      if(uploadBtn) uploadBtn.style.display = 'none';
+      if(uploadWarn) uploadWarn.style.display = 'none';
+    } else {
+      matBtn.style.background = '#1a3a1a'; matBtn.style.color = '#e8d8a0';
+      calBtn.style.background = '#e0d8c8'; calBtn.style.color = '#1a1a1a';
+      if(titleEl) titleEl.textContent = 'Master Schedule View';
+      if(excelBtn) excelBtn.style.display = 'inline-block';
+      var uploadBtn = document.getElementById('upload-btn');
+      var uploadWarn = document.getElementById('upload-warning');
+      if(uploadBtn) uploadBtn.style.display = 'inline-block';
+      if(uploadWarn) uploadWarn.style.display = 'block';
+    }
+  }
+  var month = document.getElementById('req-view-month').value;
+  if(month) renderRequestsContent(month, currentReqData);
+}
+
+function renderRequestsContent(month, requests){
+  currentReqData = requests;
+  if(currentReqView === 'matrix'){
+    renderMatrixContent(month, requests);
+  } else {
+    renderCalendarContent(month, requests);
+  }
+}
+
+function buildSummaryTable(month, requests){
+  var monthIdx = Object.keys(MDAYS).indexOf(month);
+  var dh = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var rows = '', rowNum = 0;
+  allNames.forEach(function(name){
+    var days = requests[name];
+    if(days&&days.length>0){
+      rowNum++;
+      var sorted = days.slice().sort(function(a,b){return a-b;});
+      var list = sorted.map(function(d){ var dt=new Date(2026,monthIdx,d); return dh[dt.getDay()]+' '+d; }).join(', ');
+      rows += '<tr class="'+(rowNum%2===0?'even':'odd')+'">';
+      rows += '<td style="font-weight:bold">'+name+'</td><td>'+list+'</td>';
+      rows += '<td style="text-align:center;font-weight:bold">'+days.length+'</td></tr>';
+    }
+  });
+  if(!rows) return '';
+  return '<table class="req-summary-table" style="margin-top:20px;"><thead><tr>'
+    +'<th style="width:20%">Starter</th><th>Days Off</th>'
+    +'<th style="width:10%;text-align:center">Total Days</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+function renderCalendarContent(month, requests){
+  var container = document.getElementById('requests-view-content');
+  var monthIdx = Object.keys(MDAYS).indexOf(month);
+  var totalDays = MDAYS[month] || 30;
+  var startDay = MSTART[month] || 0;
+  var dh = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var anyReqs = allNames.some(function(n){ return requests[n] && requests[n].length > 0; });
+
+  if(!anyReqs){
+    container.innerHTML = '<div class="empty">No requests for '+month+' yet.</div>';
+    return;
+  }
+
+  var calHtml = '<div class="req-cal-grid">';
+  for(var i=0;i<7;i++) calHtml += '<div class="req-cal-header">'+dh[i]+'</div>';
+  for(var i=0;i<startDay;i++) calHtml += '<div class="req-cal-cell empty-cell"></div>';
+  for(var d=1;d<=totalDays;d++){
+    var dt = new Date(2026, monthIdx, d);
+    var offNames = [];
+    for(var n in requests){ if(requests[n]&&requests[n].indexOf(d)>=0) offNames.push(n); }
+    var hasReq = offNames.length > 0;
+    calHtml += '<div class="req-cal-cell'+(hasReq?' has-requests':'')+'">';
+    calHtml += '<div class="req-day-num">'+d+'</div><div class="req-day-name">'+dh[dt.getDay()]+'</div>';
+    offNames.forEach(function(n){ calHtml += '<span class="req-name-tag">'+n+'</span>'; });
+    calHtml += '</div>';
+  }
+  calHtml += '</div>';
+
+  container.innerHTML = calHtml + buildSummaryTable(month, requests);
+}
+
+function renderMatrixContent(month, requests){
+  var container = document.getElementById('requests-view-content');
+  var monthIdx = Object.keys(MDAYS).indexOf(month);
+  var totalDays = MDAYS[month] || 30;
+  var dh = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  // Starters who responded (submitted ANY request this month)
+  var responded = {};
+  allNames.forEach(function(n){ responded[n] = requests[n] && requests[n].length > 0; });
+
+  // Legend
+  var legendHtml = '<div style="display:flex;gap:16px;margin-bottom:12px;font-size:12px;flex-wrap:wrap;align-items:center;">'
+    +'<span><span style="display:inline-block;width:14px;height:14px;background:#8b1a1a;border-radius:3px;margin-right:4px;vertical-align:middle;"></span>R = Requested off</span>'
+    +'<span><span style="display:inline-block;width:14px;height:14px;background:#fff;border:1px solid #ccc;border-radius:3px;margin-right:4px;vertical-align:middle;"></span>Available (responded)</span>'
+    +'<span><span style="display:inline-block;width:14px;height:14px;background:#fff3cd;border:1px solid #c8a000;border-radius:3px;margin-right:4px;vertical-align:middle;"></span>No response yet</span>'
+    +'<span><span style="display:inline-block;width:14px;height:14px;background:#d4edda;border:1px solid #1a6b3a;border-radius:3px;margin-right:4px;vertical-align:middle;"></span>Assigned</span>'
+    +'<span style="color:#666;font-style:italic;">Click any available/no-response cell to assign</span>'
+    +'</div>';
+
+  // Mini assignment panel placeholder
+  var miniPanel = '<div id="matrix-mini-panel" style="display:none;background:#fff;border:2px solid #1a3a1a;border-radius:10px;padding:16px;margin-bottom:16px;box-shadow:0 4px 12px rgba(0,0,0,0.15);">'
+    +'<div id="matrix-mini-content"></div>'
+    +'</div>';
+
+  // Build grid using DOM to avoid onclick string escaping issues
+  var wrapper = document.createElement('div');
+  wrapper.innerHTML = legendHtml + miniPanel;
+
+  var scrollDiv = document.createElement('div');
+  scrollDiv.style.cssText = 'overflow-x:auto;margin-bottom:24px;';
+
+  var table = document.createElement('table');
+  table.className = 'req-grid-table';
+
+  // Header row
+  var thead = document.createElement('thead');
+  var headerRow = document.createElement('tr');
+  var dayTh = document.createElement('th');
+  dayTh.className = 'req-grid-day-col';
+  dayTh.textContent = 'Day';
+  headerRow.appendChild(dayTh);
+  allNames.forEach(function(n){
+    var abbr = n.length > 8 ? n.substring(0,7)+'.' : n;
+    var hasResp = responded[n];
+    var th = document.createElement('th');
+    th.title = n;
+    th.style.fontSize = '10px';
+    if(!hasResp) th.style.color = '#c8a000';
+    th.innerHTML = abbr + (hasResp ? '' : '<br>⚠');
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // Body rows
+  var tbody = document.createElement('tbody');
+  for(var d=1;d<=totalDays;d++){
+    var dt = new Date(2026, monthIdx, d);
+    var dayName = dh[dt.getDay()];
+    var isWeekend = dt.getDay()===0||dt.getDay()===6;
+    var dateStr = month.substring(0,3)+' '+d;
+
+    var tr = document.createElement('tr');
+    if(isWeekend) tr.style.background = '#dff0d8';
+
+    // Day label cell
+    var dayTd = document.createElement('td');
+    dayTd.className = 'req-grid-day-cell';
+    dayTd.innerHTML = '<span class="req-grid-daynum">'+d+'</span><span class="req-grid-dayname"> '+dayName+'</span>';
+    tr.appendChild(dayTd);
+
+    // One cell per starter
+    allNames.forEach(function(n){
+      var isOff = requests[n] && requests[n].indexOf(d) >= 0;
+      var assignedToday = false;
+      var assignedInfo = '';
+      var courses = ['Links','Harbor'], slots = ['Early','Late'];
+      for(var ci=0;ci<courses.length;ci++){
+        for(var si=0;si<slots.length;si++){
+          var k = month+'|'+dateStr+'|'+courses[ci]+'|'+slots[si];
+          if(schedAssignments[k] && schedAssignments[k].name === n){
+            assignedToday = true;
+            assignedInfo = courses[ci][0]+':'+slots[si][0]+(schedAssignments[k].shift?' '+schedAssignments[k].shift:'');
+          }
+        }
+      }
+
+      var td = document.createElement('td');
+      td.className = 'req-grid-cell';
+
+      if(isOff){
+        td.classList.add('req-grid-off');
+        td.textContent = 'R';
+      } else if(assignedToday){
+        td.classList.add('req-grid-assigned');
+        td.textContent = assignedInfo;
+        td.style.cursor = 'pointer';
+        (function(m,day,ds,dn,name){ td.addEventListener('click', function(){ openMatrixPanel(m,day,ds,dn,name); }); })(month,d,dateStr,dayName,n);
+      } else if(responded[n]){
+        td.classList.add('req-grid-open');
+        td.style.cursor = 'pointer';
+        (function(m,day,ds,dn,name){ td.addEventListener('click', function(){ openMatrixPanel(m,day,ds,dn,name); }); })(month,d,dateStr,dayName,n);
+      } else {
+        td.classList.add('req-grid-unknown');
+        td.style.cursor = 'pointer';
+        (function(m,day,ds,dn,name){ td.addEventListener('click', function(){ openMatrixPanel(m,day,ds,dn,name); }); })(month,d,dateStr,dayName,n);
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  }
+  // Totals footer row
+  var tfoot = document.createElement('tfoot');
+  var totalsRow = document.createElement('tr');
+  totalsRow.style.cssText = 'background:#1a3a1a;color:#e8d8a0;font-weight:bold;';
+  var totalLabel = document.createElement('td');
+  totalLabel.className = 'req-grid-day-cell';
+  totalLabel.style.cssText = 'font-weight:bold;color:#e8d8a0;background:#1a3a1a;font-size:12px;';
+  totalLabel.textContent = 'Total Off';
+  totalsRow.appendChild(totalLabel);
+  allNames.forEach(function(n){
+    var days = requests[n] ? requests[n].length : 0;
+    var td = document.createElement('td');
+    td.className = 'req-grid-cell';
+    td.style.cssText = 'background:#1a3a1a;color:'+(days>0?'#e8d8a0':'rgba(232,216,160,0.3)')+';font-weight:bold;font-size:12px;border-color:#145a30;';
+    td.textContent = days > 0 ? days : '';
+    totalsRow.appendChild(td);
+  });
+  tfoot.appendChild(totalsRow);
+  table.appendChild(tfoot);
+  table.appendChild(tbody);
+  scrollDiv.appendChild(table);
+  wrapper.appendChild(scrollDiv);
+
+  // Summary table
+  var summaryDiv = document.createElement('div');
+  summaryDiv.innerHTML = buildSummaryTable(month, requests);
+  wrapper.appendChild(summaryDiv);
+
+  container.innerHTML = '';
+  container.appendChild(wrapper);
+}
+
+function openMatrixPanel(month, day, dateStr, dayName, starterName){
+  var panel = document.getElementById('matrix-mini-panel');
+  var panelContent = document.getElementById('matrix-mini-content');
+  var courses = ['Links','Harbor'], slots = ['Early','Late'];
+
+  panelContent.innerHTML = '';
+
+  // Header
+  var header = document.createElement('div');
+  header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;';
+  var title = document.createElement('h3');
+  title.style.cssText = 'font-size:15px;color:#1a3a1a;margin:0;';
+  title.textContent = dayName+' '+dateStr+' — '+starterName;
+  var closeBtn = document.createElement('button');
+  closeBtn.style.cssText = 'background:none;border:1px solid #ccc;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:12px;';
+  closeBtn.textContent = '✕ Close';
+  closeBtn.addEventListener('click', closeMatrixPanel);
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+  panelContent.appendChild(header);
+
+  // Unavailable today
+  var offToday = [];
+  for(var n in currentReqData){ if(currentReqData[n]&&currentReqData[n].indexOf(day)>=0) offToday.push(n); }
+  if(offToday.length > 0){
+    var unavDiv = document.createElement('div');
+    unavDiv.style.cssText = 'font-size:12px;color:#8b1a1a;margin-bottom:10px;font-weight:bold;';
+    unavDiv.textContent = 'Unavailable today: '+offToday.join(', ');
+    panelContent.appendChild(unavDiv);
+  }
+
+  // Course grid
+  var grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:12px;';
+
+  courses.forEach(function(course){
+    var courseDiv = document.createElement('div');
+    var courseTitle = document.createElement('h4');
+    courseTitle.style.cssText = 'font-size:12px;font-weight:bold;margin-bottom:8px;color:'+(course==='Links'?'#1a6b3a':'#1a4a8a')+';';
+    courseTitle.textContent = course+' Course';
+    courseDiv.appendChild(courseTitle);
+
+    slots.forEach(function(slot){
+      var key = month+'|'+dateStr+'|'+course+'|'+slot;
+      var asgn = schedAssignments[key] || {name:'',shift:''};
+      var isThisStarter = asgn.name === starterName;
+
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;';
+
+      var label = document.createElement('span');
+      label.style.cssText = 'font-size:11px;color:#888;min-width:34px;';
+      label.textContent = slot+':';
+      row.appendChild(label);
+
+      if(isThisStarter){
+        var nameSpan = document.createElement('span');
+        nameSpan.style.cssText = 'flex:1;padding:4px 8px;background:#d4edda;border-radius:6px;border:1px solid #1a6b3a;font-size:12px;color:#1a3a1a;font-weight:bold;';
+        nameSpan.textContent = starterName;
+        row.appendChild(nameSpan);
+
+        var shiftInput = document.createElement('input');
+        shiftInput.type = 'text';
+        shiftInput.placeholder = 'shift';
+        shiftInput.value = asgn.shift || '';
+        shiftInput.style.cssText = 'width:70px;padding:4px;border-radius:6px;border:1px solid #c8b87a;font-size:11px;font-family:Georgia,serif;';
+        (function(m,ds,c,s){ shiftInput.addEventListener('change', function(){ aShift(m,ds,c,s,this.value); }); })(month,dateStr,course,slot);
+        row.appendChild(shiftInput);
+
+        var removeBtn = document.createElement('button');
+        removeBtn.style.cssText = 'padding:4px 8px;background:#8b1a1a;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;';
+        removeBtn.textContent = '✕';
+        (function(m,ds,c,s,nm,dy){ removeBtn.addEventListener('click', function(){ removeFromMatrix(m,ds,c,s,nm,dy); }); })(month,dateStr,course,slot,starterName,day);
+        row.appendChild(removeBtn);
+
+      } else if(asgn.name){
+        var takenSpan = document.createElement('span');
+        takenSpan.style.cssText = 'flex:1;padding:4px 8px;background:#f0ece0;border-radius:6px;border:1px solid #c8b87a;font-size:12px;color:#666;';
+        takenSpan.textContent = asgn.name;
+        row.appendChild(takenSpan);
+        var spacer = document.createElement('span');
+        spacer.style.width = '70px';
+        row.appendChild(spacer);
+
+      } else {
+        var assignBtn = document.createElement('button');
+        assignBtn.style.cssText = 'flex:1;padding:4px 8px;background:#1a3a1a;color:#e8d8a0;border:none;border-radius:6px;font-size:12px;font-family:Georgia,serif;cursor:pointer;';
+        assignBtn.textContent = '+ Assign here';
+        (function(m,ds,c,s,nm,dy){ assignBtn.addEventListener('click', function(){ assignFromMatrix(m,ds,c,s,nm,dy); }); })(month,dateStr,course,slot,starterName,day);
+        row.appendChild(assignBtn);
+        var spacer = document.createElement('span');
+        spacer.style.width = '70px';
+        row.appendChild(spacer);
+      }
+      courseDiv.appendChild(row);
+    });
+    grid.appendChild(courseDiv);
+  });
+  panelContent.appendChild(grid);
+
+  panel.style.display = 'block';
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function assignFromMatrix(month, dateStr, course, slot, name, day){
+  aSlot(month, dateStr, course, slot, name);
+  if(name) checkConsecutiveWarning(month, day, name);
+  // Refresh matrix and reopen panel
+  renderMatrixContent(month, currentReqData);
+  setTimeout(function(){
+    openMatrixPanel(month, day, dateStr,
+      ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(2026,Object.keys(MDAYS).indexOf(month),day).getDay()],
+      name);
+  }, 50);
+}
+
+function removeFromMatrix(month, dateStr, course, slot, name, day){
+  aSlot(month, dateStr, course, slot, '');
+  renderMatrixContent(month, currentReqData);
+  setTimeout(function(){
+    openMatrixPanel(month, day, dateStr,
+      ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(2026,Object.keys(MDAYS).indexOf(month),day).getDay()],
+      name);
+  }, 50);
+}
+
+function closeMatrixPanel(){
+  document.getElementById('matrix-mini-panel').style.display = 'none';
+}
+
+function downloadExcel(){
+  var month = document.getElementById('req-view-month').value;
+  if(!month){ alert('Select a month first.'); return; }
+  if(typeof XLSX === 'undefined'){ alert('Excel library loading... please try again in a moment.'); return; }
+
+  var requests = currentReqData;
+  var monthIdx = Object.keys(MDAYS).indexOf(month);
+  var totalDays = MDAYS[month] || 30;
+  var dh = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var SLOTS = ['L:E','L:L','H:E','H:L'];
+  var SLOT_LABELS = ['Links Early','Links Late','Harbor Early','Harbor Late'];
+  var codeMap = {'Links:Early':'L:E','Links:Late':'L:L','Harbor:Early':'H:E','Harbor:Late':'H:L'};
+
+  // ── Helper: column number to letter ──
+  function colLetter(n){
+    var s='',t;
+    while(n>0){t=(n-1)%26;s=String.fromCharCode(65+t)+s;n=(n-t-1)/26|0;}
+    return s;
+  }
+
+  // ── Alternating colors ──
+  var STARTER_HDR  = ['2D6A2D','1A4A8A'];
+  var STARTER_SUB  = ['4A8A4A','2D6AA0'];
+  var STARTER_FILL = ['EBF3EB','E0ECF8'];
+  var WEEKEND_FILL = ['D4E8D4','D0E0F0'];
+  var HDR_DARK = '1A3A1A';
+  var HDR_GOLD = 'E8D8A0';
+
+  function hdr(fg,bold,sz){ return {font:{color:{rgb:fg},bold:bold||false,sz:sz||9}}; }
+  function fill(fg){ return {fill:{fgColor:{rgb:fg}}}; }
+  function border(thick_right){
+    var t={style:'thin',color:{rgb:'B0B0B0'}};
+    var r=thick_right?{style:'medium',color:{rgb:'666666'}}:t;
+    return {border:{left:t,right:r,top:t,bottom:t}};
+  }
+  function cell(v, styles){
+    var c = {v:v, t:'s'};
+    var s = {};
+    styles.forEach(function(st){ for(var k in st) s[k]=st[k]; });
+    c.s = s;
+    return c;
+  }
+
+  var wb = XLSX.utils.book_new();
+
+  // ── LEGEND SHEET ──
+  var legendData = [
+    ['WILD DUNES STARTER SCHEDULE - MASTER SCHEDULE VIEW'],
+    ['Month: '+month+' 2026'],
+    [''],
+    ['All data cells are TEXT format — shift times like 7-3 will NOT convert to dates'],
+    ['R = Requested off   ? = No response   blank = Available not yet assigned'],
+    [''],
+    ['TO ASSIGN: Type shift time in the correct column for that starter'],
+    ['L:E = Links Early   L:L = Links Late   H:E = Harbor Early   H:L = Harbor Late'],
+    ['Example: type 7-3 in Floyd L:E column = Floyd assigned Links Early 7am-3pm'],
+    [''],
+    ['Starters alternate green/blue shading for easy visual separation'],
+    ['Daily Summary tab updates automatically as you enter data'],
+    [''],
+    ['WARNING: UPLOADING THIS FILE REPLACES ALL EXISTING DATA FOR '+month.toUpperCase()+' 2026'],
+    ['THIS ACTION CANNOT BE UNDONE. VERIFY DATA BEFORE UPLOADING.'],
+  ];
+  var wsLegend = XLSX.utils.aoa_to_sheet(legendData);
+  wsLegend['!cols'] = [{wch:85}];
+  XLSX.utils.book_append_sheet(wb, wsLegend, 'LEGEND - READ FIRST');
+
+  // ── SCHEDULE SHEET ──
+  var wsData = [];
+
+  // Row 1: starter names
+  var r1 = [{v:'Day',t:'s',s:{fill:{fgColor:{rgb:HDR_DARK}},font:{color:{rgb:HDR_GOLD},bold:true,sz:9},alignment:{horizontal:'center'}}}];
+  allNames.forEach(function(n,i){
+    var color = STARTER_HDR[i%2];
+    r1.push({v:n,t:'s',s:{fill:{fgColor:{rgb:color}},font:{color:{rgb:'FFFFFF'},bold:true,sz:9},alignment:{horizontal:'center'}}});
+    r1.push({v:'',t:'s',s:{fill:{fgColor:{rgb:color}}}}); 
+    r1.push({v:'',t:'s',s:{fill:{fgColor:{rgb:color}}}});
+    r1.push({v:'',t:'s',s:{fill:{fgColor:{rgb:color}}}});
+  });
+  wsData.push(r1);
+
+  // Row 2: slot sub-headers
+  var r2 = [{v:'',t:'s',s:{fill:{fgColor:{rgb:HDR_DARK}}}}];
+  allNames.forEach(function(n,i){
+    var color = STARTER_SUB[i%2];
+    SLOTS.forEach(function(s,j){
+      var isLast = j===3;
+      r2.push({v:s,t:'s',s:{
+        fill:{fgColor:{rgb:color}},
+        font:{color:{rgb:'FFFFFF'},bold:true,sz:8},
+        alignment:{horizontal:'center'},
+        border:{left:{style:'thin',color:{rgb:'B0B0B0'}},
+                right:isLast?{style:'medium',color:{rgb:'333333'}}:{style:'thin',color:{rgb:'B0B0B0'}},
+                top:{style:'thin',color:{rgb:'B0B0B0'}},
+                bottom:{style:'thin',color:{rgb:'B0B0B0'}}}
+      }});
+    });
+  });
+  wsData.push(r2);
+
+  // Data rows
+  for(var d=1;d<=totalDays;d++){
+    var dt = new Date(2026, monthIdx, d);
+    var dayName = dh[dt.getDay()];
+    var isWknd = dt.getDay()===0||dt.getDay()===6;
+    var dateStr = month.substring(0,3)+' '+d;
+    var row = [{v:d+' '+dayName,t:'s',s:{
+      fill:{fgColor:{rgb:isWknd?'E8E0D0':'F4F1EA'}},
+      font:{bold:true,sz:9},alignment:{horizontal:'center'},
+      border:{left:{style:'thin',color:{rgb:'B0B0B0'}},right:{style:'thin',color:{rgb:'B0B0B0'}},
+              top:{style:'thin',color:{rgb:'B0B0B0'}},bottom:{style:'thin',color:{rgb:'B0B0B0'}}}
+    }}];
+
+    allNames.forEach(function(n,i){
+      var fc = isWknd ? WEEKEND_FILL[i%2] : STARTER_FILL[i%2];
+      // Find assignments for this starter today
+      var slotShifts={'L:E':'','L:L':'','H:E':'','H:L':''};
+      var courses=['Links','Harbor'],slots2=['Early','Late'];
+      for(var ci=0;ci<2;ci++)for(var si=0;si<2;si++){
+        var k=month+'|'+dateStr+'|'+courses[ci]+'|'+slots2[si];
+        if(schedAssignments[k]&&schedAssignments[k].name===n){
+          slotShifts[codeMap[courses[ci]+':'+slots2[si]]]=schedAssignments[k].shift||'assigned';
+        }
+      }
+      // Check if requested off
+      var isOff = requests[n]&&requests[n].indexOf(d)>=0;
+      SLOTS.forEach(function(s,j){
+        var isLast=j===3;
+        var val = isOff?'R':(slotShifts[s]||'');
+        row.push({v:val,t:'s',s:{
+          fill:{fgColor:{rgb:fc}},
+          alignment:{horizontal:'center'},
+          numFmt:'@',
+          border:{left:{style:'thin',color:{rgb:'B0B0B0'}},
+                  right:isLast?{style:'medium',color:{rgb:'333333'}}:{style:'thin',color:{rgb:'B0B0B0'}},
+                  top:{style:'thin',color:{rgb:'B0B0B0'}},
+                  bottom:{style:'thin',color:{rgb:'B0B0B0'}}}
+        }});
+      });
+    });
+    wsData.push(row);
+  }
+
+  // Totals row
+  var rTot = [{v:'TOTAL DAYS OFF',t:'s',s:{fill:{fgColor:{rgb:HDR_DARK}},font:{color:{rgb:HDR_GOLD},bold:true,sz:9}}}];
+  allNames.forEach(function(n,i){
+    var color=STARTER_HDR[i%2];
+    var days=requests[n]?requests[n].length:'';
+    rTot.push({v:days===''?'':days,t:days===''?'s':'n',s:{fill:{fgColor:{rgb:color}},font:{color:{rgb:'E8D8A0'},bold:true,sz:9},alignment:{horizontal:'center'}}});
+    rTot.push({v:'',t:'s',s:{fill:{fgColor:{rgb:color}}}});
+    rTot.push({v:'',t:'s',s:{fill:{fgColor:{rgb:color}}}});
+    rTot.push({v:'',t:'s',s:{fill:{fgColor:{rgb:color}}}});
+  });
+  wsData.push(rTot);
+
+  var wsSched = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Merge starter name cells in row 1
+  if(!wsSched['!merges']) wsSched['!merges'] = [];
+  allNames.forEach(function(n,i){
+    var startCol = i*4+1; // 0-indexed
+    wsSched['!merges'].push({s:{r:0,c:startCol},e:{r:0,c:startCol+3}});
+  });
+
+  // Column widths
+  var cols = [{wch:9}];
+  allNames.forEach(function(){ for(var j=0;j<4;j++) cols.push({wch:6}); });
+  wsSched['!cols'] = cols;
+
+  // Freeze row 1,2 and col A
+  wsSched['!freeze'] = {xSplit:1,ySplit:2};
+
+  XLSX.utils.book_append_sheet(wb, wsSched, month+' Schedule');
+
+  // ── DAILY SUMMARY SHEET ──
+  var wsSumData = [];
+  var sumHdr = [{v:'Day',t:'s',s:{fill:{fgColor:{rgb:HDR_DARK}},font:{color:{rgb:HDR_GOLD},bold:true,sz:9},alignment:{horizontal:'center'}}}];
+  SLOT_LABELS.forEach(function(lbl){
+    sumHdr.push({v:lbl,t:'s',s:{fill:{fgColor:{rgb:HDR_DARK}},font:{color:{rgb:HDR_GOLD},bold:true,sz:9},alignment:{horizontal:'center'}}});
+  });
+  wsSumData.push(sumHdr);
+
+  // For summary, pull actual assigned data
+  for(var d=1;d<=totalDays;d++){
+    var dt = new Date(2026, monthIdx, d);
+    var dayName = dh[dt.getDay()];
+    var isWknd = dt.getDay()===0||dt.getDay()===6;
+    var dateStr = month.substring(0,3)+' '+d;
+    var fc = isWknd?'E8E0D0':'FFFFFF';
+    var dayFc = isWknd?'E8E0D0':'F4F1EA';
+
+    var sumRow = [{v:d+' '+dayName,t:'s',s:{fill:{fgColor:{rgb:dayFc}},font:{bold:true,sz:9},alignment:{horizontal:'center'},border:{left:{style:'thin',color:{rgb:'B0B0B0'}},right:{style:'thin',color:{rgb:'B0B0B0'}},top:{style:'thin',color:{rgb:'B0B0B0'}},bottom:{style:'thin',color:{rgb:'B0B0B0'}}}}}];
+
+    SLOTS.forEach(function(code){
+      var parts = code.split(':');
+      var course = parts[0]==='L'?'Links':'Harbor';
+      var slot = parts[1]==='E'?'Early':'Late';
+      var key = month+'|'+dateStr+'|'+course+'|'+slot;
+      var asgn = schedAssignments[key];
+      var val = asgn&&asgn.name ? asgn.name+(asgn.shift?' '+asgn.shift:'') : '';
+      sumRow.push({v:val,t:'s',s:{fill:{fgColor:{rgb:fc}},alignment:{horizontal:'left',vertical:'center'},border:{left:{style:'thin',color:{rgb:'B0B0B0'}},right:{style:'thin',color:{rgb:'B0B0B0'}},top:{style:'thin',color:{rgb:'B0B0B0'}},bottom:{style:'thin',color:{rgb:'B0B0B0'}}}}});
+    });
+    wsSumData.push(sumRow);
+  }
+
+  var wsSum = XLSX.utils.aoa_to_sheet(wsSumData);
+  wsSum['!cols'] = [{wch:10},{wch:25},{wch:25},{wch:25},{wch:25}];
+  wsSum['!freeze'] = {xSplit:1,ySplit:1};
+  XLSX.utils.book_append_sheet(wb, wsSum, 'Daily Summary');
+
+  XLSX.writeFile(wb, 'WildDunes_MasterSchedule_'+month+'_2026.xlsx');
+}
+
+
+function uploadExcel(input){
+  var month = document.getElementById('req-view-month').value;
+  if(!month){ alert('Please select a month first.'); input.value=''; return; }
+
+  var statusEl = document.getElementById('upload-status');
+  statusEl.style.display = 'block';
+  statusEl.style.background = '#e8f5ed';
+  statusEl.style.borderColor = '#1a6b3a';
+  statusEl.style.color = '#1a3a1a';
+  statusEl.textContent = 'Reading file...';
+
+  var file = input.files[0];
+  if(!file){ return; }
+
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var text = e.target.result;
+    if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    var NL = String.fromCharCode(10);
+    var lines = text.split(NL);
+
+    var SLOTS = ['L:E','L:L','H:E','H:L'];
+    var courseMap = {'L':'Links','H':'Harbor'};
+    var slotMap = {'E':'Early','L':'Late'};
+
+    // Find header row 1 (starter names - has 'Day' in col 0)
+    var h1Idx = -1, h2Idx = -1;
+    for(var i=0;i<lines.length;i++){
+      var cells = lines[i].split(',');
+      if(cells[0] && cells[0].trim() === 'Day'){ h1Idx = i; h2Idx = i+1; break; }
+    }
+
+    if(h1Idx < 0){
+      statusEl.style.background='#fff3f3'; statusEl.style.borderColor='#8b1a1a'; statusEl.style.color='#8b1a1a';
+      statusEl.textContent = 'Error: Cannot find data header row.';
+      input.value=''; return;
+    }
+
+    // Build column map from headers
+    // h1 = starter names (every 4 cols starting at 1)
+    // h2 = slot codes (L:E, L:L, H:E, H:L repeating)
+    var h1 = lines[h1Idx].split(',');
+    var h2 = lines[h2Idx].split(',');
+    var colMap = []; // [{name, code}]
+    for(var c=1;c<h2.length;c++){
+      var slot = h2[c] ? h2[c].trim() : '';
+      if(SLOTS.indexOf(slot) >= 0){
+        // Find starter name - look backwards in h1 for nearest non-empty
+        var name = '';
+        for(var nc=c;nc>=1;nc--){
+          if(h1[nc] && h1[nc].trim()){ name = h1[nc].trim(); break; }
+        }
+        if(name) colMap.push({col:c, name:name, code:slot});
+      }
+    }
+
+    // Parse data rows
+    var entries = [], errors = [];
+    for(var i=h2Idx+1;i<lines.length;i++){
+      var line = lines[i].trim();
+      if(!line || line.indexOf('TOTAL')===0 || line.indexOf('---')===0) continue;
+      var cells = line.split(',');
+      var dayCell = cells[0] ? cells[0].trim() : '';
+      var dayNum = parseInt(dayCell.split(' ')[0]);
+      if(isNaN(dayNum)||dayNum<1||dayNum>31) continue;
+      var dateStr = month.substring(0,3)+' '+dayNum;
+
+      colMap.forEach(function(cm){
+        var val = cells[cm.col] ? cells[cm.col].trim() : '';
+        if(!val || val==='R' || val==='?') return;
+        var parts = cm.code.split(':');
+        entries.push({
+          date: dateStr,
+          course: courseMap[parts[0]],
+          slot: slotMap[parts[1]],
+          name: cm.name,
+          shift: val === 'assigned' ? '' : val
+        });
+      });
+    }
+
+    if(errors.length > 0){
+      statusEl.style.background='#fff3f3'; statusEl.style.borderColor='#8b1a1a'; statusEl.style.color='#8b1a1a';
+      statusEl.textContent = 'ERRORS - nothing saved: '+errors.join(' | ');
+      input.value=''; return;
+    }
+
+    statusEl.textContent = 'Validated '+entries.length+' assignments. Saving... WARNING: REPLACES ALL DATA FOR '+month.toUpperCase();
+
+    apiCall({action:'saveSchedule',month:month,entries:JSON.stringify(entries)}).then(function(data){
+      if(data.status==='success'){
+        for(var k in schedAssignments){ if(k.indexOf(month+'|')===0) delete schedAssignments[k]; }
+        entries.forEach(function(e){
+          schedAssignments[month+'|'+e.date+'|'+e.course+'|'+e.slot]={name:e.name,shift:e.shift};
+        });
+        statusEl.style.background='#e8f5ed'; statusEl.style.borderColor='#1a6b3a'; statusEl.style.color='#1a3a1a';
+        statusEl.textContent='SUCCESS: '+entries.length+' assignments saved for '+month+'. Previous data replaced.';
+        renderMatrixContent(month, currentReqData);
+      } else {
+        statusEl.style.background='#fff3f3'; statusEl.style.borderColor='#8b1a1a'; statusEl.style.color='#8b1a1a';
+        statusEl.textContent='Error: '+(data.message||'Unknown error');
+      }
+      input.value='';
+    }).catch(function(){
+      statusEl.style.background='#fff3f3'; statusEl.style.borderColor='#8b1a1a'; statusEl.style.color='#8b1a1a';
+      statusEl.textContent='Connection error. Please try again.';
+      input.value='';
+    });
+  };
+  reader.onerror = function(){ statusEl.textContent='Error reading file.'; input.value=''; };
+  reader.readAsText(file);
+}
+
+
+function printRequestsView(){
+  var month = document.getElementById('req-view-month').value;
+  if(!month){ alert('Select a month first.'); return; }
+  
+  // Get the current view content
+  var viewType = currentReqView;
+  var content = document.getElementById('requests-view-content');
+  if(!content){ return; }
+  
+  var win = window.open('', '_blank');
+  win.document.write('<!DOCTYPE html><html><head><title>'+month+' 2026 - Day Off Requests</title>'
+    +'<style>'
+    +'@page{size:landscape;margin:8mm;}'
+    +'*{box-sizing:border-box;}'
+    +'body{font-family:Arial,sans-serif;padding:6px;color:#1a1a1a;font-size:7px;}'
+    +'h1{font-size:13px;color:#1a3a1a;margin-bottom:2px;}'
+    +'h2{font-size:10px;color:#666;font-weight:normal;margin-bottom:8px;}'
+    +'.legend{font-size:7px;margin-bottom:8px;display:flex;gap:10px;flex-wrap:wrap;}'
+    +'.req-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:16px;}'
+    +'.req-cal-header{text-align:center;font-size:8px;font-weight:bold;color:#888;padding:3px;text-transform:uppercase;background:#f4f1ea;}'
+    +'.req-cal-cell{padding:3px;min-height:40px;border:1px solid #e0d8c8;background:#fff;font-size:8px;}'
+    +'.req-cal-cell.empty-cell{background:transparent;border-color:transparent;}'
+    +'.req-cal-cell.has-requests{background:#fff8f0;border-color:#c8b87a;}'
+    +'.req-day-num{font-size:10px;font-weight:bold;color:#1a1a1a;}'
+    +'.req-day-name{font-size:7px;color:#888;}'
+    +'.req-name-tag{display:inline-block;background:#8b1a1a;color:#fff;border-radius:4px;padding:1px 3px;margin:1px;font-size:7px;}'
+    +'.req-grid-table{border-collapse:collapse;width:100%;table-layout:fixed;}'
+    +'.req-grid-table th{background:#1a3a1a;color:#e8d8a0;padding:3px 1px;text-align:center;border:1px solid #145a30;font-size:7px;word-break:break-word;overflow-wrap:break-word;}'
+    +'.req-grid-day-col{width:38px;text-align:left !important;padding-left:3px !important;}'
+    +'.req-grid-day-cell{padding:2px 3px;border:1px solid #e0d8c8;white-space:nowrap;font-size:7px;width:38px;}'
+    +'.req-grid-cell{padding:2px 1px;text-align:center;border:1px solid #e0d8c8;font-weight:bold;font-size:7px;}'
+    +'.req-grid-off{background:#8b1a1a;color:#fff;}'
+    +'.req-grid-unknown{background:#fff3cd;}'
+    +'.req-grid-assigned{background:#d4edda;color:#1a3a1a;font-size:6px;}'
+    +'tfoot td{background:#1a3a1a;color:#e8d8a0;font-weight:bold;padding:2px 1px;border:1px solid #145a30;font-size:7px;text-align:center;}'
+    +'tfoot .req-grid-day-cell{text-align:left;padding-left:3px;}'
+    +'.req-summary-table{width:100%;border-collapse:collapse;margin-top:10px;}'
+    +'.req-summary-table th{background:#1a3a1a;color:#e8d8a0;padding:5px 8px;text-align:left;font-size:9px;}'
+    +'.req-summary-table td{padding:4px 8px;font-size:9px;border-bottom:1px solid #eee;}'
+    +'.footer{margin-top:12px;font-size:8px;color:#999;}'
+    +'</style></head><body>'
+    +'<h1>&#9971; Wild Dunes Starter Schedule</h1>'
+    +'<h2>Day-Off Requests &mdash; '+month+' 2026 ('+viewType.charAt(0).toUpperCase()+viewType.slice(1)+' View)</h2>'
+    +content.innerHTML
+    +'<div class="footer">Printed '+new Date().toLocaleDateString()+' &middot; Wild Dunes Resort</div>'
+    +'</body></html>');
+  win.document.close();
+  setTimeout(function(){ win.print(); }, 600);
+}
+
+function printSummary(){ showRequestsView(); }
+
+</script>
+<div id="off-popup"></div>
+</body>
+</html>
