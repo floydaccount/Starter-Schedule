@@ -1216,11 +1216,7 @@ function initApp(){
   renderSearch();
 }
 
-function shiftHours(s){
-  var p=s.trim().split('-');if(p.length!==2)return 0;
-  function toH(t){if(t.indexOf(':')>=0){var x=t.split(':');return parseInt(x[0])+parseInt(x[1])/60;}return parseFloat(t);}
-  try{var a=toH(p[0]),b=toH(p[1]);if(b<=a)b+=12;return Math.round((b-a)*10)/10;}catch(e){return 0;}
-}
+// shiftHours defined above
 
 function badge(c){return '<span class="badge badge-'+c.toLowerCase()+'">'+c+'</span>';}
 
