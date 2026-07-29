@@ -164,6 +164,7 @@ tr{border-bottom:1px solid #f0ece0;}
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
         <h3 style="font-size:16px;color:#1a3a1a;margin:0;">Hours by Starter</h3>
         <select id="hours-month" class="filter-select" onchange="renderHours()">
+          <option value="">-- Select Month --</option>
           <option value="All">All Months</option>
           <option>January</option><option>February</option><option>March</option>
           <option>April</option><option>May</option><option>June</option>
@@ -171,6 +172,7 @@ tr{border-bottom:1px solid #f0ece0;}
           <option>October</option><option>November</option><option>December</option>
         </select>
         <select id="hours-starter" class="filter-select" onchange="renderHours()">
+          <option value="">-- Select Starter --</option>
           <option value="All">All Starters</option>
         </select>
       </div>
@@ -182,6 +184,7 @@ tr{border-bottom:1px solid #f0ece0;}
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
         <h3 style="font-size:16px;color:#1a3a1a;margin:0;">Course Notes</h3>
         <select id="notes-month" class="filter-select" onchange="renderCourseNotes()">
+          <option value="">-- Select Month --</option>
           <option value="All">All Months</option>
           <option>January</option><option>February</option><option>March</option>
           <option>April</option><option>May</option><option>June</option>
@@ -916,7 +919,7 @@ function doLogin(){
   if(pw===APW){
     role='admin';
     document.getElementById('login-screen').style.display='none';
-    setTimeout(function(){ renderHours(); }, 100);
+    // Hours loads when user selects from dropdown
     document.getElementById('tab-requests').style.display='inline-block';
     document.getElementById('tab-scheduler').style.display='inline-block';
     initApp();
@@ -974,7 +977,10 @@ function getScheduleForMonth(month, callback){
         rows = data.entries.map(function(e){
           var dayNum = parseInt(e.date.split(' ')[1]);
           var dt = new Date(2026, monthIdx, dayNum);
-          return {date:e.date, day:dh[dt.getDay()], month:month, course:e.course, name:e.name, shift:e.shift||''};
+          // Strip S: prefix from shift if present
+          var shift = String(e.shift || '');
+          if(shift.indexOf('S:') === 0) shift = shift.substring(2);
+          return {date:e.date, day:dh[dt.getDay()], month:month, course:e.course, name:e.name, shift:shift};
         });
       }
       sheetsScheduleCache[month] = rows;
@@ -991,6 +997,10 @@ function renderHours(){
   var month = document.getElementById('hours-month').value;
   var starter = document.getElementById('hours-starter').value;
   var container = document.getElementById('hours-content');
+  if(!month || !starter){
+    container.innerHTML = '<div class="empty">Select a month and starter above to view hours.</div>';
+    return;
+  }
   container.innerHTML = '<div class="empty">Loading...</div>';
 
   var allMonths = ['January','February','March','April','May','June','July','August','September','October','November','December'];
