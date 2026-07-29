@@ -1086,7 +1086,7 @@ function renderCourseNotes(){
 
   if(month === 'All'){
     // Load all months - getCourseNotes with no month returns all
-    apiRead({action:'getCourseNotes'}).then(function(data){
+    apiRead({action:'getCourseNotes', month:''}).then(function(data){
       if(data.status === 'success'){
         buildNotesTable('All', data.notes);
       } else {
@@ -1198,8 +1198,8 @@ function initApp(){
 
   // Hours section always visible, renderHours checks role internally
 
-  // Set initial course notes state
-  document.getElementById('notes-content').innerHTML = '<div class="empty">Select a month above to view course notes, or choose All Months to see everything.</div>';
+  // Auto-trigger course notes load
+  renderCourseNotes();
   document.getElementById('person-select').onchange=function(){selectPerson(this.value);};
   renderSearch();
 }
