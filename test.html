@@ -964,8 +964,8 @@ function getScheduleForMonth(month, callback){
     var rows = RAW_DATA.filter(function(e){ return e.month === month; });
     callback(rows);
   } else {
-    // Check cache first
-    if(sheetsScheduleCache[month]){
+    // Check cache first - only use if has data
+    if(sheetsScheduleCache[month] && sheetsScheduleCache[month].length > 0){
       callback(sheetsScheduleCache[month]);
       return;
     }
@@ -1096,6 +1096,10 @@ function buildHoursTable(allRows, selectedMonth, selectedStarter, monthsToLoad){
 function renderCourseNotes(){
   var month = document.getElementById('notes-month').value;
   var container = document.getElementById('notes-content');
+  if(!month){
+    container.innerHTML = '<div class="empty">Select a month above to view course notes.</div>';
+    return;
+  }
   container.innerHTML = '<div class="empty">Loading...</div>';
 
   if(month === 'All'){
@@ -1210,8 +1214,6 @@ function initApp(){
     }
   }
 
-  // Auto-trigger course notes load
-  renderCourseNotes();
   document.getElementById('person-select').onchange=function(){selectPerson(this.value);};
   renderSearch();
 }
