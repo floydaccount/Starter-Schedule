@@ -158,6 +158,40 @@ tr{border-bottom:1px solid #f0ece0;}
       <select class="filter-select" id="month-filter"><option value="All">All Months</option><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select>
       <select class="filter-select" id="course-filter"><option value="All">All Courses</option><option>Links</option><option>Harbor</option></select>
     </div>
+
+    <!-- Hours by Starter section (schedule password only) -->
+    <div id="hours-section" style="display:none;margin-top:20px;padding-top:16px;border-top:1px solid #e0d8c8;">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+        <h3 style="font-size:16px;color:#1a3a1a;margin:0;">Hours by Starter</h3>
+        <select id="hours-month" class="filter-select" onchange="renderHours()">
+          <option value="All">All Months</option>
+          <option>January</option><option>February</option><option>March</option>
+          <option>April</option><option>May</option><option>June</option>
+          <option>July</option><option>August</option><option>September</option>
+          <option>October</option><option>November</option><option>December</option>
+        </select>
+        <select id="hours-starter" class="filter-select" onchange="renderHours()">
+          <option value="All">All Starters</option>
+        </select>
+      </div>
+      <div id="hours-content"></div>
+    </div>
+
+    <!-- Course Notes section (both passwords) -->
+    <div id="notes-section" style="margin-top:20px;padding-top:16px;border-top:1px solid #e0d8c8;">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+        <h3 style="font-size:16px;color:#1a3a1a;margin:0;">Course Notes</h3>
+        <select id="notes-month" class="filter-select" onchange="renderCourseNotes()">
+          <option value="All">All Months</option>
+          <option>January</option><option>February</option><option>March</option>
+          <option>April</option><option>May</option><option>June</option>
+          <option>July</option><option>August</option><option>September</option>
+          <option>October</option><option>November</option><option>December</option>
+        </select>
+      </div>
+      <div id="notes-content"><div class="empty">Select a month to view course notes</div></div>
+    </div>
+
     <div id="result-count"></div>
     <div id="search-results"></div>
     <div id="totals-bar"></div>
@@ -896,6 +930,208 @@ function doLogin(){
   }
 }
 
+function shiftHours(shift){
+  if(!shift) return 0;
+  shift = shift.replace(/[^0-9:\-]/g,'').trim();
+  var parts = shift.split('-');
+  if(parts.length < 2) return 0;
+  function toMins(t){
+    t = t.replace(':','.');
+    var h = parseFloat(t);
+    if(isNaN(h)) return 0;
+    var hr = Math.floor(h);
+    var mn = Math.round((h - hr) * 100);
+    return hr * 60 + mn;
+  }
+  var start = toMins(parts[0]);
+  var end = toMins(parts[1]);
+  if(end < start) end += 12 * 60;
+  var hrs = (end - start) / 60;
+  return hrs > 0 && hrs < 16 ? Math.round(hrs) : 0;
+}
+
+// Cache for Google Sheets schedule data
+var sheetsScheduleCache = {};
+
+function getScheduleForMonth(month, callback){
+  var STATIC = ['January','February','March','April','May','June'];
+  if(STATIC.indexOf(month) >= 0){
+    // Use RAW_DATA
+    var rows = RAW_DATA.filter(function(e){ return e.month === month; });
+    callback(rows);
+  } else {
+    // Check cache first
+    if(sheetsScheduleCache[month]){
+      callback(sheetsScheduleCache[month]);
+      return;
+    }
+    apiRead({action:'getSchedule', month:month}).then(function(data){
+      var rows = [];
+      if(data.status === 'success' && data.entries.length > 0){
+        var monthIdx = ['January','February','March','April','May','June','July','August','September','October','November','December'].indexOf(month);
+        var dh = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        rows = data.entries.map(function(e){
+          var dayNum = parseInt(e.date.split(' ')[1]);
+          var dt = new Date(2026, monthIdx, dayNum);
+          return {date:e.date, day:dh[dt.getDay()], month:month, course:e.course, name:e.name, shift:e.shift||''};
+        });
+      }
+      sheetsScheduleCache[month] = rows;
+      callback(rows);
+    }).catch(function(){ callback([]); });
+  }
+}
+
+function renderHours(){
+  var month = document.getElementById('hours-month').value;
+  var starter = document.getElementById('hours-starter').value;
+  var container = document.getElementById('hours-content');
+  container.innerHTML = '<div class="empty">Loading...</div>';
+
+  var allMonths = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var monthsToLoad = (month === 'All') ? allMonths : [month];
+  var loaded = 0;
+  var allRows = [];
+
+  monthsToLoad.forEach(function(m){
+    getScheduleForMonth(m, function(rows){
+      allRows = allRows.concat(rows);
+      loaded++;
+      if(loaded === monthsToLoad.length){
+        buildHoursTable(allRows, month, starter, monthsToLoad);
+      }
+    });
+  });
+}
+
+function buildHoursTable(allRows, selectedMonth, selectedStarter, monthsToLoad){
+  var container = document.getElementById('hours-content');
+
+  // Filter by starter
+  var rows = allRows;
+  if(selectedStarter !== 'All') rows = rows.filter(function(r){ return r.name === selectedStarter; });
+
+  if(rows.length === 0){
+    container.innerHTML = '<div class="empty">No data found.</div>';
+    return;
+  }
+
+  // Build hours matrix: starter -> month -> hours
+  var starters = selectedStarter === 'All' ? allNames : [selectedStarter];
+  var hoursMap = {}; // name -> month -> hours
+  starters.forEach(function(n){ hoursMap[n] = {}; });
+
+  rows.forEach(function(r){
+    if(!hoursMap[r.name]) return;
+    if(!hoursMap[r.name][r.month]) hoursMap[r.name][r.month] = 0;
+    hoursMap[r.name][r.month] += shiftHours(r.shift);
+  });
+
+  // Build table
+  var html = '<div style="overflow-x:auto;"><table style="border-collapse:collapse;width:100%;font-size:13px;">';
+
+  // Header
+  html += '<thead><tr><th style="background:#1a3a1a;color:#e8d8a0;padding:8px 12px;text-align:left;border:1px solid #145a30;">Starter</th>';
+  monthsToLoad.forEach(function(m){
+    html += '<th style="background:#1a3a1a;color:#e8d8a0;padding:8px 8px;text-align:center;border:1px solid #145a30;">'+m.substring(0,3)+'</th>';
+  });
+  html += '<th style="background:#1a6b3a;color:#e8d8a0;padding:8px 8px;text-align:center;border:1px solid #145a30;">Total</th>';
+  html += '</tr></thead><tbody>';
+
+  // Rows
+  var rowNum = 0;
+  starters.forEach(function(n){
+    if(!hoursMap[n]) return;
+    var hasHours = monthsToLoad.some(function(m){ return hoursMap[n][m] > 0; });
+    if(!hasHours) return;
+    rowNum++;
+    var bg = rowNum%2===0?'#faf8f3':'#fff';
+    var total = 0;
+    html += '<tr style="background:'+bg+';">';
+    html += '<td style="padding:7px 12px;border:1px solid #e0d8c8;font-weight:bold;">'+n+'</td>';
+    monthsToLoad.forEach(function(m){
+      var hrs = hoursMap[n][m] || 0;
+      total += hrs;
+      html += '<td style="padding:7px 8px;border:1px solid #e0d8c8;text-align:center;color:'+(hrs>0?'#1a3a1a':'#ccc')+';">'+(hrs>0?hrs+'h':'')+'</td>';
+    });
+    html += '<td style="padding:7px 8px;border:1px solid #e0d8c8;text-align:center;font-weight:bold;background:#e8f5ed;color:#1a3a1a;">'+total+'h</td>';
+    html += '</tr>';
+  });
+
+  // Totals row
+  html += '<tr style="background:#e8f5ed;">';
+  html += '<td style="padding:7px 12px;border:1px solid #c8dfc8;font-weight:bold;color:#1a3a1a;">TOTAL</td>';
+  var grandTotal = 0;
+  monthsToLoad.forEach(function(m){
+    var mTotal = 0;
+    starters.forEach(function(n){ mTotal += (hoursMap[n] && hoursMap[n][m]) || 0; });
+    grandTotal += mTotal;
+    html += '<td style="padding:7px 8px;border:1px solid #c8dfc8;text-align:center;font-weight:bold;color:#1a3a1a;">'+(mTotal>0?mTotal+'h':'')+'</td>';
+  });
+  html += '<td style="padding:7px 8px;border:1px solid #c8dfc8;text-align:center;font-weight:bold;background:#1a3a1a;color:#e8d8a0;">'+grandTotal+'h</td>';
+  html += '</tr>';
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+function renderCourseNotes(){
+  var month = document.getElementById('notes-month').value;
+  var container = document.getElementById('notes-content');
+  if(month === 'All'){
+    container.innerHTML = '<div class="empty">Select a month to view course notes.</div>';
+    return;
+  }
+  container.innerHTML = '<div class="empty">Loading...</div>';
+  apiRead({action:'getCourseNotes', month:month}).then(function(data){
+    if(data.status === 'success'){
+      buildNotesTable(month, data.notes);
+    } else {
+      container.innerHTML = '<div class="empty">Error loading notes.</div>';
+    }
+  }).catch(function(){
+    container.innerHTML = '<div class="empty">Error loading notes. Please try again.</div>';
+  });
+}
+
+function buildNotesTable(month, notes){
+  var container = document.getElementById('notes-content');
+  var monthIdx = ['January','February','March','April','May','June','July','August','September','October','November','December'].indexOf(month);
+  var dh = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  if(notes.length === 0){
+    container.innerHTML = '<div class="empty">No course notes for '+month+'. Notes can be added directly in the Google Sheet → Course Notes tab.</div>';
+    return;
+  }
+
+  notes.sort(function(a,b){ return a.day - b.day; });
+
+  var html = '<table style="border-collapse:collapse;width:100%;font-size:14px;">';
+  html += '<thead><tr>';
+  html += '<th style="background:#1a3a1a;color:#e8d8a0;padding:9px 14px;text-align:left;border:1px solid #145a30;">Date</th>';
+  html += '<th style="background:#1a3a1a;color:#e8d8a0;padding:9px 14px;text-align:left;border:1px solid #145a30;">Course</th>';
+  html += '<th style="background:#1a3a1a;color:#e8d8a0;padding:9px 14px;text-align:left;border:1px solid #145a30;">Note</th>';
+  html += '</tr></thead><tbody>';
+
+  notes.forEach(function(n, i){
+    var dt = new Date(2026, monthIdx, n.day);
+    var dayName = dh[dt.getDay()];
+    var bg = i%2===0?'#fff':'#faf8f3';
+    html += '<tr style="background:'+bg+';">';
+    html += '<td style="padding:8px 14px;border:1px solid #e0d8c8;font-weight:bold;">'+dayName+' '+month.substring(0,3)+' '+n.day+'</td>';
+    html += '<td style="padding:8px 14px;border:1px solid #e0d8c8;">';
+    if(n.course === 'Links') html += '<span style="background:#e8f5e8;color:#1a6b3a;border-radius:10px;padding:2px 10px;font-size:12px;font-weight:bold;">Links</span>';
+    else if(n.course === 'Harbor') html += '<span style="background:#e8f0ff;color:#1a4a8a;border-radius:10px;padding:2px 10px;font-size:12px;font-weight:bold;">Harbor</span>';
+    else html += '<span style="background:#f0f0f0;border-radius:10px;padding:2px 10px;font-size:12px;">'+n.course+'</span>';
+    html += '</td>';
+    html += '<td style="padding:8px 14px;border:1px solid #e0d8c8;color:#444;">'+n.note+'</td>';
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
 function initApp(){
   var seen={},names=[];
   for(var i=0;i<RAW_DATA.length;i++){if(!seen[RAW_DATA[i].name]){seen[RAW_DATA[i].name]=true;names.push(RAW_DATA[i].name);}}
@@ -913,6 +1149,25 @@ function initApp(){
   document.getElementById('search-input').onchange=renderSearch;
   document.getElementById('month-filter').onchange=renderSearch;
   document.getElementById('course-filter').onchange=renderSearch;
+
+  // Populate hours-starter dropdown
+  var hoursStarter = document.getElementById('hours-starter');
+  if(hoursStarter){
+    for(var i=0;i<allNames.length;i++){
+      var opt = document.createElement('option');
+      opt.value = allNames[i]; opt.textContent = allNames[i];
+      hoursStarter.appendChild(opt);
+    }
+  }
+
+  // Show hours section only for schedule password
+  if(role === 'schedule'){
+    var hs = document.getElementById('hours-section');
+    if(hs) hs.style.display = 'block';
+  }
+
+  // Load course notes
+  renderCourseNotes();
   document.getElementById('person-select').onchange=function(){selectPerson(this.value);};
   renderSearch();
 }
