@@ -1190,7 +1190,7 @@ function initApp(){
   var seen={},names=[];
   for(var i=0;i<RAW_DATA.length;i++){if(!seen[RAW_DATA[i].name]){seen[RAW_DATA[i].name]=true;names.push(RAW_DATA[i].name);}}
   // Add starters not in RAW_DATA (new starters or July+ only starters)
-  var extraNames=['Geno','Greg'];
+  var extraNames=['Andrew L','Geno','Greg','John F','Nick'];
   extraNames.forEach(function(n){ if(!seen[n]){seen[n]=true;names.push(n);} });
   allNames=names.sort();
   var ss=document.getElementById('search-input'),ps=document.getElementById('person-select'),rs=document.getElementById('req-name');
