@@ -1201,7 +1201,6 @@ function initApp(){
     rs.innerHTML+='<option value="'+n+'">'+n+'</option>';
   }
   document.getElementById('search-input').onchange=renderSearch;
-  document.getElementById('month-filter').onchange=renderSearch;
   document.getElementById('course-filter').onchange=renderSearch;
 
   // Populate hours-starter dropdown
@@ -1216,14 +1215,14 @@ function initApp(){
 
   document.getElementById('person-select').onchange=function(){selectPerson(this.value);};
 
-  // Auto-select current month on page load
+  // Auto-select current month on page load then wire up onchange
   var monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
   var currentMonthName=monthNames[new Date().getMonth()];
   var mf=document.getElementById('month-filter');
   for(var i=0;i<mf.options.length;i++){
     if(mf.options[i].value===currentMonthName){mf.selectedIndex=i;break;}
   }
-
+  document.getElementById('month-filter').onchange=renderSearch;
   renderSearch();
 }
 
