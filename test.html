@@ -1215,15 +1215,18 @@ function initApp(){
 
   document.getElementById('person-select').onchange=function(){selectPerson(this.value);};
 
-  // Auto-select current month on page load then wire up onchange
+  document.getElementById('month-filter').onchange=renderSearch;
+
+  // Auto-select current month after a short delay so DOM is fully settled
   var monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
   var currentMonthName=monthNames[new Date().getMonth()];
-  var mf=document.getElementById('month-filter');
-  for(var i=0;i<mf.options.length;i++){
-    if(mf.options[i].value===currentMonthName){mf.selectedIndex=i;break;}
-  }
-  document.getElementById('month-filter').onchange=renderSearch;
-  renderSearch();
+  setTimeout(function(){
+    var mf=document.getElementById('month-filter');
+    for(var i=0;i<mf.options.length;i++){
+      if(mf.options[i].value===currentMonthName){mf.selectedIndex=i;break;}
+    }
+    renderSearch();
+  }, 100);
 }
 
 // shiftHours defined above
