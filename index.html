@@ -1215,6 +1215,15 @@ function initApp(){
   }
 
   document.getElementById('person-select').onchange=function(){selectPerson(this.value);};
+
+  // Auto-select current month on page load
+  var monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var currentMonthName=monthNames[new Date().getMonth()];
+  var mf=document.getElementById('month-filter');
+  for(var i=0;i<mf.options.length;i++){
+    if(mf.options[i].value===currentMonthName){mf.selectedIndex=i;break;}
+  }
+
   renderSearch();
 }
 
