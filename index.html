@@ -1278,7 +1278,7 @@ function apiWrite(params){
 
 // Route to correct method based on action
 function apiCall(params){
-  var writeActions = ['submitRequest','saveSchedule'];
+  var writeActions = ['submitRequest','saveSchedule','clearMonth','appendEntries'];
   if(writeActions.indexOf(params.action) >= 0){
     return apiWrite(params);
   }
@@ -2705,46 +2705,56 @@ function uploadExcel(input){
       input.value=''; return;
     }
 
-    statusEl.textContent = 'Validated '+entries.length+' assignments. Saving batch 1... WARNING: REPLACES ALL DATA FOR '+month.toUpperCase();
+    statusEl.textContent = 'Validated '+entries.length+' assignments. Step 1: Clearing old '+month+' data...';
 
-    // Send in batches of 50 to avoid Cloudflare Worker 30s timeout
+    // Step 1: clear old month data (separate fast call)
+    // Step 2+: append new entries in batches of 50
     var BATCH_SIZE = 50;
     var batches = [];
     for(var b=0; b<entries.length; b+=BATCH_SIZE){ batches.push(entries.slice(b, b+BATCH_SIZE)); }
 
-    var batchIdx = 0;
-    function sendNextBatch(){
-      var isFirst = (batchIdx === 0);
-      var batch = batches[batchIdx];
-      var mode = isFirst ? 'replace' : 'append';
-      statusEl.textContent = 'Saving batch '+(batchIdx+1)+' of '+batches.length+'...';
-      apiCall({action:'saveSchedule',month:month,entries:JSON.stringify(batch),mode:mode}).then(function(data){
-        if(data.status==='success'){
-          batchIdx++;
-          if(batchIdx < batches.length){
-            sendNextBatch();
+    apiCall({action:'clearMonth', month:month}).then(function(data){
+      if(data.status !== 'success'){
+        statusEl.style.background='#fff3f3'; statusEl.style.borderColor='#8b1a1a'; statusEl.style.color='#8b1a1a';
+        statusEl.textContent='Error clearing old data: '+(data.message||'Unknown error');
+        input.value=''; return;
+      }
+      // Now append batches
+      var batchIdx = 0;
+      function sendNextBatch(){
+        statusEl.textContent = 'Step 2: Saving batch '+(batchIdx+1)+' of '+batches.length+'...';
+        apiCall({action:'appendEntries', month:month, entries:JSON.stringify(batches[batchIdx])}).then(function(data){
+          if(data.status==='success'){
+            batchIdx++;
+            if(batchIdx < batches.length){
+              sendNextBatch();
+            } else {
+              for(var k in schedAssignments){ if(k.indexOf(month+'|')===0) delete schedAssignments[k]; }
+              entries.forEach(function(e){
+                schedAssignments[month+'|'+e.date+'|'+e.course+'|'+e.slot]={name:e.name,shift:e.shift};
+              });
+              statusEl.style.background='#e8f5ed'; statusEl.style.borderColor='#1a6b3a'; statusEl.style.color='#1a3a1a';
+              statusEl.textContent='SUCCESS: '+entries.length+' assignments saved for '+month+'. Previous data replaced.';
+              renderMatrixContent(month, currentReqData);
+              input.value='';
+            }
           } else {
-            for(var k in schedAssignments){ if(k.indexOf(month+'|')===0) delete schedAssignments[k]; }
-            entries.forEach(function(e){
-              schedAssignments[month+'|'+e.date+'|'+e.course+'|'+e.slot]={name:e.name,shift:e.shift};
-            });
-            statusEl.style.background='#e8f5ed'; statusEl.style.borderColor='#1a6b3a'; statusEl.style.color='#1a3a1a';
-            statusEl.textContent='SUCCESS: '+entries.length+' assignments saved for '+month+'. Previous data replaced.';
-            renderMatrixContent(month, currentReqData);
+            statusEl.style.background='#fff3f3'; statusEl.style.borderColor='#8b1a1a'; statusEl.style.color='#8b1a1a';
+            statusEl.textContent='Error on batch '+(batchIdx+1)+': '+(data.message||'Unknown error');
             input.value='';
           }
-        } else {
+        }).catch(function(){
           statusEl.style.background='#fff3f3'; statusEl.style.borderColor='#8b1a1a'; statusEl.style.color='#8b1a1a';
-          statusEl.textContent='Error on batch '+(batchIdx+1)+': '+(data.message||'Unknown error');
+          statusEl.textContent='Connection error on batch '+(batchIdx+1)+'. Please try again.';
           input.value='';
-        }
-      }).catch(function(){
-        statusEl.style.background='#fff3f3'; statusEl.style.borderColor='#8b1a1a'; statusEl.style.color='#8b1a1a';
-        statusEl.textContent='Connection error on batch '+(batchIdx+1)+'. Please try again.';
-        input.value='';
-      });
-    }
-    sendNextBatch();
+        });
+      }
+      sendNextBatch();
+    }).catch(function(){
+      statusEl.style.background='#fff3f3'; statusEl.style.borderColor='#8b1a1a'; statusEl.style.color='#8b1a1a';
+      statusEl.textContent='Connection error clearing old data. Please try again.';
+      input.value='';
+    });
   };
   reader.onerror = function(){ statusEl.textContent='Error reading file.'; input.value=''; };
   reader.readAsText(file);
