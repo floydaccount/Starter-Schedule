@@ -1023,8 +1023,15 @@ function renderHours(){
   loadNext(0);
 }
 
-function buildHoursTable(allRows, selectedMonth, selectedStarter, monthsToLoad){
+var _hoursSortCol = 'name', _hoursSortAsc = true;
+var _hoursLastArgs = null;
+
+function buildHoursTable(allRows, selectedMonth, selectedStarter, monthsToLoad, sortCol, sortAsc){
   var container = document.getElementById('hours-content');
+
+  // Remember args for re-sort
+  _hoursLastArgs = [allRows, selectedMonth, selectedStarter, monthsToLoad];
+  if(sortCol !== undefined){ _hoursSortCol = sortCol; _hoursSortAsc = sortAsc; }
 
   // Filter by starter
   var rows = allRows;
@@ -1046,30 +1053,61 @@ function buildHoursTable(allRows, selectedMonth, selectedStarter, monthsToLoad){
     hoursMap[r.name][r.month] += shiftHours(r.shift);
   });
 
+  // Build sortable starter list
+  var starterTotals = {};
+  starters.forEach(function(n){
+    var t = 0;
+    monthsToLoad.forEach(function(m){ t += (hoursMap[n] && hoursMap[n][m]) || 0; });
+    starterTotals[n] = t;
+  });
+  var sortedStarters = starters.slice().filter(function(n){
+    return monthsToLoad.some(function(m){ return hoursMap[n] && hoursMap[n][m] > 0; });
+  });
+  sortedStarters.sort(function(a, b){
+    var av, bv;
+    if(_hoursSortCol === 'name'){
+      av = a.toLowerCase(); bv = b.toLowerCase();
+      return _hoursSortAsc ? (av < bv ? -1 : av > bv ? 1 : 0) : (av > bv ? -1 : av < bv ? 1 : 0);
+    } else if(_hoursSortCol === 'total'){
+      av = starterTotals[a]; bv = starterTotals[b];
+    } else {
+      av = (hoursMap[a] && hoursMap[a][_hoursSortCol]) || 0;
+      bv = (hoursMap[b] && hoursMap[b][_hoursSortCol]) || 0;
+    }
+    return _hoursSortAsc ? av - bv : bv - av;
+  });
+
+  // Sort arrow helper
+  function arrow(col){ return _hoursSortCol===col ? (_hoursSortAsc?' ▲':' ▼') : ' ⇅'; }
+  function thClick(col){
+    return 'onclick="var asc=(_hoursSortCol===\''+col+'\'?!_hoursSortAsc:false);buildHoursTable(_hoursLastArgs[0],_hoursLastArgs[1],_hoursLastArgs[2],_hoursLastArgs[3],\''+col+'\',asc);" style="cursor:pointer;"';
+  }
+
   // Build table
   var html = '<div style="overflow-x:auto;"><table style="border-collapse:collapse;width:100%;font-size:13px;">';
 
   // Header
-  html += '<thead><tr><th style="background:#1a3a1a;color:#e8d8a0;padding:8px 12px;text-align:left;border:1px solid #145a30;">Starter</th>';
+  var thBase = 'background:#1a3a1a;color:#e8d8a0;padding:8px 12px;text-align:left;border:1px solid #145a30;user-select:none;';
+  var thCtr  = 'background:#1a3a1a;color:#e8d8a0;padding:8px 8px;text-align:center;border:1px solid #145a30;user-select:none;';
+  var thTot  = 'background:#1a6b3a;color:#e8d8a0;padding:8px 8px;text-align:center;border:1px solid #145a30;user-select:none;';
+  html += '<thead><tr>';
+  html += '<th style="'+thBase+'" '+thClick('name')+'>Starter'+arrow('name')+'</th>';
   monthsToLoad.forEach(function(m){
-    html += '<th style="background:#1a3a1a;color:#e8d8a0;padding:8px 8px;text-align:center;border:1px solid #145a30;">'+m.substring(0,3)+'</th>';
+    html += '<th style="'+thCtr+'" '+thClick(m)+'>'+m.substring(0,3)+arrow(m)+'</th>';
   });
-  html += '<th style="background:#1a6b3a;color:#e8d8a0;padding:8px 8px;text-align:center;border:1px solid #145a30;">Total</th>';
+  html += '<th style="'+thTot+'" '+thClick('total')+'>Total'+arrow('total')+'</th>';
   html += '</tr></thead><tbody>';
 
   // Rows
   var rowNum = 0;
-  starters.forEach(function(n){
-    if(!hoursMap[n]) return;
-    var hasHours = monthsToLoad.some(function(m){ return hoursMap[n][m] > 0; });
-    if(!hasHours) return;
+  sortedStarters.forEach(function(n){
     rowNum++;
     var bg = rowNum%2===0?'#faf8f3':'#fff';
     var total = 0;
     html += '<tr style="background:'+bg+';">';
     html += '<td style="padding:7px 12px;border:1px solid #e0d8c8;font-weight:bold;">'+n+'</td>';
     monthsToLoad.forEach(function(m){
-      var hrs = hoursMap[n][m] || 0;
+      var hrs = (hoursMap[n] && hoursMap[n][m]) || 0;
       total += hrs;
       html += '<td style="padding:7px 8px;border:1px solid #e0d8c8;text-align:center;color:'+(hrs>0?'#1a3a1a':'#ccc')+';">'+(hrs>0?hrs+'h':'')+'</td>';
     });
