@@ -1257,21 +1257,12 @@ function buildTotals(rows){
   return h;
 }
 
-// READ: simple fetch GET through Cloudflare Worker (no CORS issues)
-function apiRead(params){
-  var url = AURL + '?';
-  var parts = [];
-  for(var k in params) parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
-  url += parts.join('&');
-  return fetch(url).then(function(r){ return r.json(); });
-}
-
-// WRITE: JSONP directly to Apps Script (bypasses Cloudflare Worker 30s timeout)
-function apiWrite(params){
+// ALL API calls go directly to Apps Script via JSONP — no Cloudflare Worker needed
+function apiCall(params){
   return new Promise(function(resolve, reject){
     var cbName = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*100000);
-    var url = DIRECT_URL + '?callback=' + cbName;
-    for(var k in params) url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+    var url = DIRECT_URL + '?callback=' + encodeURIComponent(cbName);
+    for(var k in params) url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(String(params[k]));
     var script = document.createElement('script');
     var timer = setTimeout(function(){ cleanup(); reject(new Error('timeout')); }, 55000);
     window[cbName] = function(data){ cleanup(); resolve(data); };
@@ -1281,15 +1272,9 @@ function apiWrite(params){
     document.head.appendChild(script);
   });
 }
-
-// Route to correct method based on action
-function apiCall(params){
-  var writeActions = ['submitRequest','saveSchedule','clearMonth','appendEntries'];
-  if(writeActions.indexOf(params.action) >= 0){
-    return apiWrite(params);
-  }
-  return apiRead(params);
-}
+// Legacy aliases (kept for any other code that calls these directly)
+function apiRead(params){ return apiCall(params); }
+function apiWrite(params){ return apiCall(params); }
 
 function switchView(v){
   var vs=['search','person','requests','scheduler'];
