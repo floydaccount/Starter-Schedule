@@ -282,7 +282,7 @@ tr{border-bottom:1px solid #f0ece0;}
 </div>
 
 <script>
-var SPW='wilddunes',APW='schedule',AURL='https://schedule-proxy.fsmattern.workers.dev',role='',allNames=[],requestsCache={},schedAssignments={},schedRequests={};
+var SPW='wilddunes',APW='schedule',AURL='https://schedule-proxy.fsmattern.workers.dev',DIRECT_URL='https://script.google.com/macros/s/AKfycbzCMtamMpfZWEF8CFTfhNpvLcbpz_m4lJTh4dmdQIlAjNyA3mHZT3XJv0g6PMu8du5u/exec',role='',allNames=[],requestsCache={},schedAssignments={},schedRequests={};
 var MONTHS=['January','February','March','April','May','June'];
 var MDAYS={January:31,February:28,March:31,April:30,May:31,June:30,July:31,August:31,September:30,October:31,November:30,December:31};
 var DNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -1266,14 +1266,20 @@ function apiRead(params){
   return fetch(url).then(function(r){ return r.json(); });
 }
 
-// WRITE: POST through Cloudflare Worker (no CORS issues)
+// WRITE: JSONP directly to Apps Script (bypasses Cloudflare Worker 30s timeout)
 function apiWrite(params){
-  var formData = new FormData();
-  for(var k in params) formData.append(k, String(params[k]));
-  return fetch(AURL, {
-    method: 'POST',
-    body: formData
-  }).then(function(r){ return r.json(); });
+  return new Promise(function(resolve, reject){
+    var cbName = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*100000);
+    var url = DIRECT_URL + '?callback=' + cbName;
+    for(var k in params) url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+    var script = document.createElement('script');
+    var timer = setTimeout(function(){ cleanup(); reject(new Error('timeout')); }, 55000);
+    window[cbName] = function(data){ cleanup(); resolve(data); };
+    function cleanup(){ clearTimeout(timer); delete window[cbName]; if(script.parentNode) script.parentNode.removeChild(script); }
+    script.onerror = function(){ cleanup(); reject(new Error('script error')); };
+    script.src = url;
+    document.head.appendChild(script);
+  });
 }
 
 // Route to correct method based on action
