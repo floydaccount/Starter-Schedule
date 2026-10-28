@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2704,27 +2705,46 @@ function uploadExcel(input){
       input.value=''; return;
     }
 
-    statusEl.textContent = 'Validated '+entries.length+' assignments. Saving... WARNING: REPLACES ALL DATA FOR '+month.toUpperCase();
+    statusEl.textContent = 'Validated '+entries.length+' assignments. Saving batch 1... WARNING: REPLACES ALL DATA FOR '+month.toUpperCase();
 
-    apiCall({action:'saveSchedule',month:month,entries:JSON.stringify(entries)}).then(function(data){
-      if(data.status==='success'){
-        for(var k in schedAssignments){ if(k.indexOf(month+'|')===0) delete schedAssignments[k]; }
-        entries.forEach(function(e){
-          schedAssignments[month+'|'+e.date+'|'+e.course+'|'+e.slot]={name:e.name,shift:e.shift};
-        });
-        statusEl.style.background='#e8f5ed'; statusEl.style.borderColor='#1a6b3a'; statusEl.style.color='#1a3a1a';
-        statusEl.textContent='SUCCESS: '+entries.length+' assignments saved for '+month+'. Previous data replaced.';
-        renderMatrixContent(month, currentReqData);
-      } else {
+    // Send in batches of 50 to avoid Cloudflare Worker 30s timeout
+    var BATCH_SIZE = 50;
+    var batches = [];
+    for(var b=0; b<entries.length; b+=BATCH_SIZE){ batches.push(entries.slice(b, b+BATCH_SIZE)); }
+
+    var batchIdx = 0;
+    function sendNextBatch(){
+      var isFirst = (batchIdx === 0);
+      var batch = batches[batchIdx];
+      var mode = isFirst ? 'replace' : 'append';
+      statusEl.textContent = 'Saving batch '+(batchIdx+1)+' of '+batches.length+'...';
+      apiCall({action:'saveSchedule',month:month,entries:JSON.stringify(batch),mode:mode}).then(function(data){
+        if(data.status==='success'){
+          batchIdx++;
+          if(batchIdx < batches.length){
+            sendNextBatch();
+          } else {
+            for(var k in schedAssignments){ if(k.indexOf(month+'|')===0) delete schedAssignments[k]; }
+            entries.forEach(function(e){
+              schedAssignments[month+'|'+e.date+'|'+e.course+'|'+e.slot]={name:e.name,shift:e.shift};
+            });
+            statusEl.style.background='#e8f5ed'; statusEl.style.borderColor='#1a6b3a'; statusEl.style.color='#1a3a1a';
+            statusEl.textContent='SUCCESS: '+entries.length+' assignments saved for '+month+'. Previous data replaced.';
+            renderMatrixContent(month, currentReqData);
+            input.value='';
+          }
+        } else {
+          statusEl.style.background='#fff3f3'; statusEl.style.borderColor='#8b1a1a'; statusEl.style.color='#8b1a1a';
+          statusEl.textContent='Error on batch '+(batchIdx+1)+': '+(data.message||'Unknown error');
+          input.value='';
+        }
+      }).catch(function(){
         statusEl.style.background='#fff3f3'; statusEl.style.borderColor='#8b1a1a'; statusEl.style.color='#8b1a1a';
-        statusEl.textContent='Error: '+(data.message||'Unknown error');
-      }
-      input.value='';
-    }).catch(function(){
-      statusEl.style.background='#fff3f3'; statusEl.style.borderColor='#8b1a1a'; statusEl.style.color='#8b1a1a';
-      statusEl.textContent='Connection error. Please try again.';
-      input.value='';
-    });
+        statusEl.textContent='Connection error on batch '+(batchIdx+1)+'. Please try again.';
+        input.value='';
+      });
+    }
+    sendNextBatch();
   };
   reader.onerror = function(){ statusEl.textContent='Error reading file.'; input.value=''; };
   reader.readAsText(file);
