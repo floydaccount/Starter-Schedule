@@ -1996,7 +1996,7 @@ function saveSchedule(){
   if(!month){alert('Select a month first.');return;}
   var el=document.getElementById('save-status');
   if(el) el.textContent='Saving...';
-  
+
   var entries=[];
   for(var key in schedAssignments){
     if(key.indexOf(month+'|')===0&&schedAssignments[key]&&schedAssignments[key].name){
@@ -2006,36 +2006,59 @@ function saveSchedule(){
       }
     }
   }
-  console.log('Saving '+entries.length+' entries for '+month+': '+JSON.stringify(entries));
-  
-  var timeout = setTimeout(function(){
-    if(el) el.textContent='';
-    alert('Save timed out. Check your internet connection and try again.');
-  }, 10000);
-  
-  apiCall({action:'saveSchedule',month:month,entries:JSON.stringify(entries)}).then(function(data){
-    clearTimeout(timeout);
-    if(data.status==='success'){
-      if(el) el.textContent='Schedule saved!';
-      alert(entries.length > 0 ? 'Schedule saved! '+entries.length+' assignments saved.' : 'Schedule cleared successfully.');
-      // Clear schedAssignments for this month and reload from saved entries
-      for(var key in schedAssignments){
-        if(key.indexOf(month+'|')===0) delete schedAssignments[key];
-      }
-      entries.forEach(function(e){
-        schedAssignments[month+'|'+e.date+'|'+e.course+'|'+e.slot]={name:e.name,shift:e.shift};
-      });
-      renderCalendarView(month);
-      setTimeout(function(){if(el)el.textContent='';},3000);
-    } else {
+
+  // Split into batches of 50 to keep URLs short
+  var BATCH_SIZE=50;
+  var batches=[];
+  for(var b=0;b<entries.length;b+=BATCH_SIZE) batches.push(entries.slice(b,b+BATCH_SIZE));
+  if(batches.length===0) batches=[[]]; // still need to clear if no entries
+
+  // Step 1: clear old month data
+  if(el) el.textContent='Saving (clearing old data)...';
+  apiCall({action:'clearMonth',month:month}).then(function(data){
+    if(data.status!=='success'){
       if(el) el.textContent='Error saving.';
-      alert('Error saving: '+(data.message||'Unknown error'));
+      alert('Error clearing old data: '+(data.message||'Unknown error'));
+      return;
     }
-  }).catch(function(err){
-    clearTimeout(timeout);
+    if(entries.length===0){
+      if(el) el.textContent='Schedule cleared!';
+      alert('Schedule cleared successfully.');
+      setTimeout(function(){if(el)el.textContent='';},3000);
+      return;
+    }
+    // Step 2+: append batches
+    var batchIdx=0;
+    function sendNext(){
+      if(el) el.textContent='Saving ('+(batchIdx+1)+' of '+batches.length+')...';
+      apiCall({action:'appendEntries',month:month,entries:JSON.stringify(batches[batchIdx])}).then(function(data){
+        if(data.status==='success'){
+          batchIdx++;
+          if(batchIdx<batches.length){ sendNext(); return; }
+          // All done
+          if(el) el.textContent='Schedule saved!';
+          alert('Schedule saved! '+entries.length+' assignments saved.');
+          for(var key in schedAssignments){
+            if(key.indexOf(month+'|')===0) delete schedAssignments[key];
+          }
+          entries.forEach(function(e){
+            schedAssignments[month+'|'+e.date+'|'+e.course+'|'+e.slot]={name:e.name,shift:e.shift};
+          });
+          renderCalendarView(month);
+          setTimeout(function(){if(el)el.textContent='';},3000);
+        } else {
+          if(el) el.textContent='Error saving.';
+          alert('Error saving batch '+(batchIdx+1)+': '+(data.message||'Unknown error'));
+        }
+      }).catch(function(err){
+        if(el) el.textContent='';
+        alert('Connection error saving schedule. Please try again.');
+      });
+    }
+    sendNext();
+  }).catch(function(){
     if(el) el.textContent='';
     alert('Connection error saving schedule. Please try again.');
-    console.log('Save error:',err);
   });
 }
 
